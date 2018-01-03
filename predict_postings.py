@@ -1,4 +1,7 @@
-"""Decorator for beancount importers that adds smart prediction and autocompletion of postings."""
+"""
+Decorator for beancount importers that adds smart prediction
+and autocompletion of postings.
+"""
 
 from functools import wraps
 from typing import Dict, List, Union
@@ -22,7 +25,7 @@ class PredictPostings:
     Example:
 
     class MyImporter(ImporterProtocol):
-        @PredictPostings("trainingdata.beancount")
+        @PredictPostings(training_data="trainingdata.beancount")
         def extract(file):
           # do the import, return list of entries
     '''
