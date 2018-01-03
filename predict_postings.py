@@ -40,26 +40,9 @@ class PredictPostings:
         # Handle arguments
         # print(inspect.stack()[0][3]) # prints the current function name
         # debug(**locals()) # see https://stackoverflow.com/a/9938156
-        self._trained = False
-
-        # load the training data
-        if isinstance(training_data, _FileMemo):
-            print(f"Reading training data from {training_data.name}")
-            x_train, y_train = ml.load_training_data_from_file(training_data, filter_by_account, debug=debug)
-        else:
-            print(f"Reading {len(training_data)} entries of training data")
-            x_train, y_train = ml.load_training_data_from_entrylist(training_data, filter_by_account, debug=debug)
-
-        # Define machine learning pipeline
-        self.pipeline = ml.pipeline()
-
-        # Train the machine learning model
-        if not y_train:
-            print("Warning: Cannot train the machine learning model because the training data is empty.")
-        else:
-            print(f"Training machine learning model...")
-            self.pipeline.fit(x_train, y_train)
-            self._trained = True
+        self.training_data = training_data
+        self.filter_by_account = filter_by_account
+        self.debug = debug
 
     def __call__(self, importers_extract_function, *args, **kwargs):
         # Decorating the extract function:
@@ -73,6 +56,30 @@ class PredictPostings:
             :param csvFile: `_FileMemo` of the csv file to be imported
             :return: list of beancount directives
             """
+
+            # load the training data
+            self._trained = False
+            if isinstance(self.training_data, _FileMemo):
+                print(f"Reading training data from {self.training_data.name}")
+                x_train, y_train = ml.load_training_data_from_file(self.training_data,
+                                                                   self.filter_by_account,
+                                                                   debug=self.debug)
+            else:
+                print(f"Reading {len(self.training_data)} entries of training data")
+                x_train, y_train = ml.load_training_data_from_entrylist(self.training_data,
+                                                                        self.filter_by_account,
+                                                                        debug=self.debug)
+
+            # Define machine learning pipeline
+            self.pipeline = ml.pipeline()
+
+            # Train the machine learning model
+            if not y_train:
+                print("Warning: Cannot train the machine learning model because the training data is empty.")
+            else:
+                print(f"Training machine learning model...")
+                self.pipeline.fit(x_train, y_train)
+                self._trained = True
 
             # use the importer to import the file
             transactions_beancount: List[Union[ALL_DIRECTIVES]]
