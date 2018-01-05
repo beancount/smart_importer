@@ -1,5 +1,5 @@
 """Machinelearning Helpers for the Smart Importer."""
-
+import json
 import sys
 from typing import Dict, Any, List, Union, Optional
 
@@ -115,23 +115,35 @@ def transaction_involves_account(transaction: Transaction, account: str) -> bool
     return any([posting.account == account for posting in transaction.postings])
 
 
-def add_account_to_transaction(transaction: Transaction, account: str):
+def add_posting_to_transaction(transaction: Transaction, postings_account: str):
     '''
-    modifies a transaction by adding a posting with specified account to it
-    :param t_a:
-    :return:
+    Modifies a transaction by adding a posting with specified postings_account to it.
     '''
 
+    ## implementation note:
     ## for how to modify transactions, see this code from beancount.core.interpolate.py:
     # new_postings = list(entry.postings)
     # new_postings.extend(get_residual_postings(residual, account_rounding))
     # entry = entry._replace(postings=new_postings)
 
     additionalPosting: Posting
-    additionalPosting = Posting(account, None, None, None, None, None)
+    additionalPosting = Posting(postings_account, None, None, None, None, None)
     new_postings_list = list(transaction.postings)
     new_postings_list.extend([additionalPosting])
     transaction = transaction._replace(postings=new_postings_list)
+    return transaction
+
+
+def add_suggestions_to_transaction(transaction: Transaction, suggested_accounts: List[str]):
+    """
+    Adds a list of suggested accounts to a transaction under transaction.meta['__suggested_accounts__'].
+    :param transaction:
+    :param suggested_accounts:
+    :return:
+    """
+    meta = transaction.meta
+    meta['__suggested_accounts__'] = json.dumps(suggested_accounts)
+    transaction = transaction._replace(meta=meta)
     return transaction
 
 

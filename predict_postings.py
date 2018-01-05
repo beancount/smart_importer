@@ -35,13 +35,17 @@ class PredictPostings:
 
     def __init__(self, *,
                  training_data: Union[_FileMemo, List[Union[ALL_DIRECTIVES]]],
-                 filter_by_account: str = None,
+                 filter_training_data_by_account: str = None,
+                 predict_second_posting: bool = True,
+                 suggest_accounts: bool = True,
                  debug: bool = False):
         # Handle arguments
         # print(inspect.stack()[0][3]) # prints the current function name
         # debug(**locals()) # see https://stackoverflow.com/a/9938156
         self.training_data = training_data
-        self.filter_by_account = filter_by_account
+        self.filter_by_account = filter_training_data_by_account
+        self.predict_second_posting = predict_second_posting
+        self.suggest_accounts = suggest_accounts
         self.debug = debug
 
     def __call__(self, importers_extract_function, *args, **kwargs):
@@ -81,24 +85,40 @@ class PredictPostings:
                 self.pipeline.fit(x_train, y_train)
                 self._trained = True
 
-            # use the importer to import the file
-            transactions_beancount: List[Union[ALL_DIRECTIVES]]
-            transactions_beancount = importers_extract_function(importerInstance, csvFile)
+            # call the decorated extract function
+            transactions: List[Union[ALL_DIRECTIVES]]
+            transactions = importers_extract_function(importerInstance, csvFile)
 
             if not self._trained:
                 print("Warning: Cannot predict postings because there is no trained machine learning model")
-                return transactions_beancount
+                return transactions
 
             # create data structures for scikit-learn
             transactions_scikit: Dict[str, np.ndarray]
-            transactions_scikit, _ = ml.load_training_data_from_entrylist(transactions_beancount)
+            transactions_scikit, _ = ml.load_training_data_from_entrylist(transactions)
 
-            # predict missing postings
-            predicted_accounts: List[str]
-            predicted_accounts = self.pipeline.predict(transactions_scikit)
-            transactions_with_predicted_accounts = [ml.add_account_to_transaction(*t_a) for t_a in
-                                                    zip(transactions_beancount, predicted_accounts)]
-            return transactions_with_predicted_accounts
+            # predict missing second postings
+            if self.predict_second_posting:
+                predicted_accounts: List[str]
+                predicted_accounts = self.pipeline.predict(transactions_scikit)
+                transactions = [ml.add_posting_to_transaction(*t_a)
+                                for t_a in zip(transactions, predicted_accounts)]
+
+            # suggest accounts that are likely involved in the transaction
+            if self.suggest_accounts:
+                # get values from the SVC decision function
+                decision_values = self.pipeline.decision_function(transactions_scikit)
+
+                # add a human-readable class label (i.e., account name) to each value, and sort by value:
+                suggestions = [[account for _, account in sorted(list(zip(distance_values, self.pipeline.classes_)),
+                           key=lambda x: x[0], reverse=True)]
+                    for distance_values in decision_values]
+
+                # add the suggested accounts to each transaction:
+                transactions = [ml.add_suggestions_to_transaction(*t_s)
+                                for t_s in zip(transactions, suggestions)]
+
+            return transactions
 
         return _extract
 
