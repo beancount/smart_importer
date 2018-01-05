@@ -74,6 +74,13 @@ class PredictPostingsTest(unittest.TestCase):
             """)
         assert not errors
 
+        self.correct_predictions = ['Expenses:Food:Groceries',
+                                    'Expenses:Food:Groceries',
+                                    'Expenses:Food:Restaurant',
+                                    'Expenses:Food:Restaurant',
+                                    'Expenses:Food:Groceries',
+                                    'Expenses:Food:Coffee']
+
         # to be able to reference ourselves later on:
         testcase = self
 
@@ -92,7 +99,7 @@ class PredictPostingsTest(unittest.TestCase):
         '''
         print("\n\nRunning Test Case: {id}".format(id=self.id().split('.')[-1]))
         method_without_decorator = self.importer.extract.__wrapped__
-        entries = method_without_decorator(self.importer, 'this-is-never-read-by-the-dummy-importer.csv')
+        entries = method_without_decorator(self.importer, 'dummy-data')
         self.assertEqual(entries[0].narration, "Buying groceries")
         # print("Entries without predicted postings:")
         # printer.print_entries(entries)
@@ -102,19 +109,31 @@ class PredictPostingsTest(unittest.TestCase):
         Verifies that the decorator leaves the narration intact
         '''
         print("\n\nRunning Test Case: {id}".format(id=self.id().split('.')[-1]))
+        correct_narrations = [transaction.narration for transaction in self.test_data]
+        extracted_narrations = [transaction.narration for transaction in self.importer.extract("dummy-data")]
+        self.assertEqual(extracted_narrations, correct_narrations)
         
 
     def test_predicted_postings(self):
         '''
-        Tests the importer with predicted postings.
+        Verifies that the decorator adds predicted postings.
         '''
         print("\n\nRunning Test Case: {id}".format(id=self.id().split('.')[-1]))
-        entries = self.importer.extract("this-is-never-read-by-the-dummy-importer.csv")
+        transactions = self.importer.extract("dummy-data")
+        predicted_accounts = [entry.postings[-1].account for entry in transactions]
+        self.assertEqual(predicted_accounts, self.correct_predictions)
+        # print("Entries with predicted postings:")
+        # printer.print_entries(entries)
 
-        print("Entries with predicted postings:")
-        printer.print_entries(entries)
-
-        self.assertEqual(entries[0].postings[1].account, "Expenses:Food:Groceries")
+    def test_added_suggestions(self):
+        '''
+        Verifies that the decorator adds suggestions about accounts
+        that are likely to be involved in the transaction.
+        '''
+        transactions = self.importer.extract("dummy-data")
+        for transaction in transactions:
+            suggestions = transaction.meta['__suggested_accounts__']
+            self.assertTrue(len(suggestions), msg=f"The list of suggested accounts should not be empty, but was found to be empty for transaction {transaction}.")
 
 
 if __name__ == '__main__':
