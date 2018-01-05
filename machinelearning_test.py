@@ -1,3 +1,4 @@
+import json
 import unittest
 from typing import List
 
@@ -44,4 +45,4 @@ class MachinelearningTest(unittest.TestCase):
         transaction = add_suggestions_to_transaction(self.test_transaction, suggestions)
 
         # print(transaction.meta['__suggested_accounts__'])
-        self.assertEqual(transaction.meta['__suggested_accounts__'], suggestions)
+        self.assertEqual(transaction.meta['__suggested_accounts__'], json.dumps(suggestions))

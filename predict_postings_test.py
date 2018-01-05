@@ -104,7 +104,7 @@ class PredictPostingsTest(unittest.TestCase):
         # print("Entries without predicted postings:")
         # printer.print_entries(entries)
 
-    def test_unchanged_narration(self):
+    def test_unchanged_narrations(self):
         '''
         Verifies that the decorator leaves the narration intact
         '''
@@ -112,7 +112,15 @@ class PredictPostingsTest(unittest.TestCase):
         correct_narrations = [transaction.narration for transaction in self.test_data]
         extracted_narrations = [transaction.narration for transaction in self.importer.extract("dummy-data")]
         self.assertEqual(extracted_narrations, correct_narrations)
-        
+
+    def test_unchanged_first_posting(self):
+        '''
+        Verifies that the decorator leaves the first posting intact
+        '''
+        print("\n\nRunning Test Case: {id}".format(id=self.id().split('.')[-1]))
+        correct_first_postings = [transaction.postings[0] for transaction in self.test_data]
+        extracted_first_postings = [transaction.postings[0] for transaction in self.importer.extract("dummy-data")]
+        self.assertEqual(extracted_first_postings, correct_first_postings)
 
     def test_predicted_postings(self):
         '''
@@ -133,7 +141,8 @@ class PredictPostingsTest(unittest.TestCase):
         transactions = self.importer.extract("dummy-data")
         for transaction in transactions:
             suggestions = transaction.meta['__suggested_accounts__']
-            self.assertTrue(len(suggestions), msg=f"The list of suggested accounts should not be empty, but was found to be empty for transaction {transaction}.")
+            self.assertTrue(len(suggestions),
+                            msg=f"The list of suggested accounts should not be empty, but was found to be empty for transaction {transaction}.")
 
 
 if __name__ == '__main__':
