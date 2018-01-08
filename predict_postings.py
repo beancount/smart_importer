@@ -9,6 +9,7 @@ from typing import Dict, List, Union
 import numpy as np
 from beancount.core.data import ALL_DIRECTIVES
 from beancount.ingest.cache import _FileMemo
+from beancount.ingest.importer import ImporterProtocol
 
 import importers.smart_importer.machinelearning as ml
 
@@ -52,7 +53,7 @@ class PredictPostings:
         # Decorating the extract function:
 
         @wraps(importers_extract_function)
-        def _extract(importerInstance, csvFile: _FileMemo) -> List[Union[ALL_DIRECTIVES]]:
+        def _extract(importerInstance: ImporterProtocol, csvFile: _FileMemo) -> List[Union[ALL_DIRECTIVES]]:
             """
             Completes missing missing postings using machine learning.
             :param importerInstance: refers to the importer object, which is normally passed in

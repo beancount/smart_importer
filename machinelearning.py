@@ -17,7 +17,7 @@ from sklearn.svm import SVC
 def load_training_data_from_file(beancount_file: _FileMemo, filter_by_account: str, debug=False) -> (
         Dict[str, np.ndarray], List[str]):
     """
-    loads entries from a beancount file and returns them in a format suitable
+    Loads entries from a beancount file and returns them in a format suitable
     for training a scikit-learn machine learning model.
     :param beancount_file:
     :param filter_by_account:
@@ -196,7 +196,11 @@ def pipeline() -> Pipeline:
 
 class ItemSelector(BaseEstimator, TransformerMixin):
     """
-    Helper class: For data grouped by feature, select subset of data at a provided key.
+    Helper class:
+    For data grouped by feature, select subset of data at a provided key.
+
+    Code from:
+    http://scikit-learn.org/stable/auto_examples/hetero_feature_union.html
 
     The data is expected to be stored in a 2D data structure, where the first
     index is over features and the second is over samples.  i.e.
@@ -256,10 +260,14 @@ class ArrayCaster(BaseEstimator, TransformerMixin):
     Helper class.
     """
 
+    def __init__(self, debug=False):
+        self.debug = debug
+
     def fit(self, x, y=None):
         return self
 
     def transform(self, data):
-        print(data.shape)
-        print(np.transpose(np.matrix(data)).shape)
+        if self.debug:
+            print(data.shape)
+            print(np.transpose(np.matrix(data)).shape)
         return np.transpose(np.matrix(data))
