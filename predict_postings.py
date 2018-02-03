@@ -1,15 +1,19 @@
 """
-Decorator for beancount importers that adds smart prediction
-and autocompletion of postings.
+Decorator for a Beancount Importers's `extract` function
+that suggests and predicts missing postings
+using machine learning.
 """
 
 from functools import wraps
-from typing import Dict, List, Union
+from typing import List, Union
 
-import numpy as np
-from beancount.core.data import ALL_DIRECTIVES
+from beancount import loader
+from beancount.core.data import Transaction, TxnPosting
 from beancount.ingest.cache import _FileMemo
 from beancount.ingest.importer import ImporterProtocol
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.svm import SVC
 
 import importers.smart_importer.machinelearning as ml
 
@@ -35,14 +39,11 @@ class PredictPostings:
     # see http://scottlobdell.me/2015/04/decorators-arguments-python/
 
     def __init__(self, *,
-                 training_data: Union[_FileMemo, List[Union[ALL_DIRECTIVES]]],
+                 training_data: Union[_FileMemo, List[Transaction]],
                  filter_training_data_by_account: str = None,
                  predict_second_posting: bool = True,
                  suggest_accounts: bool = True,
                  debug: bool = False):
-        # Handle arguments
-        # print(inspect.stack()[0][3]) # prints the current function name
-        # debug(**locals()) # see https://stackoverflow.com/a/9938156
         self.training_data = training_data
         self.filter_by_account = filter_training_data_by_account
         self.predict_second_posting = predict_second_posting
@@ -53,67 +54,89 @@ class PredictPostings:
         # Decorating the extract function:
 
         @wraps(importers_extract_function)
-        def _extract(importerInstance: ImporterProtocol, csvFile: _FileMemo) -> List[Union[ALL_DIRECTIVES]]:
+        def _extract(importerInstance: ImporterProtocol, csvFile: _FileMemo) -> List[Transaction]:
             """
             Completes missing missing postings using machine learning.
             :param importerInstance: refers to the importer object, which is normally passed in
                 as `self` argument.
             :param csvFile: `_FileMemo` of the csv file to be imported
-            :return: list of beancount directives
+            :return: list of beancount transactions
             """
 
-            # load the training data
-            self._trained = False
+            # load training data from file if necessary
             if isinstance(self.training_data, _FileMemo):
-                print(f"Reading training data from {self.training_data.name}")
-                x_train, y_train = ml.load_training_data_from_file(self.training_data,
-                                                                   self.filter_by_account,
-                                                                   debug=self.debug)
-            else:
-                print(f"Reading {len(self.training_data)} entries of training data")
-                x_train, y_train = ml.load_training_data_from_entrylist(self.training_data,
-                                                                        self.filter_by_account,
-                                                                        debug=self.debug)
+                self.training_data, errors, _ = loader.load_file(self.training_data.name)
+                assert not errors
 
-            # Define machine learning pipeline
-            self.pipeline = ml.pipeline()
+            # training data now is a list of transactions...
+            self.training_data = [t for t in self.training_data
+                                  # ...filtered because the training data must involve the filter_by_account:
+                                  if ml.transaction_involves_account(t, self.filter_by_account)]
 
-            # Train the machine learning model
-            if not y_train:
+            # convert training data to a list of TxnPostings
+            self.training_data = [TxnPosting(t, p) for t in self.training_data for p in t.postings
+                                  # ...filtered, the TxnPosting.posting.account must be different from the
+                                  # already-known filter_by_account:
+                                  if p.account != self.filter_by_account]
+
+
+            # train the machine learning model
+            self._trained = False
+            if not self.training_data:
                 print("Warning: Cannot train the machine learning model because the training data is empty.")
+            elif len(self.training_data) < 2:
+                print("Warning: Cannot train the machine learning model because the training data consists of less than two elements.")
             else:
-                print(f"Training machine learning model...")
-                self.pipeline.fit(x_train, y_train)
+                self.pipeline = Pipeline([
+                    ('union', FeatureUnion(
+                        transformer_list=[
+                            ('narration', Pipeline([
+                                ('getNarration', ml.GetNarration()),
+                                ('vect', CountVectorizer(ngram_range=(1, 3))),
+                            ])),
+                            ('payee', Pipeline([
+                                ('getPayee', ml.GetPayee()),
+                                ('vect', CountVectorizer(ngram_range=(1, 3))),
+                            ])),
+                            ('dayOfMonth', Pipeline([
+                                ('getDayOfMonth', ml.GetDayOfMonth()),
+                                ('caster', ml.ArrayCaster()), # need for issue with data shape
+                            ])),
+                        ],
+                        transformer_weights={
+                            'narration': 0.8,
+                            'payee': 0.5,
+                            'dayOfMonth': 0.1
+                        })),
+                    ('svc', SVC(kernel='linear')),
+                ])
+                self.pipeline.fit(self.training_data, ml.GetPostingAccount().transform(self.training_data))
                 self._trained = True
 
-            # call the decorated extract function
-            transactions: List[Union[ALL_DIRECTIVES]]
+            # import transactions by calling the importer's extract function
+            transactions: List[Union[Transaction]]
             transactions = importers_extract_function(importerInstance, csvFile)
 
             if not self._trained:
                 print("Warning: Cannot predict postings because there is no trained machine learning model")
                 return transactions
 
-            # create data structures for scikit-learn
-            transactions_scikit: Dict[str, np.ndarray]
-            transactions_scikit, _ = ml.load_training_data_from_entrylist(transactions)
-
             # predict missing second postings
             if self.predict_second_posting:
                 predicted_accounts: List[str]
-                predicted_accounts = self.pipeline.predict(transactions_scikit)
+                predicted_accounts = self.pipeline.predict(transactions)
                 transactions = [ml.add_posting_to_transaction(*t_a)
                                 for t_a in zip(transactions, predicted_accounts)]
 
             # suggest accounts that are likely involved in the transaction
             if self.suggest_accounts:
                 # get values from the SVC decision function
-                decision_values = self.pipeline.decision_function(transactions_scikit)
+                decision_values = self.pipeline.decision_function(transactions)
 
                 # add a human-readable class label (i.e., account name) to each value, and sort by value:
                 suggestions = [[account for _, account in sorted(list(zip(distance_values, self.pipeline.classes_)),
-                           key=lambda x: x[0], reverse=True)]
-                    for distance_values in decision_values]
+                                                                 key=lambda x: x[0], reverse=True)]
+                               for distance_values in decision_values]
 
                 # add the suggested accounts to each transaction:
                 transactions = [ml.add_suggestions_to_transaction(*t_s)
@@ -122,19 +145,3 @@ class PredictPostings:
             return transactions
 
         return _extract
-
-    def _train(self):
-        '''
-        Trains a machine learning model from `self.beancount_file`.
-        '''
-
-        # load the beancount file
-        x_train, y_train = ml.load_training_data_from_file(self.beancount_file, self.account)
-
-        # _train the machine learning model
-        self.pipeline.fit(x_train, y_train)
-        self._trained = True
-
-    def _predict(self, transactions_dict: Dict[str, np.ndarray]) -> List[str]:
-        predicted_accounts = self.pipeline.predict(transactions_dict)
-        return predicted_accounts

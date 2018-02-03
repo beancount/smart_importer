@@ -1,11 +1,11 @@
-"""Machinelearning Helpers for the Smart Importer."""
+"""Machine Learning Helpers."""
 import json
 import sys
 from typing import Dict, Any, List, Union, Optional
 
 import numpy as np
 from beancount import loader
-from beancount.core.data import Transaction, ALL_DIRECTIVES, Posting
+from beancount.core.data import Transaction, ALL_DIRECTIVES, Posting, TxnPosting
 from beancount.ingest.cache import _FileMemo
 from beancount.parser import printer
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -14,98 +14,7 @@ from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 
 
-def load_training_data_from_file(beancount_file: _FileMemo, filter_by_account: str, debug=False) -> (
-        Dict[str, np.ndarray], List[str]):
-    """
-    Loads entries from a beancount file and returns them in a format suitable
-    for training a scikit-learn machine learning model.
-    :param beancount_file:
-    :param filter_by_account:
-    :param debug:
-    :return:
-    """
-
-    # load the beancount file
-    entries: List[Union[ALL_DIRECTIVES]]
-    entries, errors, option_map = loader.load_file(beancount_file.name)
-
-    if errors:
-        print(',----------------------------------------------------------------------')
-        printer.print_errors(errors, file=sys.stdout)
-        print('`----------------------------------------------------------------------')
-        raise ValueError('Error loading beancount file {}'.format(beancount_file.name))
-
-    if debug:
-        print('Loaded {} entries from the beancount file.'.format(len(entries)))
-        # printer.print_entries(entries)
-
-    # filter directives to only include transactions that involve the given account
-    transaction_entries: List[Transaction]
-    transaction_entries = [entry for entry in entries
-                           if isinstance(entry, Transaction)
-                           and transaction_involves_account(entry, filter_by_account)]
-    if debug:
-        print('Identified {} transactions relevant to {}.'.format(len(transaction_entries), filter_by_account))
-        # printer.print_entries(transaction_entries)
-
-    transactions_dict, accounts = load_training_data_from_entrylist(transaction_entries,
-                                                                    filter_by_account=filter_by_account,
-                                                                    debug=debug)
-
-    return transactions_dict, accounts
-
-
-def load_training_data_from_entrylist(
-        transaction_entries: List[Union[ALL_DIRECTIVES]],
-        filter_by_account: Optional[str] = None,
-        debug: bool = False) \
-        -> (Dict[str, np.ndarray], List[str]):
-    """
-    converts a list of beancount entries into a format suitable
-    for training a scikit-learn machine learning model.
-    :param transaction_entries: list of beancount entries. any entries that are not transactions are discarded.
-    :param filter_by_account: postings with this account name will be ignored in the output
-    :param debug: set to True in order to print debug statements
-    :return: tupel of: transactions (returned as one numpy array per feature), and accounts (array of strings).
-    """
-
-    # discard any entries that are not transactions
-    transaction_entries = [entry for entry in transaction_entries
-                           if isinstance(entry, Transaction)]
-
-    # flatten the list of transactions with nested postings into a flat list of postings
-    # TODO: Refactor, use the TxnPosting class?
-    transactions: Dict[str, Any]
-    accounts: List[str]
-    if not transaction_entries:
-        transactions = []
-        accounts = []
-    else:
-        transactions, accounts = zip(*[
-            ({
-                 'date_day': transaction.date.day,
-                 'date_month': transaction.date.month,
-                 'payee': transaction.payee,
-                 'narration': transaction.narration
-             }, posting.account)
-            for transaction in transaction_entries
-            for posting in transaction.postings
-            if posting.account != filter_by_account or filter_by_account is None])
-
-    # prepare a data structure as needed by scikit-learn, i.e.,
-    # transactions_dict is of type { 'variable': [ 'list', 'of, 'values'], 'variable2': ['list', 'of', 'values']}
-    keys = ['narration', 'date_day', 'date_month']
-    transactions_dict: Dict[str, np.ndarray]
-    transactions_dict = {k: np.array([t[k] for t in transactions]) for k in keys}
-
-    if debug and len(transactions_dict['narration']):
-        print("Prepared data for machine learning. Example transaction and filter_by_account:")
-        i = 0
-        print({key: transactions_dict[key][i] for key in keys}, {'filter_by_account', accounts[i]})
-    return transactions_dict, accounts
-
-
-def transaction_involves_account(transaction: Transaction, account: str) -> bool:
+def transaction_involves_account(transaction: Transaction, account: Optional[str]) -> bool:
     '''
     Returns whether a transactions involves a specific account,
     i.e., if any one of the transaction's postings uses the specified account name.
@@ -145,53 +54,6 @@ def add_suggestions_to_transaction(transaction: Transaction, suggested_accounts:
     meta['__suggested_accounts__'] = json.dumps(suggested_accounts)
     transaction = transaction._replace(meta=meta)
     return transaction
-
-
-def pipeline() -> Pipeline:
-    """
-    Returns a scikit-learn machine learning pipeline for predicting account names.
-    """
-    return Pipeline([
-        # Use FeatureUnion to combine the features from subject and body
-        ('union', FeatureUnion(
-            transformer_list=[
-
-                # Pipeline for narration
-                ('narrationA', Pipeline([
-                    ('selector', ItemSelector(key='narration')),
-                    #                 ('tfidf', TfidfVectorizer(min_df=2)),
-                    ('countvectorizer', CountVectorizer(ngram_range=(1, 3))),
-                    #                 ('printer', StatusPrinter()),
-                    #                 ('logisticregression', LogisticRegression()),
-                ])),
-
-                # Pipeline day
-                ('date_dayA', Pipeline([
-                    ('selector', ItemSelector(key='date_day')),
-                    #                ('svc', SVC()),
-                    ('caster', ArrayCaster())  # need for issues with data shape
-                ])),
-
-                # Pipeline month (DAY AND MONTH SHOULD BE IN ONE ESTIMATOR)
-                ('date_month', Pipeline([
-                    ('selector', ItemSelector(key='date_month')),
-                    #                ('svc', SVC()),
-                    ('caster', ArrayCaster())
-                ])),
-
-            ],
-
-            # weight components in FeatureUnion
-            transformer_weights={
-                'narration': 0.8,
-                'date_day': 0.5,
-                'date_month': 0.1,
-            },
-        )),
-
-        # Use a SVC classifier on the combined features
-        ('svc', SVC(kernel='linear')),
-    ])
 
 
 class ItemSelector(BaseEstimator, TransformerMixin):
@@ -241,7 +103,7 @@ class ItemSelector(BaseEstimator, TransformerMixin):
 
 class StatusPrinter(BaseEstimator, TransformerMixin):
     """
-    Helper class.
+    Helper class to print data that is passed through a scikit-learn pipeline.
     """
 
     def __init__(self):
@@ -257,7 +119,7 @@ class StatusPrinter(BaseEstimator, TransformerMixin):
 
 class ArrayCaster(BaseEstimator, TransformerMixin):
     """
-    Helper class.
+    Helper class for casting data into array shape.
     """
 
     def __init__(self, debug=False):
@@ -271,3 +133,80 @@ class ArrayCaster(BaseEstimator, TransformerMixin):
             print(data.shape)
             print(np.transpose(np.matrix(data)).shape)
         return np.transpose(np.matrix(data))
+
+
+class NoFitMixin:
+    '''
+    Mixin that helps implementing a custom scikit-learn transformer.
+    This mixing implements a transformer's fit method that simply returns self.
+    Compare https://signal-to-noise.xyz/post/sklearn-pipeline/
+    '''
+
+    def fit(self, X, y=None):
+        return self
+
+
+class GetPayee(TransformerMixin, NoFitMixin):
+    '''
+    Scikit-learn transformer to extract the payee.
+    The input can be of type List[Transaction] or List[TxnPosting],
+    the output is a List[str].
+    '''
+    def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
+        return [self._get_payee(d) for d in data]
+
+    def _get_payee(self, d):
+        if isinstance(d, Transaction):
+            return d.payee
+        elif isinstance(d, TxnPosting):
+            return d.txn.payee
+
+
+class GetNarration(TransformerMixin, NoFitMixin):
+    '''
+    Scikit-learn transformer to extract the narration.
+    The input can be of type List[Transaction] or List[TxnPosting],
+    the output is a List[str].
+    '''
+    def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
+        return [self._get_narration(d) for d in data]
+
+    def _get_narration(self, d):
+        if isinstance(d, Transaction):
+            return d.narration
+        elif isinstance(d, TxnPosting):
+            return d.txn.narration
+
+
+class GetPostingAccount(TransformerMixin, NoFitMixin):
+    '''
+    Scikit-learn transformer to extract the account name.
+    The input can be of type List[Transaction] or List[TxnPosting].
+    The account name is extracted from the last posting of each transaction,
+    or from TxnPosting.posting.account of each TxnPosting.
+    The output is a List[str].
+    '''
+    def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
+        return [self._get_posting_account(d) for d in data]
+
+    def _get_posting_account(self, d):
+        if isinstance(d, Transaction):
+            return d.postings[-1].account
+        elif isinstance(d, TxnPosting):
+            return d.posting.account
+
+
+class GetDayOfMonth(TransformerMixin, NoFitMixin):
+    '''
+    Scikit-learn transformer to extract the day of month when a transaction happened.
+    The input can be of type List[Transaction] or List[TxnPosting],
+    the output is a List[Date].
+    '''
+    def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
+        return [self._get_day_of_month(d) for d in data]
+
+    def _get_day_of_month(self, d):
+        if isinstance(d, Transaction):
+            return d.date.day
+        elif isinstance(d, TxnPosting):
+            return d.txn.date.day

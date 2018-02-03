@@ -1,4 +1,4 @@
-"""Test cases for the `PredictPostings` decorator"""
+"""Tests for the `PredictPostings` decorator"""
 
 import unittest
 from typing import List, Union
