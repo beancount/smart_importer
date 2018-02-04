@@ -28,5 +28,8 @@ class MyImporter(ImporterProtocol):
 - [x] prepare for additional decorators: some refactoring and cleanup is needed to ease the implementation of additional decorators.
 - add another decorator that predicts payees
 - limit predictions to missing second postings
+
 - stability: fix handling of imported statements that are not transactions (but, for example, balance assertions)
 - stability: add a unit test and gracefully handle the case for when there are only two accounts in the training data (this currently throws an error)
+
+- decide packaging and integration with beancount and/or fava
