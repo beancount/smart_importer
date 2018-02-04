@@ -1,6 +1,6 @@
 # smart_importer
 
-A smart importer for beancount, built as a suggestion for https://github.com/beancount/fava/issues/579
+A smart importer for [beancount](https://github.com/beancount/beancount) and [fava](https://github.com/beancount/fava), currently in development as a suggestion for [#579 Import: Intelligent suggestions for account names](https://github.com/beancount/fava/issues/579)
 
 
 ## Status
