@@ -8,9 +8,7 @@ from typing import List
 from beancount.core.data import Transaction, TxnPosting
 from beancount.parser import parser
 
-from machinelearning_helpers import add_posting_to_transaction, \
-    add_suggestions_to_transaction, transaction_involves_account, GetPayee, GetNarration, GetPostingAccount, \
-    GetDayOfMonth
+import machinelearning_helpers as ml
 
 LOG_LEVEL = logging.DEBUG
 logging.basicConfig(level=LOG_LEVEL)
@@ -57,14 +55,14 @@ class MachinelearningTest(unittest.TestCase):
 
     def test_transaction_involves_account(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
-        self.assertTrue(transaction_involves_account(self.test_transaction, None))
-        self.assertTrue(transaction_involves_account(self.test_transaction, 'Assets:US:BofA:Checking'))
-        self.assertFalse(transaction_involves_account(self.test_transaction, 'Some:Unknown:Account'))
+        self.assertTrue(ml.transaction_involves_account(self.test_transaction, None))
+        self.assertTrue(ml.transaction_involves_account(self.test_transaction, 'Assets:US:BofA:Checking'))
+        self.assertFalse(ml.transaction_involves_account(self.test_transaction, 'Some:Unknown:Account'))
 
     def test_add_predicted_posting_to_transaction(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         transaction: Transaction
-        transaction = add_posting_to_transaction(self.test_transaction, "Expenses:Food:Groceries")
+        transaction = ml.add_posting_to_transaction(self.test_transaction, "Expenses:Food:Groceries")
         self.assertEqual(transaction.postings[1].account, "Expenses:Food:Groceries")
 
     def test_add_suggested_accounts_to_transaction(self):
@@ -75,36 +73,36 @@ class MachinelearningTest(unittest.TestCase):
                        "Expenses:Household",
                        "Expenses:Gifts"]
         transaction: Transaction
-        transaction = add_suggestions_to_transaction(self.test_transaction, suggestions)
+        transaction = ml.add_suggested_accounts_to_transaction(self.test_transaction, suggestions)
         self.assertEqual(transaction.meta['__suggested_accounts__'], json.dumps(suggestions))
 
     def test_get_payee(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
-        self.assertEqual(GetPayee().transform(self.test_data),
+        self.assertEqual(ml.GetPayee().transform(self.test_data),
                          ['Farmer Fresh', 'Starbucks', 'Farmer Fresh', 'Gimme Coffee'])
 
     def test_get_payee(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
-        self.assertEqual(GetNarration().transform(self.test_data),
+        self.assertEqual(ml.GetNarration().transform(self.test_data),
                          ['Buying groceries', 'Coffee', 'Groceries', 'Coffee'])
 
     def test_get_posting_account_of_transactions(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
-        self.assertEqual(GetPostingAccount().transform(self.test_data),
+        self.assertEqual(ml.GetPostingAccount().transform(self.test_data),
                          ['Assets:US:BofA:Checking', 'Expenses:Food:Coffee', 'Expenses:Food:Groceries',
                           'Expenses:Food:Coffee'])
 
     def test_get_posting_account_of_txnpostings(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         txn_postings = [TxnPosting(t, p) for t in self.test_data for p in t.postings]
-        self.assertEqual(GetPostingAccount().transform(txn_postings),
+        self.assertEqual(ml.GetPostingAccount().transform(txn_postings),
                          ['Assets:US:BofA:Checking', 'Assets:US:BofA:Checking', 'Expenses:Food:Coffee',
                           'Assets:US:BofA:Checking', 'Expenses:Food:Groceries', 'Assets:US:BofA:Checking',
                           'Expenses:Food:Coffee'])
 
     def test_get_day_of_month(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
-        self.assertEqual(GetDayOfMonth().transform(self.test_data), [6, 7, 7, 8])
+        self.assertEqual(ml.GetDayOfMonth().transform(self.test_data), [6, 7, 7, 8])
 
 
 if __name__ == '__main__':

@@ -47,7 +47,7 @@ class PredictPostings:
                  predict_second_posting: bool = True,
                  suggest_accounts: bool = True):
         self.training_data = training_data
-        self.filter_by_account = filter_training_data_by_account
+        self.filter_training_data_by_account = filter_training_data_by_account
         self.predict_second_posting = predict_second_posting
         self.suggest_accounts = suggest_accounts
 
@@ -64,28 +64,16 @@ class PredictPostings:
             :return: list of beancount transactions
             """
 
-            # load training data from file if necessary
-            if isinstance(self.training_data, _FileMemo):
-                logger.debug("Received training data as a _FilMemo instance.")
-                self.training_data, errors, _ = loader.load_file(self.training_data.name)
-                assert not errors
-            elif isinstance(self.training_data, str):
-                logger.debug("Received training data as a filename string.")
-                self.training_data, errors, _ = loader.load_file(self.training_data)
-                assert not errors
-            logger.debug(f"Training data consists of {len(self.training_data)} entries.")
-
-            # training data now is a list of transactions...
-            self.training_data = [t for t in self.training_data
-                                  # ...filtered because the training data must involve the filter_by_account:
-                                  if ml.transaction_involves_account(t, self.filter_by_account)]
-            logger.debug(f"After filtering, training data consists of {len(self.training_data)} entries.")
+            # load training data
+            self.training_data = ml.load_training_data(
+                self.training_data,
+                filter_training_data_by_account=self.filter_training_data_by_account)
 
             # convert training data to a list of TxnPostings
             self.training_data = [TxnPosting(t, p) for t in self.training_data for p in t.postings
                                   # ...filtered, the TxnPosting.posting.account must be different from the
-                                  # already-known filter_by_account:
-                                  if p.account != self.filter_by_account]
+                                  # already-known filter_training_data_by_account:
+                                  if p.account != self.filter_training_data_by_account]
 
             # train the machine learning model
             self._trained = False
@@ -126,7 +114,7 @@ class PredictPostings:
 
             # import transactions by calling the importer's extract function
             logger.debug(f"About to call the importer's extract function in order to receive entries to be imported...")
-            transactions: List[Union[Transaction]]
+            transactions: List[Transaction]
             transactions = importers_extract_function(importerInstance, csvFile)
             logger.debug(f"Received {len(transactions)} entries by calling the importer's extract function.")
 
@@ -155,7 +143,7 @@ class PredictPostings:
                                for distance_values in decision_values]
 
                 # add the suggested accounts to each transaction:
-                transactions = [ml.add_suggestions_to_transaction(*t_s)
+                transactions = [ml.add_suggested_accounts_to_transaction(*t_s)
                                 for t_s in zip(transactions, suggestions)]
                 logger.debug("Finished adding suggested accounts to the transactions to be imported.")
 

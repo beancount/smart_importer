@@ -1,17 +1,46 @@
 """Machine Learning Helpers."""
+
 import json
-import sys
-from typing import Dict, Any, List, Union, Optional
+import logging
+from typing import List, Union, Optional
 
 import numpy as np
 from beancount import loader
-from beancount.core.data import Transaction, ALL_DIRECTIVES, Posting, TxnPosting
+from beancount.core.data import Transaction, Posting, TxnPosting
 from beancount.ingest.cache import _FileMemo
-from beancount.parser import printer
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.svm import SVC
+
+logger = logging.getLogger(__name__)
+
+
+def load_training_data(training_data: Union[_FileMemo, List[Transaction], str],
+                       filter_training_data_by_account: str = None) -> List[Transaction]:
+    '''
+    Loads training data
+    :param training_data: The training data that shall be loaded.
+        Can be provided as a string (the filename pointing to a beancount file),
+        a _FileMemo instance,
+        or a list of beancount entries
+    :param filter_training_data_by_account: Optional filter for the training data.
+        If provided, the training data is filtered to only include transactions that involve the specified account.
+    :return: Returns a list of beancount entries.
+    '''
+    if isinstance(training_data, _FileMemo):
+        logger.debug(f"Reading training data from _FileMemo \"{training_data.name}\"...")
+        training_data, errors, _ = loader.load_file(training_data.name)
+        assert not errors
+    elif isinstance(training_data, str):
+        logger.debug(f"Reading training data from file \"{training_data}\"...")
+        training_data, errors, _ = loader.load_file(training_data)
+        assert not errors
+    logger.debug(f"Finished reading training data; it consists of {len(training_data)} entries.")
+    if filter_training_data_by_account:
+        training_data = [t for t in training_data
+                         # ...filtered because the training data must involve the filter_training_data_by_account:
+                         if transaction_involves_account(t, filter_training_data_by_account)]
+        logger.debug(f"After filtering for account {filter_training_data_by_account}, "
+                     f"the training data consists of {len(training_data)} entries.")
+    return training_data
 
 
 def transaction_involves_account(transaction: Transaction, account: Optional[str]) -> bool:
@@ -43,15 +72,28 @@ def add_posting_to_transaction(transaction: Transaction, postings_account: str):
     return transaction
 
 
-def add_suggestions_to_transaction(transaction: Transaction, suggested_accounts: List[str]):
+def add_suggested_accounts_to_transaction(transaction: Transaction, suggestions: List[str]) -> Transaction:
     """
-    Adds a list of suggested accounts to a transaction under transaction.meta['__suggested_accounts__'].
-    :param transaction:
-    :param suggested_accounts:
-    :return:
+    Adds suggested related accounts to a transaction.
+    This function is a convenience wrapper over `_add_suggestions_to_transaction`.
+    """
+    return _add_suggestions_to_transaction(transaction, suggestions, key='__suggested_accounts__')
+
+
+def add_suggested_payees_to_transaction(transaction: Transaction, suggestions: List[str]) -> Transaction:
+    """
+    Adds suggested payees to a transaction.
+    This function is a convenience wrapper over `_add_suggestions_to_transaction`.
+    """
+    return _add_suggestions_to_transaction(transaction, suggestions, key='__suggested_payees__')
+
+
+def _add_suggestions_to_transaction(transaction: Transaction, suggestions: List[str], key='__suggestions__'):
+    """
+    Adds a list of suggested accounts to a transaction under transaction.meta[key].
     """
     meta = transaction.meta
-    meta['__suggested_accounts__'] = json.dumps(suggested_accounts)
+    meta[key] = json.dumps(suggestions)
     transaction = transaction._replace(meta=meta)
     return transaction
 
@@ -152,6 +194,7 @@ class GetPayee(TransformerMixin, NoFitMixin):
     The input can be of type List[Transaction] or List[TxnPosting],
     the output is a List[str].
     '''
+
     def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
         return [self._get_payee(d) for d in data]
 
@@ -168,6 +211,7 @@ class GetNarration(TransformerMixin, NoFitMixin):
     The input can be of type List[Transaction] or List[TxnPosting],
     the output is a List[str].
     '''
+
     def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
         return [self._get_narration(d) for d in data]
 
@@ -186,6 +230,7 @@ class GetPostingAccount(TransformerMixin, NoFitMixin):
     or from TxnPosting.posting.account of each TxnPosting.
     The output is a List[str].
     '''
+
     def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
         return [self._get_posting_account(d) for d in data]
 
@@ -202,6 +247,7 @@ class GetDayOfMonth(TransformerMixin, NoFitMixin):
     The input can be of type List[Transaction] or List[TxnPosting],
     the output is a List[Date].
     '''
+
     def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
         return [self._get_day_of_month(d) for d in data]
 
