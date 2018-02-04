@@ -8,7 +8,7 @@ from typing import List
 from beancount.core.data import Transaction, TxnPosting
 from beancount.parser import parser
 
-from machinelearning import add_posting_to_transaction, \
+from machinelearning_helpers import add_posting_to_transaction, \
     add_suggestions_to_transaction, transaction_involves_account, GetPayee, GetNarration, GetPostingAccount, \
     GetDayOfMonth
 
@@ -27,7 +27,7 @@ if coloredlogs:
 
 class MachinelearningTest(unittest.TestCase):
     '''
-    Tests for machinelearning.py
+    Tests for machinelearning_helpers.py
     '''
 
     def setUp(self):

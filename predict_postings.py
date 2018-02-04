@@ -16,7 +16,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 
-import machinelearning as ml
+import machinelearning_helpers as ml
 
 logger = logging.getLogger(__name__)
 
