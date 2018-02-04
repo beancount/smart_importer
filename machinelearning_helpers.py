@@ -53,9 +53,9 @@ def transaction_involves_account(transaction: Transaction, account: Optional[str
     return any([posting.account == account for posting in transaction.postings])
 
 
-def add_posting_to_transaction(transaction: Transaction, postings_account: str):
+def add_posting_to_transaction(transaction: Transaction, postings_account: str) -> Transaction:
     '''
-    Modifies a transaction by adding a posting with specified postings_account to it.
+    Adds a posting with specified postings_account to a transaction.
     '''
 
     ## implementation note:
@@ -72,12 +72,25 @@ def add_posting_to_transaction(transaction: Transaction, postings_account: str):
     return transaction
 
 
+def add_payee_to_transaction(transaction: Transaction, payee: str, overwrite=False) -> Transaction:
+    '''
+    Sets a transactions's payee.
+    '''
+    if not transaction.payee or overwrite:
+        transaction = transaction._replace(payee=payee)
+    return transaction
+
+
+METADATA_KEY_SUGGESTED_ACCOUNTS = '__suggested_accounts__'
+METADATA_KEY_SUGGESTED_PAYEES = '__suggested_payees__'
+
+
 def add_suggested_accounts_to_transaction(transaction: Transaction, suggestions: List[str]) -> Transaction:
     """
     Adds suggested related accounts to a transaction.
     This function is a convenience wrapper over `_add_suggestions_to_transaction`.
     """
-    return _add_suggestions_to_transaction(transaction, suggestions, key='__suggested_accounts__')
+    return _add_suggestions_to_transaction(transaction, suggestions, key=METADATA_KEY_SUGGESTED_ACCOUNTS)
 
 
 def add_suggested_payees_to_transaction(transaction: Transaction, suggestions: List[str]) -> Transaction:
@@ -85,7 +98,7 @@ def add_suggested_payees_to_transaction(transaction: Transaction, suggestions: L
     Adds suggested payees to a transaction.
     This function is a convenience wrapper over `_add_suggestions_to_transaction`.
     """
-    return _add_suggestions_to_transaction(transaction, suggestions, key='__suggested_payees__')
+    return _add_suggestions_to_transaction(transaction, suggestions, key=METADATA_KEY_SUGGESTED_PAYEES)
 
 
 def _add_suggestions_to_transaction(transaction: Transaction, suggestions: List[str], key='__suggestions__'):
@@ -200,9 +213,9 @@ class GetPayee(TransformerMixin, NoFitMixin):
 
     def _get_payee(self, d):
         if isinstance(d, Transaction):
-            return d.payee
+            return d.payee or ''
         elif isinstance(d, TxnPosting):
-            return d.txn.payee
+            return d.txn.payee or ''
 
 
 class GetNarration(TransformerMixin, NoFitMixin):

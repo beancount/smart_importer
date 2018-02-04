@@ -2,14 +2,15 @@
 
 import logging
 import unittest
-from typing import List, Union
+from typing import List
 
-from beancount.core.data import ALL_DIRECTIVES, Transaction
+from beancount.core.data import Transaction
 from beancount.ingest.cache import _FileMemo
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
-from predict_postings import PredictPostings
+import machinelearning_helpers as ml
+from predict_payees import PredictPayees
 
 LOG_LEVEL = logging.DEBUG
 logging.basicConfig(level=LOG_LEVEL)
@@ -24,9 +25,9 @@ if coloredlogs:
     coloredlogs.install(level=LOG_LEVEL)
 
 
-class PredictPostingsTest(unittest.TestCase):
+class PredictPayeesTest(unittest.TestCase):
     '''
-    Tests for the `PredictPostings` decorator.
+    Tests for the `PredictPayees` decorator.
     '''
 
     def setUp(self):
@@ -63,6 +64,10 @@ class PredictPostingsTest(unittest.TestCase):
             2016-01-10 * "Uncle Boons" "Dinner with Mary"
               Assets:US:BofA:Checking  -35.00 USD
               Expenses:Food:Restaurant
+
+            2016-01-11 * "Farmer Fresh" "Groceries"
+              Assets:US:BofA:Checking  -30.50 USD
+              Expenses:Food:Groceries
             """)
         assert not errors
 
@@ -70,16 +75,16 @@ class PredictPostingsTest(unittest.TestCase):
             2017-01-06 * "Farmer Fresh" "Buying groceries"
               Assets:US:BofA:Checking  -2.50 USD
 
-            2017-01-07 * "Farmer Fresh" "Groceries"
+            2017-01-07 * "Groceries"
               Assets:US:BofA:Checking  -10.20 USD
 
-            2017-01-10 * "Uncle Boons" "Eating out with Joe"
+            2017-01-10 * "" "Eating out with Joe"
               Assets:US:BofA:Checking  -38.36 USD
 
-            2017-01-10 * "Uncle Boons" "Dinner with Martin"
+            2017-01-10 * "Dinner with Martin"
               Assets:US:BofA:Checking  -35.00 USD
 
-            2017-01-10 * "Walmarts" "Groceries"
+            2017-01-10 * "Groceries"
               Assets:US:BofA:Checking  -53.70 USD
 
             2017-01-10 * "Gimme Coffee" "Coffee"
@@ -87,21 +92,22 @@ class PredictPostingsTest(unittest.TestCase):
             """)
         assert not errors
 
-        self.correct_predictions = ['Expenses:Food:Groceries',
-                                    'Expenses:Food:Groceries',
-                                    'Expenses:Food:Restaurant',
-                                    'Expenses:Food:Restaurant',
-                                    'Expenses:Food:Groceries',
-                                    'Expenses:Food:Coffee']
+        self.correct_predictions = ['Farmer Fresh',
+                                    'Farmer Fresh',
+                                    'Uncle Boons',
+                                    'Uncle Boons',
+                                    'Farmer Fresh',
+                                    'Gimme Coffee']
 
         # to be able to reference ourselves later on:
         testcase = self
 
         # define a test importer and decorate its extract function:
         class DummyImporter(ImporterProtocol):
-            @PredictPostings(training_data=self.training_data,
-                             filter_training_data_by_account="Assets:US:BofA:Checking")
-            def extract(self, file: _FileMemo) -> List[Union[ALL_DIRECTIVES]]:
+            @PredictPayees(training_data=self.training_data,
+                           filter_training_data_by_account="Assets:US:BofA:Checking",
+                           overwrite_existing_payees=False)
+            def extract(self, file: _FileMemo) -> List[Transaction]:
                 return testcase.test_data
 
         self.importer = DummyImporter()
@@ -135,16 +141,14 @@ class PredictPostingsTest(unittest.TestCase):
         extracted_first_postings = [transaction.postings[0] for transaction in self.importer.extract("dummy-data")]
         self.assertEqual(extracted_first_postings, correct_first_postings)
 
-    def test_predicted_postings(self):
+    def test_predicted_payees(self):
         '''
         Verifies that the decorator adds predicted postings.
         '''
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         transactions = self.importer.extract("dummy-data")
-        predicted_accounts = [entry.postings[-1].account for entry in transactions]
-        self.assertEqual(predicted_accounts, self.correct_predictions)
-        # print("Entries with predicted postings:")
-        # printer.print_entries(entries)
+        predicted_payees = [entry.payee for entry in transactions]
+        self.assertEqual(predicted_payees, self.correct_predictions)
 
     def test_added_suggestions(self):
         '''
@@ -154,7 +158,7 @@ class PredictPostingsTest(unittest.TestCase):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         transactions = self.importer.extract("dummy-data")
         for transaction in transactions:
-            suggestions = transaction.meta['__suggested_accounts__']
+            suggestions = transaction.meta[ml.METADATA_KEY_SUGGESTED_PAYEES]
             self.assertTrue(len(suggestions),
                             msg=f"The list of suggested accounts should not be empty, "
                                 f"but was found to be empty for transaction {transaction}.")
