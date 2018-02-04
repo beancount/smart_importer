@@ -39,7 +39,7 @@ class PredictPostings:
     # see http://scottlobdell.me/2015/04/decorators-arguments-python/
 
     def __init__(self, *,
-                 training_data: Union[_FileMemo, List[Transaction]],
+                 training_data: Union[_FileMemo, List[Transaction], str],
                  filter_training_data_by_account: str = None,
                  predict_second_posting: bool = True,
                  suggest_accounts: bool = True,
@@ -66,6 +66,9 @@ class PredictPostings:
             # load training data from file if necessary
             if isinstance(self.training_data, _FileMemo):
                 self.training_data, errors, _ = loader.load_file(self.training_data.name)
+                assert not errors
+            elif isinstance(self.training_data, str):
+                self.training_data, errors, _ = loader.load_file(self.training_data)
                 assert not errors
 
             # training data now is a list of transactions...
