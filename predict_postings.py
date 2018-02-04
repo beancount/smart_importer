@@ -15,7 +15,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 
-import importers.smart_importer.machinelearning as ml
+import machinelearning as ml
 
 
 class PredictPostings:

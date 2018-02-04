@@ -7,7 +7,7 @@ from typing import List
 from beancount.core.data import Transaction, TxnPosting
 from beancount.parser import parser
 
-from importers.smart_importer.machinelearning import add_posting_to_transaction, \
+from machinelearning import add_posting_to_transaction, \
     add_suggestions_to_transaction, transaction_involves_account, GetPayee, GetNarration, GetPostingAccount, \
     GetDayOfMonth
 
@@ -25,15 +25,15 @@ class MachinelearningTest(unittest.TestCase):
         self.test_data, errors, __ = parser.parse_string("""
                 2016-01-06 * "Farmer Fresh" "Buying groceries"
                   Assets:US:BofA:Checking  -10.00 USD
-                
+
                 2016-01-07 * "Starbucks" "Coffee"
                   Assets:US:BofA:Checking  -4.00 USD
                   Expenses:Food:Coffee
-                
+
                 2016-01-07 * "Farmer Fresh" "Groceries"
                   Assets:US:BofA:Checking  -10.20 USD
                   Expenses:Food:Groceries
-                
+
                 2016-01-08 * "Gimme Coffee" "Coffee"
                   Assets:US:BofA:Checking  -3.50 USD
                   Expenses:Food:Coffee

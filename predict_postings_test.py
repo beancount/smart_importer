@@ -8,7 +8,7 @@ from beancount.ingest.cache import _FileMemo
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import printer, parser
 
-from importers.smart_importer.predict_postings import PredictPostings
+from predict_postings import PredictPostings
 
 
 class PredictPostingsTest(unittest.TestCase):
@@ -22,53 +22,53 @@ class PredictPostingsTest(unittest.TestCase):
             2016-01-06 * "Farmer Fresh" "Buying groceries"
               Assets:US:BofA:Checking  -2.50 USD
               Expenses:Food:Groceries
-            
+
             2016-01-07 * "Starbucks" "Coffee"
               Assets:US:BofA:Checking  -4.00 USD
               Expenses:Food:Coffee
-            
+
             2016-01-07 * "Farmer Fresh" "Groceries"
               Assets:US:BofA:Checking  -10.20 USD
               Expenses:Food:Groceries
-            
+
             2016-01-07 * "Gimme Coffee" "Coffee"
               Assets:US:BofA:Checking  -3.50 USD
               Expenses:Food:Coffee
-            
+
             2016-01-08 * "Uncle Boons" "Eating out with Joe"
               Assets:US:BofA:Checking  -38.36 USD
               Expenses:Food:Restaurant
-            
+
             2016-01-10 * "Walmarts" "Groceries"
               Assets:US:BofA:Checking  -53.70 USD
               Expenses:Food:Groceries
-            
+
             2016-01-10 * "Gimme Coffee" "Coffee"
               Assets:US:BofA:Checking  -6.19 USD
               Expenses:Food:Coffee
 
             2016-01-10 * "Uncle Boons" "Dinner with Mary"
               Assets:US:BofA:Checking  -35.00 USD
-              Expenses:Food:Restaurant            
+              Expenses:Food:Restaurant
             """)
         assert not errors
 
         self.test_data, errors, _ = parser.parse_string("""
             2017-01-06 * "Farmer Fresh" "Buying groceries"
               Assets:US:BofA:Checking  -2.50 USD
-            
+
             2017-01-07 * "Farmer Fresh" "Groceries"
               Assets:US:BofA:Checking  -10.20 USD
-            
+
             2017-01-10 * "Uncle Boons" "Eating out with Joe"
               Assets:US:BofA:Checking  -38.36 USD
-            
+
             2017-01-10 * "Uncle Boons" "Dinner with Martin"
               Assets:US:BofA:Checking  -35.00 USD
-            
+
             2017-01-10 * "Walmarts" "Groceries"
               Assets:US:BofA:Checking  -53.70 USD
-            
+
             2017-01-10 * "Gimme Coffee" "Coffee"
               Assets:US:BofA:Checking  -5.00 USD
             """)
