@@ -7,6 +7,8 @@ A smart importer for [beancount](https://github.com/beancount/beancount) and [fa
 
 Prototype, work in progress.
 
+[![Build Status](https://travis-ci.org/johannesjh/smart_importer.svg?branch=master)](https://travis-ci.org/johannesjh/smart_importer)
+
 
 ## Current Functionality
 
