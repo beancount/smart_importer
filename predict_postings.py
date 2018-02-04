@@ -4,6 +4,7 @@ that suggests and predicts missing postings
 using machine learning.
 """
 
+import logging
 from functools import wraps
 from typing import List, Union
 
@@ -16,6 +17,8 @@ from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 
 import machinelearning as ml
+
+logger = logging.getLogger(__name__)
 
 
 class PredictPostings:
@@ -42,13 +45,11 @@ class PredictPostings:
                  training_data: Union[_FileMemo, List[Transaction], str],
                  filter_training_data_by_account: str = None,
                  predict_second_posting: bool = True,
-                 suggest_accounts: bool = True,
-                 debug: bool = False):
+                 suggest_accounts: bool = True):
         self.training_data = training_data
         self.filter_by_account = filter_training_data_by_account
         self.predict_second_posting = predict_second_posting
         self.suggest_accounts = suggest_accounts
-        self.debug = debug
 
     def __call__(self, importers_extract_function, *args, **kwargs):
         # Decorating the extract function:
@@ -65,16 +66,20 @@ class PredictPostings:
 
             # load training data from file if necessary
             if isinstance(self.training_data, _FileMemo):
+                logger.debug("Received training data as a _FilMemo instance.")
                 self.training_data, errors, _ = loader.load_file(self.training_data.name)
                 assert not errors
             elif isinstance(self.training_data, str):
+                logger.debug("Received training data as a filename string.")
                 self.training_data, errors, _ = loader.load_file(self.training_data)
                 assert not errors
+            logger.debug(f"Training data consists of {len(self.training_data)} entries.")
 
             # training data now is a list of transactions...
             self.training_data = [t for t in self.training_data
                                   # ...filtered because the training data must involve the filter_by_account:
                                   if ml.transaction_involves_account(t, self.filter_by_account)]
+            logger.debug(f"After filtering, training data consists of {len(self.training_data)} entries.")
 
             # convert training data to a list of TxnPostings
             self.training_data = [TxnPosting(t, p) for t in self.training_data for p in t.postings
@@ -82,13 +87,14 @@ class PredictPostings:
                                   # already-known filter_by_account:
                                   if p.account != self.filter_by_account]
 
-
             # train the machine learning model
             self._trained = False
             if not self.training_data:
-                print("Warning: Cannot train the machine learning model because the training data is empty.")
+                logger.warning("Cannot train the machine learning model "
+                               "because the training data is empty.")
             elif len(self.training_data) < 2:
-                print("Warning: Cannot train the machine learning model because the training data consists of less than two elements.")
+                logger.warning("Cannot train the machine learning model "
+                               "because the training data consists of less than two elements.")
             else:
                 self.pipeline = Pipeline([
                     ('union', FeatureUnion(
@@ -103,7 +109,7 @@ class PredictPostings:
                             ])),
                             ('dayOfMonth', Pipeline([
                                 ('getDayOfMonth', ml.GetDayOfMonth()),
-                                ('caster', ml.ArrayCaster()), # need for issue with data shape
+                                ('caster', ml.ArrayCaster()),  # need for issue with data shape
                             ])),
                         ],
                         transformer_weights={
@@ -113,27 +119,34 @@ class PredictPostings:
                         })),
                     ('svc', SVC(kernel='linear')),
                 ])
+                logger.debug("About to train the machine learning model...")
                 self.pipeline.fit(self.training_data, ml.GetPostingAccount().transform(self.training_data))
+                logger.info("Finished training the machine learning model.")
                 self._trained = True
 
             # import transactions by calling the importer's extract function
+            logger.debug(f"About to call the importer's extract function in order to receive entries to be imported...")
             transactions: List[Union[Transaction]]
             transactions = importers_extract_function(importerInstance, csvFile)
+            logger.debug(f"Received {len(transactions)} entries by calling the importer's extract function.")
 
             if not self._trained:
-                print("Warning: Cannot predict postings because there is no trained machine learning model")
+                logger.warning("Cannot predict postings because there is no trained machine learning model.")
                 return transactions
 
             # predict missing second postings
             if self.predict_second_posting:
+                logger.debug("About to generate predictions for missing second postings...")
                 predicted_accounts: List[str]
                 predicted_accounts = self.pipeline.predict(transactions)
                 transactions = [ml.add_posting_to_transaction(*t_a)
                                 for t_a in zip(transactions, predicted_accounts)]
+                logger.debug("Finished adding predicted accounts to the transactions to be imported.")
 
             # suggest accounts that are likely involved in the transaction
             if self.suggest_accounts:
                 # get values from the SVC decision function
+                logger.debug("About to generate suggestions about related accounts...")
                 decision_values = self.pipeline.decision_function(transactions)
 
                 # add a human-readable class label (i.e., account name) to each value, and sort by value:
@@ -144,6 +157,7 @@ class PredictPostings:
                 # add the suggested accounts to each transaction:
                 transactions = [ml.add_suggestions_to_transaction(*t_s)
                                 for t_s in zip(transactions, suggestions)]
+                logger.debug("Finished adding suggested accounts to the transactions to be imported.")
 
             return transactions
 

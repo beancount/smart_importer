@@ -1,9 +1,11 @@
+# travis-ci setup for running unit tests:
+
 language: python
 python:
   - "3.6"
 
 install:
-  - pip install -r requirements.txt
+  - make install
 
 script:
-  - python -m unittest discover -p "*_test.py"
+  - make test
