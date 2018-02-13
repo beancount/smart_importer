@@ -29,11 +29,12 @@ def load_training_data(training_data: Union[_FileMemo, List[Transaction], str],
         logger.debug(f"Reading training data from _FileMemo \"{training_data.name}\"...")
         training_data, errors, _ = loader.load_file(training_data.name)
         assert not errors
+        training_data = filter_txns(training_data)
     elif isinstance(training_data, str):
         logger.debug(f"Reading training data from file \"{training_data}\"...")
         training_data, errors, _ = loader.load_file(training_data)
         assert not errors
-    training_data = filter_txns(training_data)
+        training_data = filter_txns(training_data)
     logger.debug(f"Finished reading training data.")
     if filter_training_data_by_account:
         training_data = [t for t in training_data
