@@ -53,6 +53,11 @@ class MachinelearningTest(unittest.TestCase):
         self.test_transaction: Transaction
         self.test_transaction = self.test_data[0]
 
+    def test_load_training_data(self):
+        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
+        test_data = ml.load_training_data(training_data="sample_training.beancount")
+        self.assertEqual(1, len(list(test_data)))
+
     def test_transaction_involves_account(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         self.assertTrue(ml.transaction_involves_account(self.test_transaction, None))

@@ -69,17 +69,17 @@ class PredictPostings:
                 filter_training_data_by_account=self.filter_training_data_by_account)
 
             # convert training data to a list of TxnPostings
-            self.training_data = [TxnPosting(t, p) for t in self.training_data for p in t.postings
+            self.converted_training_data = [TxnPosting(t, p) for t in self.training_data for p in t.postings
                                   # ...filtered, the TxnPosting.posting.account must be different from the
                                   # already-known filter_training_data_by_account:
                                   if p.account != self.filter_training_data_by_account]
 
             # train the machine learning model
             self._trained = False
-            if not self.training_data:
+            if not self.converted_training_data:
                 logger.warning("Cannot train the machine learning model "
                                "because the training data is empty.")
-            elif len(self.training_data) < 2:
+            elif len(self.converted_training_data) < 2:
                 logger.warning("Cannot train the machine learning model "
                                "because the training data consists of less than two elements.")
             else:
@@ -107,7 +107,7 @@ class PredictPostings:
                     ('svc', SVC(kernel='linear')),
                 ])
                 logger.debug("About to train the machine learning model...")
-                self.pipeline.fit(self.training_data, ml.GetPostingAccount().transform(self.training_data))
+                self.pipeline.fit(self.converted_training_data, ml.GetPostingAccount().transform(self.converted_training_data))
                 logger.info("Finished training the machine learning model.")
                 self._trained = True
 
