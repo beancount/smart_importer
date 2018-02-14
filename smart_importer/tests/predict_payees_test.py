@@ -9,8 +9,8 @@ from beancount.ingest.cache import _FileMemo
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
-import machinelearning_helpers as ml
-from predict_payees import PredictPayees
+from smart_importer import machinelearning_helpers as ml
+from smart_importer.predict_payees import PredictPayees
 
 LOG_LEVEL = logging.DEBUG
 logging.basicConfig(level=LOG_LEVEL)

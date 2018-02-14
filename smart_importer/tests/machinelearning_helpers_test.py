@@ -2,13 +2,14 @@
 
 import json
 import logging
+import os
 import unittest
 from typing import List
 
 from beancount.core.data import Transaction, TxnPosting
 from beancount.parser import parser
 
-import machinelearning_helpers as ml
+from smart_importer import machinelearning_helpers as ml
 
 LOG_LEVEL = logging.DEBUG
 logging.basicConfig(level=LOG_LEVEL)
@@ -55,7 +56,9 @@ class MachinelearningTest(unittest.TestCase):
 
     def test_load_training_data(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
-        test_data = ml.load_training_data(training_data="sample_training.beancount")
+        test_data = ml.load_training_data(
+            training_data=os.path.join(os.path.dirname(__file__), 'sample_training.beancount')
+        )
         self.assertEqual(1, len(list(test_data)))
 
     def test_transaction_involves_account(self):

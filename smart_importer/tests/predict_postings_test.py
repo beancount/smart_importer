@@ -9,7 +9,7 @@ from beancount.ingest.cache import _FileMemo
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
-from predict_postings import PredictPostings
+from smart_importer.predict_postings import PredictPostings
 
 LOG_LEVEL = logging.DEBUG
 logging.basicConfig(level=LOG_LEVEL)
