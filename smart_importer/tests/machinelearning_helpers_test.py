@@ -8,7 +8,7 @@ from typing import List
 from beancount.core.data import Transaction, TxnPosting
 from beancount.parser import parser
 
-import machinelearning_helpers as ml
+from smart_importer import machinelearning_helpers as ml
 
 LOG_LEVEL = logging.DEBUG
 logging.basicConfig(level=LOG_LEVEL)

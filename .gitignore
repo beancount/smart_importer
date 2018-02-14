@@ -1,3 +1,17 @@
+# intellij project files
 .idea/
+
+# python caches
 __pycache__/
+
+# python virtual envs
 virtualenv/
+
+# compiled python modules.
+*.pyc
+
+# setuptools distribution folder
+/dist/
+
+# python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
