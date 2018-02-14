@@ -83,27 +83,39 @@ class PredictPostings:
                 logger.warning("Cannot train the machine learning model "
                                "because the training data consists of less than two elements.")
             else:
+                transformers = []
+                transformer_weights = {} 
+                transformers.append(
+                    ('narration', Pipeline([
+                        ('getNarration', ml.GetNarration()),
+                        ('vect', CountVectorizer(ngram_range=(1, 3))),
+                    ]))
+                )
+                transformer_weights['narration'] = 0.8
+
+                distinctPayees = set(map(lambda trx: trx.txn.payee, self.converted_training_data))
+                if len(distinctPayees) > 1:
+                    transformers.append(
+                        ('payee', Pipeline([
+                            ('getPayee', ml.GetPayee()),
+                            ('vect', CountVectorizer(ngram_range=(1, 3))),
+                        ]))
+                    )
+                    transformer_weights['payee'] = 0.5
+
+                transformers.append(
+                    ('dayOfMonth', Pipeline([
+                        ('getDayOfMonth', ml.GetDayOfMonth()),
+                        ('caster', ml.ArrayCaster()),  # need for issue with data shape
+                    ]))
+                )
+                transformer_weights['dayOfMonth'] = 0.1
+
+
                 self.pipeline = Pipeline([
                     ('union', FeatureUnion(
-                        transformer_list=[
-                            ('narration', Pipeline([
-                                ('getNarration', ml.GetNarration()),
-                                ('vect', CountVectorizer(ngram_range=(1, 3))),
-                            ])),
-                            ('payee', Pipeline([
-                                ('getPayee', ml.GetPayee()),
-                                ('vect', CountVectorizer(ngram_range=(1, 3))),
-                            ])),
-                            ('dayOfMonth', Pipeline([
-                                ('getDayOfMonth', ml.GetDayOfMonth()),
-                                ('caster', ml.ArrayCaster()),  # need for issue with data shape
-                            ])),
-                        ],
-                        transformer_weights={
-                            'narration': 0.8,
-                            'payee': 0.5,
-                            'dayOfMonth': 0.1
-                        })),
+                        transformer_list=transformers,
+                        transformer_weights=transformer_weights)),
                     ('svc', SVC(kernel='linear')),
                 ])
                 logger.debug("About to train the machine learning model...")
