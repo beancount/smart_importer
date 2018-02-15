@@ -56,12 +56,13 @@ class PredictPayees:
         # Decorating the extract function:
 
         @wraps(importers_extract_function)
-        def _extract(importerInstance: ImporterProtocol, csvFile: _FileMemo) -> List[Transaction]:
+        def _extract(importerInstance: ImporterProtocol, *args, **kwargs) -> List[Transaction]:
             """
             Completes missing payees using machine learning.
             :param importerInstance: refers to the importer object, which is normally passed in
                 as `self` argument.
-            :param csvFile: `_FileMemo` of the csv file to be imported
+            :param *args: original arguments to be passed
+            :param **kwargs: original keyword arguments to be passed
             :return: list of beancount transactions
             """
 
@@ -110,7 +111,7 @@ class PredictPayees:
             # import transactions by calling the importer's extract function
             logger.debug(f"About to call the importer's extract function in order to receive entries to be imported...")
             transactions: List[Transaction]
-            transactions = importers_extract_function(importerInstance, csvFile)
+            transactions = importers_extract_function(importerInstance, *args, **kwargs)
             logger.debug(f"Received {len(transactions)} entries by calling the importer's extract function.")
 
             if not self._trained:
