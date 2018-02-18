@@ -61,6 +61,15 @@ class MachinelearningTest(unittest.TestCase):
         )
         self.assertEqual(1, len(list(test_data)))
 
+    def test_load_training_data_use_existing(self):
+        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
+        existing_entries = self.test_data
+        actual = ml.load_training_data(
+            training_data=None,
+            existing_entries=existing_entries
+        )
+        self.assertEqual(existing_entries, actual)
+
     def test_transaction_involves_account(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         self.assertTrue(ml.transaction_involves_account(self.test_transaction, None))

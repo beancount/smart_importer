@@ -41,7 +41,7 @@ class PredictPostings:
     # see http://scottlobdell.me/2015/04/decorators-arguments-python/
 
     def __init__(self, *,
-                 training_data: Union[_FileMemo, List[Transaction], str],
+                 training_data: Union[_FileMemo, List[Transaction], str] = None,
                  filter_training_data_by_account: str = None,
                  predict_second_posting: bool = True,
                  suggest_accounts: bool = True):
@@ -63,11 +63,16 @@ class PredictPostings:
             :param **kwargs: original keyword arguments to be passed
             :return: list of beancount transactions
             """
+            existing_entries = None
+            if 'existing_entries' in kwargs:
+                existing_entries = kwargs['existing_entries']
+
 
             # load training data
             self.training_data = ml.load_training_data(
                 self.training_data,
-                filter_training_data_by_account=self.filter_training_data_by_account)
+                filter_training_data_by_account=self.filter_training_data_by_account,
+                existing_entries=existing_entries)
 
             # convert training data to a list of TxnPostings
             self.converted_training_data = [TxnPosting(t, p) for t in self.training_data for p in t.postings
