@@ -41,7 +41,7 @@ class PredictPayees:
     # see http://scottlobdell.me/2015/04/decorators-arguments-python/
 
     def __init__(self, *,
-                 training_data: Union[_FileMemo, List[Transaction], str],
+                 training_data: Union[_FileMemo, List[Transaction], str] = None,
                  filter_training_data_by_account: str = None,
                  predict_payees: bool = True,
                  overwrite_existing_payees=False,
@@ -66,10 +66,15 @@ class PredictPayees:
             :return: list of beancount transactions
             """
 
+            existing_entries = None
+            if 'existing_entries' in kwargs:
+                existing_entries = kwargs['existing_entries']
+
             # load training data
             self.training_data = ml.load_training_data(
                 self.training_data,
-                filter_training_data_by_account=self.filter_training_data_by_account)
+                filter_training_data_by_account=self.filter_training_data_by_account,
+                existing_entries=existing_entries)
 
             # train the machine learning model
             self._trained = False
