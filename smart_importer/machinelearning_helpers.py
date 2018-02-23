@@ -72,6 +72,9 @@ def add_posting_to_transaction(transaction: Transaction, postings_account: str) 
     # new_postings.extend(get_residual_postings(residual, account_rounding))
     # entry = entry._replace(postings=new_postings)
 
+    if len(transaction.postings) != 1:
+        return transaction
+
     additionalPosting: Posting
     additionalPosting = Posting(postings_account, None, None, None, None, None)
     new_postings_list = list(transaction.postings)
