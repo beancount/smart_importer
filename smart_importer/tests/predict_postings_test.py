@@ -98,12 +98,13 @@ class PredictPostingsTest(unittest.TestCase):
         testcase = self
 
         # define a test importer and decorate its extract function:
+        @PredictPostings(training_data=self.training_data,
+                         filter_training_data_by_account="Assets:US:BofA:Checking")
         class DummyImporter(ImporterProtocol):
-            @PredictPostings(training_data=self.training_data,
-                             filter_training_data_by_account="Assets:US:BofA:Checking")
-            def extract(self, file: _FileMemo) -> List[Union[ALL_DIRECTIVES]]:
+            def extract(self, file: _FileMemo, existing_entries=None) -> List[Union[ALL_DIRECTIVES]]:
                 return testcase.test_data
 
+        self.importerClass = DummyImporter
         self.importer = DummyImporter()
 
     def test_dummy_importer(self):
@@ -111,8 +112,8 @@ class PredictPostingsTest(unittest.TestCase):
         Verifies the dummy importer
         '''
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
-        method_without_decorator = self.importer.extract.__wrapped__
-        entries = method_without_decorator(self.importer, 'dummy-data')
+        undecorated_importer = super(self.importerClass, self.importer)
+        entries = undecorated_importer.extract('dummy-data')
         self.assertEqual(entries[0].narration, "Buying groceries")
         # print("Entries without predicted postings:")
         # printer.print_entries(entries)
