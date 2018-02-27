@@ -1,0 +1,5 @@
+
+2016-01-06 * "Foo"
+  __suggested_accounts__: "["Assets:US:EUR", "Assets:US:CHF", "Assets:US:USD", "Expenses:Food:Europe", "Expenses:Food:Swiss", "Expenses:Food:Usa"]"
+  Assets:US:EUR  -2.50 USD
+  Assets:US:EUR           

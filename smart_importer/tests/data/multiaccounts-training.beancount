@@ -1,0 +1,12 @@
+2016-01-06 * "Foo"
+    Assets:US:CHF  -2.50 USD
+    Expenses:Food:Swiss
+
+2016-01-06 * "Foo"
+    Assets:US:EUR  -2.50 USD
+    Expenses:Food:Europe
+
+2016-01-06 * "Foo"
+    Assets:US:USD  -2.50 USD
+    Expenses:Food:Usa
+
