@@ -38,6 +38,13 @@ class PredictPostingsTest(unittest.TestCase):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         self.run_testset('simple')
 
+    def test_single_account(self):
+        '''
+        Test with a degenerated training set which contains only a single account.
+        '''
+        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
+        self.run_testset('single-account')
+
     def run_testset(self, testset):
         training_data = self.load_test_data(testset, 'training') 
         extracted_data = self.load_test_data(testset, 'extracted') 
