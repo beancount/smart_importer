@@ -90,7 +90,7 @@ class PredictPostings:
                                "because the training data consists of less than two elements.")
             else:
                 transformers = []
-                transformer_weights = {} 
+                transformer_weights = {}
                 transformers.append(
                     ('narration', Pipeline([
                         ('getNarration', ml.GetNarration()),
@@ -98,6 +98,13 @@ class PredictPostings:
                     ]))
                 )
                 transformer_weights['narration'] = 0.8
+                transformers.append(
+                    ('account', Pipeline([
+                        ('getPostingAccount', ml.GetPostingAccount()),
+                        ('vect', CountVectorizer(ngram_range=(1, 3))),
+                    ]))
+                )
+                transformer_weights['account'] = 0.8
 
                 distinctPayees = set(map(lambda trx: trx.txn.payee, self.converted_training_data))
                 if len(distinctPayees) > 1:
