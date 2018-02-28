@@ -1,20 +1,14 @@
-import logging
-import unittest
-from unittest.mock import Mock
+'''
+Example importer that uses the PredictPostings decorator.
+'''
 
 from beancount.core import data, amount
 from beancount.core.number import D
 from beancount.ingest import importer
-from beancount.ingest.cache import _FileMemo
 from beancount.ingest.importers import regexp
-from beancount.parser import printer
 from dateutil.parser import parse
 
 from smart_importer.predict_postings import PredictPostings
-
-LOG_LEVEL = logging.DEBUG
-logging.basicConfig(level=LOG_LEVEL)
-logger = logging.getLogger(__name__)
 
 
 @PredictPostings()
@@ -63,29 +57,3 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         entries.append(txn)
 
         return entries
-
-
-class PredictPostingsTest(unittest.TestCase):
-
-    training_data = '''
-    2017-11-20 * "Two Postings"
-      Assets:Patrick:CHF  12 CHF
-      Assets:Patrick:USD  12 CHF
-    
-    2017-11-20 * "Single Posting"
-      Assets:Patrick:CHF  12 CHF
-    '''
-
-    def test_the_importer(self):
-        importer = Importer(['.*'])
-        mocked_file = Mock(spec=_FileMemo)
-        mocked_file.name = 'downloaded-transactions.csv'
-        mocked_file.contents = Mock(name='contents', return_value='')
-        entries = importer.extract(mocked_file, existing_entries=self.training_data)
-        printer.print_entries(entries)
-
-
-if __name__ == '__main__':
-    # show test case execution output iff logging level is DEBUG or finer:
-    show_output = LOG_LEVEL <= logging.DEBUG
-    unittest.main(buffer=not show_output)
