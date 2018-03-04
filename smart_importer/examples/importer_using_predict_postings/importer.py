@@ -23,7 +23,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
     def file_account(self, file):
         return 'Assets:Foo'
 
-    def extract(self, file, existing_entries):
+    def extract(self, file, existing_entries=None):
         entries = []
         meta = data.new_metadata(file.name, 0)
         txn = data.Transaction(

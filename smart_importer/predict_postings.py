@@ -59,25 +59,19 @@ class PredictPostings:
         decorator = self
 
         class PredictPostingsImporter(OriginalImporter):
-            def extract(self, *extract_args, **extract_kwargs):
+            def extract(self, file, existing_entries=None):
                 logger.debug(f"About to call the importer's extract function to receive entries to be imported...")
-                decorator.imported_transactions = super().extract(*extract_args, **extract_kwargs)
+                decorator.imported_transactions = super().extract(file, existing_entries)
                 logger.debug(
                     f"Received {len(decorator.imported_transactions)} entries by calling the importer's extract function.")
                 return decorator._extract(
-                    *extract_args,
-                    **extract_kwargs,
-                    original_importer_instance=super(OriginalImporter, self)
+                    file,
+                    existing_entries
                 )
 
         return PredictPostingsImporter
 
-    def _extract(self, *args, **kwargs):
-
-        existing_entries = None
-        if 'existing_entries' in kwargs:
-            existing_entries = kwargs['existing_entries']
-
+    def _extract(self, file, existing_entries):
         # load training data
         self.training_data = ml.load_training_data(
             self.training_data,
