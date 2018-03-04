@@ -4,6 +4,7 @@ that suggests and predicts postings using machine learning.
 """
 
 import logging
+import inspect
 from typing import List, Union
 
 from beancount.core.data import TxnPosting, Transaction
@@ -61,7 +62,10 @@ class PredictPostings:
         class PredictPostingsImporter(OriginalImporter):
             def extract(self, file, existing_entries=None):
                 logger.debug(f"About to call the importer's extract function to receive entries to be imported...")
-                decorator.imported_transactions = super().extract(file, existing_entries)
+                if 'existing_entries' in inspect.signature(super().extract).parameters:
+                    decorator.imported_transactions = super().extract(file, existing_entries)
+                else:
+                    decorator.imported_transactions = super().extract(file)
                 logger.debug(
                     f"Received {len(decorator.imported_transactions)} entries by calling the importer's extract function.")
                 return decorator._extract(
