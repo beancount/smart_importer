@@ -77,9 +77,8 @@ class PredictPostings:
             # convert training data to a list of TxnPostings
             self.converted_training_data = [TxnPosting(t, p) for t in self.training_data for p in t.postings
                                   # ...filtered, the TxnPosting.posting.account must be different from the
-                                  # already-known filter_training_data_by_account:
-                                  if p.account != self.filter_training_data_by_account]
-
+                                  # already-known filter_training_data_by_account and the reference account:
+                                  if p.account != self.filter_training_data_by_account and p.account != t.postings[0].account]
             # train the machine learning model
             self._trained = False
             if not self.converted_training_data:
@@ -100,7 +99,7 @@ class PredictPostings:
                 transformer_weights['narration'] = 0.8
                 transformers.append(
                     ('account', Pipeline([
-                        ('getPostingAccount', ml.GetPostingAccount()),
+                        ('getReferencePostingAccount', ml.GetReferencePostingAccount()),
                         ('vect', CountVectorizer(ngram_range=(1, 3))),
                     ]))
                 )

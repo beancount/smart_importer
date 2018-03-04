@@ -264,6 +264,22 @@ class GetPostingAccount(TransformerMixin, NoFitMixin):
         elif isinstance(d, TxnPosting):
             return d.posting.account
 
+class GetReferencePostingAccount(TransformerMixin, NoFitMixin):
+    '''
+    Scikit-learn transformer to extract the reference account name.
+    The input can be of type List[Transaction] or List[TxnPosting].
+    The reference account name is extracted from the first posting of each transaction.
+    The output is a List[str].
+    '''
+
+    def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
+        return [self._get_posting_account(d) for d in data]
+
+    def _get_posting_account(self, d):
+        if isinstance(d, Transaction):
+            return d.postings[0].account
+        elif isinstance(d, TxnPosting):
+            return d.txn.postings[0].account
 
 class GetDayOfMonth(TransformerMixin, NoFitMixin):
     '''

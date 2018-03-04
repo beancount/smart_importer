@@ -38,6 +38,14 @@ class PredictPostingsTest(unittest.TestCase):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         self.run_testset('simple')
 
+    def test_multiaccounts(self):
+        '''
+        Test where the only differing factor is the account.
+        '''
+        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
+        self.run_testset('multiaccounts')
+
+
     def run_testset(self, testset):
         training_data = self.load_test_data(testset, 'training') 
         extracted_data = self.load_test_data(testset, 'extracted') 
