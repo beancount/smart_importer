@@ -9,9 +9,9 @@ from typing import List, Union
 
 from beancount.core.data import Transaction
 from beancount.ingest.cache import _FileMemo
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.svm import SVC
+from sklearn.linear_model import SGDClassifier
 
 from smart_importer import machinelearning_helpers as ml
 
@@ -98,14 +98,14 @@ class PredictPostings:
             transformers.append(
                 ('narration', Pipeline([
                     ('getNarration', ml.GetNarration()),
-                    ('vect', CountVectorizer(ngram_range=(1, 3))),
+                    ('vect', TfidfVectorizer(ngram_range=(1, 3), norm='l2')),
                 ]))
             )
             transformer_weights['narration'] = 0.8
             transformers.append(
                 ('account', Pipeline([
                     ('getReferencePostingAccount', ml.GetReferencePostingAccount()),
-                    ('vect', CountVectorizer(ngram_range=(1, 3))),
+                    ('vect', TfidfVectorizer(ngram_range=(1, 3), norm='l2')),
                 ]))
             )
             transformer_weights['account'] = 0.8
@@ -115,7 +115,7 @@ class PredictPostings:
                 transformers.append(
                     ('payee', Pipeline([
                         ('getPayee', ml.GetPayee()),
-                        ('vect', CountVectorizer(ngram_range=(1, 3))),
+                        ('vect', TfidfVectorizer(ngram_range=(1, 3), norm='l2')),
                     ]))
                 )
                 transformer_weights['payee'] = 0.5
@@ -132,7 +132,7 @@ class PredictPostings:
                 ('union', FeatureUnion(
                     transformer_list=transformers,
                     transformer_weights=transformer_weights)),
-                ('svc', SVC(kernel='linear')),
+                ('svc', SGDClassifier(loss='modified_huber', max_iter=1000, tol=1e-3, shuffle=False, class_weight='balanced')),
             ])
             logger.debug("About to train the machine learning model...")
             self.pipeline.fit(self.converted_training_data,
@@ -145,30 +145,22 @@ class PredictPostings:
                            "because there is no trained machine learning model.")
             return self.imported_transactions
 
-        # predict missing second postings
-        self.transactions = self.imported_transactions
-        if self.predict_second_posting:
-            logger.debug("About to generate predictions for missing second postings...")
-            predicted_accounts: List[str]
-            predicted_accounts = self.pipeline.predict(self.imported_transactions)
-            self.transactions = [ml.add_posting_to_transaction(*t_a)
-                                 for t_a in zip(self.imported_transactions, predicted_accounts)]
-            logger.debug("Finished adding predicted accounts to the transactions to be imported.")
+        # predict missing second postings / suggest accounts that are likely involved
+        logger.debug("Running prediction logic")
+        resultTransactions = []
+        for (transaction, prediction) in zip(self.imported_transactions, self.pipeline.predict_proba(self.imported_transactions)):
+            accountPredictions = sorted(zip(prediction, self.pipeline.classes_), key=lambda x: x[0], reverse=True)
+            resultTransaction = transaction
+            if self.predict_second_posting and accountPredictions[0][0] > 0.6:
+                resultTransaction = ml.add_posting_to_transaction(resultTransaction, accountPredictions[0][1])
+            if self.suggest_accounts:
+                suggestions = []
+                for accountPrediction in accountPredictions:
+                    if accountPrediction[0] > 0.1:
+                        suggestions.append(accountPrediction[1])
 
-        # suggest accounts that are likely involved in the transaction
-        if self.suggest_accounts:
-            # get values from the SVC decision function
-            logger.debug("About to generate suggestions about related accounts...")
-            decision_values = self.pipeline.decision_function(self.imported_transactions)
+                if suggestions:
+                    resultTransaction = ml.add_suggested_accounts_to_transaction(resultTransaction, suggestions)
 
-            # add a human-readable class label (i.e., account name) to each value, and sort by value:
-            suggestions = [[account for _, account in sorted(list(zip(distance_values, self.pipeline.classes_)),
-                                                             key=lambda x: x[0], reverse=True)]
-                           for distance_values in decision_values]
-
-            # add the suggested accounts to each transaction:
-            self.transactions = [ml.add_suggested_accounts_to_transaction(*t_s)
-                                 for t_s in zip(self.transactions, suggestions)]
-            logger.debug("Finished adding suggested accounts to the transactions to be imported.")
-
-        return self.transactions
+            resultTransactions.append(resultTransaction)
+        return resultTransactions
