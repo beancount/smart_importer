@@ -42,11 +42,15 @@ class PredictPostings:
                  training_data: Union[_FileMemo, List[Transaction], str] = None,
                  filter_training_data_by_account: str = None,
                  predict_second_posting: bool = True,
-                 suggest_accounts: bool = True):
+                 suggest_accounts: bool = True,
+                 prediction_min_probability: float = 0.6,
+                 suggest_min_probability: float = 0.1):
         self.training_data = training_data
         self.filter_training_data_by_account = filter_training_data_by_account
         self.predict_second_posting = predict_second_posting
         self.suggest_accounts = suggest_accounts
+        self.prediction_min_probability = prediction_min_probability
+        self.suggest_min_probability = suggest_min_probability
 
     def __call__(self, OriginalImporter):
         decorator = self
@@ -151,12 +155,12 @@ class PredictPostings:
         for (transaction, prediction) in zip(self.imported_transactions, self.pipeline.predict_proba(self.imported_transactions)):
             accountPredictions = sorted(zip(prediction, self.pipeline.classes_), key=lambda x: x[0], reverse=True)
             resultTransaction = transaction
-            if self.predict_second_posting and accountPredictions[0][0] > 0.6:
+            if self.predict_second_posting and accountPredictions[0][0] > self.prediction_min_probability:
                 resultTransaction = ml.add_posting_to_transaction(resultTransaction, accountPredictions[0][1])
             if self.suggest_accounts:
                 suggestions = []
                 for accountPrediction in accountPredictions:
-                    if accountPrediction[0] > 0.1:
+                    if accountPrediction[0] > self.suggest_min_probability:
                         suggestions.append(accountPrediction[1])
 
                 if suggestions:
