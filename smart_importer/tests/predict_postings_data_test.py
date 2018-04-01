@@ -48,10 +48,10 @@ class PredictPostingsTest(unittest.TestCase):
 
     def run_testset(self, testset):
         training_data = self.load_test_data(testset, 'training') 
-        extracted_data = self.load_test_data(testset, 'extracted') 
+        extracted_data = self.load_test_data(testset, 'extracted')
 
+        @PredictPostings(suggest_accounts=True)
         class DummyImporter(ImporterProtocol):
-            @PredictPostings(suggest_accounts=True)
             def extract(self, file: _FileMemo, existing_entries: List[Union[ALL_DIRECTIVES]]) -> List[Union[ALL_DIRECTIVES]]:
                 return extracted_data
 
