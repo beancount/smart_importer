@@ -6,7 +6,7 @@ import os
 import unittest
 from typing import List
 
-from beancount.core.data import Transaction, TxnPosting
+from beancount.core.data import Transaction
 from beancount.parser import parser
 
 from smart_importer import machinelearning_helpers as ml
@@ -109,9 +109,9 @@ class MachinelearningTest(unittest.TestCase):
                          ['Assets:US:BofA:Checking', 'Expenses:Food:Coffee', 'Expenses:Food:Groceries',
                           'Expenses:Food:Coffee'])
 
-    def test_get_posting_account_of_txnpostings(self):
+    def test_get_posting_account_of_txnpostingsaccount(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
-        txn_postings = [TxnPosting(t, p) for t in self.test_data for p in t.postings]
+        txn_postings = [ml.TxnPostingAccount(t, p, 'Foo') for t in self.test_data for p in t.postings]
         self.assertEqual(ml.GetPostingAccount().transform(txn_postings),
                          ['Assets:US:BofA:Checking', 'Assets:US:BofA:Checking', 'Expenses:Food:Coffee',
                           'Assets:US:BofA:Checking', 'Expenses:Food:Groceries', 'Assets:US:BofA:Checking',
