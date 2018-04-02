@@ -45,6 +45,18 @@ For example:
         def extract(file):
           # do the import, e.g., from a csv file
 
+If you don't want to modify your importers you can also manually instantiate this 
+e.g. in our foo.import
+
+.. code:: python
+
+   from smart_importer.predict_postings import PredictPostings
+
+   MyImporter = PredictPostings(suggest_accounts=False)(MyImporter)
+   CONFIG = [
+      MyImporter("someconfig")
+   ]
+
 
 Development
 -----------
