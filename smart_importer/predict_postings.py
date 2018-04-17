@@ -2,13 +2,12 @@
 Decorator for Beancount Importer classes
 that suggests and predicts postings using machine learning.
 """
-
 import inspect
 import logging
 from functools import wraps
 from typing import List, Union
 
-from beancount.core.data import TxnPosting, Transaction
+from beancount.core.data import Transaction, TxnPosting
 from beancount.ingest.cache import _FileMemo
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -25,11 +24,9 @@ logger = logging.getLogger(__name__)
 # the decorator
 class PredictPostings:
     '''
-    Decorator for beancount importer classes.
-
-    Applying this decorator to an importer class or its extract method
-    will use machine learning to learn and predict missing second postings
-    for the transactions that are imported.
+    Applying this decorator to a beancount importer or its extract method
+    will predict and auto-complete missing second postings
+    of the transactions to be imported.
 
     Example:
 
@@ -92,18 +89,18 @@ class PredictPostings:
 
         return wrapper
 
-    def enhance_transactions(self):
-        # load training data
+    def enhance_transactions(self):# load training data
         self.training_data = ml.load_training_data(
             self.training_data,
             filter_training_data_by_account=self.filter_training_data_by_account,
             existing_entries=self.existing_entries)
 
-        # convert training data to a list of TxnPostings
-        self.converted_training_data = [TxnPosting(t, p) for t in self.training_data for p in t.postings
-                                        # ...filtered, the TxnPosting.posting.account must be different from the
-                                        # already-known filter_training_data_by_account:
-                                        if p.account != self.filter_training_data_by_account]
+        # convert training data to a list of TxnPostingAccounts
+        self.converted_training_data = [ml.TxnPostingAccount(t, p, pRef.account)
+                                        for t in self.training_data
+                                        for pRef in t.postings
+                                        for p in t.postings
+                                        if p.account != pRef.account]
 
         # train the machine learning model
         self._trained = False
@@ -123,6 +120,13 @@ class PredictPostings:
                 ]))
             )
             transformer_weights['narration'] = 0.8
+            transformers.append(
+                ('account', Pipeline([
+                    ('getReferencePostingAccount', ml.GetReferencePostingAccount()),
+                    ('vect', CountVectorizer(ngram_range=(1, 3))),
+                ]))
+            )
+            transformer_weights['account'] = 0.8
 
             distinctPayees = set(map(lambda trx: trx.txn.payee, self.converted_training_data))
             if len(distinctPayees) > 1:

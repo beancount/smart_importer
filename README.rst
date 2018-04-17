@@ -29,20 +29,42 @@ Installation
 
 
 
-Current Functionality
----------------------
+Usage
+-----
 
-When writing a beancount importer, users can apply decorators to their
-importer’s ``extract`` function in order to benefit from predictions and
-suggestions provided by machine learning.
+When writing a beancount importer, users can apply decorators to their importer classes
+in order to benefit from smart predictions and suggestions provided by machine learning.
 
 For example:
 
 .. code:: python
 
+    @PredictPostings(training_data="trainingdata.beancount")
+    @PredictPayees(training_data="trainingdata.beancount")
     class MyImporter(ImporterProtocol):
-            @PredictPostings(training_data="trainingdata.beancount")
-            @PredictPayees(training_data="trainingdata.beancount")
-            def extract(file):
-              # do the import, e.g., from a csv file
+        def extract(file):
+          # do the import, e.g., from a csv file
 
+If you don't want to modify your importers you can also manually instantiate this 
+e.g. in our foo.import
+
+.. code:: python
+
+   from smart_importer.predict_postings import PredictPostings
+
+   MyImporter = PredictPostings(suggest_accounts=False)(MyImporter)
+   CONFIG = [
+      MyImporter("someconfig")
+   ]
+
+
+Development
+-----------
+
+.. code:: bash
+
+    # for nicer test output:
+    pip install coloredlogs
+
+    # to run unittests:
+    make test

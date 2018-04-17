@@ -5,7 +5,7 @@ import logging
 from typing import List, Union, Optional
 
 import numpy as np
-from typing import Tuple
+from typing import Tuple, NamedTuple
 from beancount import loader
 from beancount.core.data import Transaction, Posting, TxnPosting, filter_txns
 from beancount.ingest.cache import _FileMemo
@@ -72,6 +72,9 @@ def add_posting_to_transaction(transaction: Transaction, postings_account: str) 
     # new_postings.extend(get_residual_postings(residual, account_rounding))
     # entry = entry._replace(postings=new_postings)
 
+    if len(transaction.postings) != 1:
+        return transaction
+
     additionalPosting: Posting
     additionalPosting = Posting(postings_account, None, None, None, None, None)
     new_postings_list = list(transaction.postings)
@@ -118,6 +121,10 @@ def _add_suggestions_to_transaction(transaction: Transaction, suggestions: List[
     transaction = transaction._replace(meta=meta)
     return transaction
 
+TxnPostingAccount = NamedTuple('TxnPostingAccount', [
+    ('txn', Transaction),
+    ('posting', Posting),
+    ('account', str)])
 
 class ItemSelector(BaseEstimator, TransformerMixin):
     """
@@ -212,43 +219,43 @@ class NoFitMixin:
 class GetPayee(TransformerMixin, NoFitMixin):
     '''
     Scikit-learn transformer to extract the payee.
-    The input can be of type List[Transaction] or List[TxnPosting],
+    The input can be of type List[Transaction] or List[TxnPostingAccount],
     the output is a List[str].
     '''
 
-    def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
+    def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._get_payee(d) for d in data]
 
     def _get_payee(self, d):
         if isinstance(d, Transaction):
             return d.payee or ''
-        elif isinstance(d, TxnPosting):
+        elif isinstance(d, TxnPostingAccount):
             return d.txn.payee or ''
 
 
 class GetNarration(TransformerMixin, NoFitMixin):
     '''
     Scikit-learn transformer to extract the narration.
-    The input can be of type List[Transaction] or List[TxnPosting],
+    The input can be of type List[Transaction] or List[TxnPostingAccount],
     the output is a List[str].
     '''
 
-    def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
+    def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._get_narration(d) for d in data]
 
     def _get_narration(self, d):
         if isinstance(d, Transaction):
             return d.narration
-        elif isinstance(d, TxnPosting):
+        elif isinstance(d, TxnPostingAccount):
             return d.txn.narration
 
 
 class GetPostingAccount(TransformerMixin, NoFitMixin):
     '''
     Scikit-learn transformer to extract the account name.
-    The input can be of type List[Transaction] or List[TxnPosting].
+    The input can be of type List[Transaction] or List[TxnPostingAccount].
     The account name is extracted from the last posting of each transaction,
-    or from TxnPosting.posting.account of each TxnPosting.
+    or from TxnPostingAccount.posting.account of each TxnPostingAccount.
     The output is a List[str].
     '''
 
@@ -258,22 +265,38 @@ class GetPostingAccount(TransformerMixin, NoFitMixin):
     def _get_posting_account(self, d):
         if isinstance(d, Transaction):
             return d.postings[-1].account
-        elif isinstance(d, TxnPosting):
+        elif isinstance(d, TxnPostingAccount):
             return d.posting.account
 
+class GetReferencePostingAccount(TransformerMixin, NoFitMixin):
+    '''
+    Scikit-learn transformer to extract the reference account name.
+    The input can be of type List[Transaction] or List[TxnPostingAccount].
+    The reference account name is extracted from the first posting of each transaction.
+    The output is a List[str].
+    '''
+
+    def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
+        return [self._get_posting_account(d) for d in data]
+
+    def _get_posting_account(self, d):
+        if isinstance(d, Transaction):
+            return d.postings[0].account
+        elif isinstance(d, TxnPostingAccount):
+            return d.account
 
 class GetDayOfMonth(TransformerMixin, NoFitMixin):
     '''
     Scikit-learn transformer to extract the day of month when a transaction happened.
-    The input can be of type List[Transaction] or List[TxnPosting],
+    The input can be of type List[Transaction] or List[TxnPostingAccount],
     the output is a List[Date].
     '''
 
-    def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
+    def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._get_day_of_month(d) for d in data]
 
     def _get_day_of_month(self, d):
         if isinstance(d, Transaction):
             return d.date.day
-        elif isinstance(d, TxnPosting):
+        elif isinstance(d, TxnPostingAccount):
             return d.txn.date.day

@@ -10,7 +10,6 @@ from typing import List, Union
 
 from beancount.core.data import Transaction
 from beancount.ingest.cache import _FileMemo
-from beancount.ingest.importer import ImporterProtocol
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
@@ -25,9 +24,9 @@ logger = logging.getLogger(__name__)
 
 class PredictPayees:
     '''
-    Applying this decorator to an importer class or its extract method
-    will use machine learning to learn and predict missing payees
-    for the transactions that are imported.
+    Applying this decorator to a beancount importer or its extract method
+    will predict and auto-complete missing payees
+    of the transactions that are imported.
 
     Predictions are implemented using machine learning
     based on training data read from a beancount file.
@@ -86,8 +85,7 @@ class PredictPayees:
 
         return wrapper
 
-    def enhance_transactions(self):
-        # load training data
+    def enhance_transactions(self):# load training data
         self.training_data = ml.load_training_data(
             self.training_data,
             filter_training_data_by_account=self.filter_training_data_by_account,
@@ -144,6 +142,15 @@ class PredictPayees:
             self.transactions = [ml.add_payee_to_transaction(*t_p, overwrite=self.overwrite_existing_payees)
                             for t_p in zip(self.transactions, predicted_payees)]
             logger.debug("Finished adding predicted payees to the transactions to be imported.")
+        # predict payees
+        self.transactions = self.imported_transactions
+        if self.predict_payees:
+            logger.debug("About to generate predictions for payees...")
+            predicted_payees: List[str]
+            predicted_payees = self.pipeline.predict(self.imported_transactions)
+            self.transactions = [ml.add_payee_to_transaction(*t_p, overwrite=self.overwrite_existing_payees)
+                            for t_p in zip(self.imported_transactions, predicted_payees)]
+            logger.debug("Finished adding predicted payees to the transactions to be imported.")
 
         # suggest likely payees
         if self.suggest_payees:
@@ -162,4 +169,5 @@ class PredictPayees:
             logger.debug("Finished adding suggested payees to the transactions to be imported.")
 
         return self.transactions
+
 

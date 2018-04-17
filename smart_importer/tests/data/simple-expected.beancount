@@ -1,0 +1,30 @@
+
+2017-01-06 * "Farmer Fresh" "Buying groceries"
+  __suggested_accounts__: "["Expenses:Food:Groceries", "Expenses:Food:Coffee", "Expenses:Food:Restaurant", "Assets:US:BofA:Checking"]"
+  Assets:US:BofA:Checking  -2.50 USD
+  Expenses:Food:Groceries           
+
+2017-01-07 * "Farmer Fresh" "Groceries"
+  __suggested_accounts__: "["Expenses:Food:Groceries", "Expenses:Food:Coffee", "Expenses:Food:Restaurant", "Assets:US:BofA:Checking"]"
+  Assets:US:BofA:Checking  -10.20 USD
+  Expenses:Food:Groceries            
+
+2017-01-10 * "Uncle Boons" "Eating out with Joe"
+  __suggested_accounts__: "["Expenses:Food:Restaurant", "Expenses:Food:Groceries", "Expenses:Food:Coffee", "Assets:US:BofA:Checking"]"
+  Assets:US:BofA:Checking   -38.36 USD
+  Expenses:Food:Restaurant            
+
+2017-01-10 * "Uncle Boons" "Dinner with Martin"
+  __suggested_accounts__: "["Expenses:Food:Restaurant", "Expenses:Food:Groceries", "Expenses:Food:Coffee", "Assets:US:BofA:Checking"]"
+  Assets:US:BofA:Checking   -35.00 USD
+  Expenses:Food:Restaurant            
+
+2017-01-10 * "Walmarts" "Groceries"
+  __suggested_accounts__: "["Expenses:Food:Groceries", "Expenses:Food:Coffee", "Expenses:Food:Restaurant", "Assets:US:BofA:Checking"]"
+  Assets:US:BofA:Checking  -53.70 USD
+  Expenses:Food:Groceries            
+
+2017-01-10 * "Gimme Coffee" "Coffee"
+  __suggested_accounts__: "["Expenses:Food:Coffee", "Expenses:Food:Groceries", "Expenses:Food:Restaurant", "Assets:US:BofA:Checking"]"
+  Assets:US:BofA:Checking  -5.00 USD
+  Expenses:Food:Coffee              
