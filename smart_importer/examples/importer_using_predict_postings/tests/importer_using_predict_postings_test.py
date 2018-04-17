@@ -23,12 +23,13 @@ class PredictPostingsTest(unittest.TestCase):
     '''
 
     def test_the_importer(self):
+        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         importer = Importer(['.*'])
         mocked_file = Mock(spec=_FileMemo)
         mocked_file.name = 'downloaded-transactions.csv'
         mocked_file.contents = Mock(name='contents', return_value='')
         entries = importer.extract(mocked_file, existing_entries=self.training_data)
-        printer.print_entries(entries)
+        # printer.print_entries(entries)
 
 
 if __name__ == '__main__':

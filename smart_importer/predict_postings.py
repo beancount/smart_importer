@@ -3,8 +3,9 @@ Decorator for Beancount Importer classes
 that suggests and predicts postings using machine learning.
 """
 
-import logging
 import inspect
+import logging
+from functools import wraps
 from typing import List, Union
 
 from beancount.core.data import TxnPosting, Transaction
@@ -15,25 +16,27 @@ from sklearn.svm import SVC
 
 from smart_importer import machinelearning_helpers as ml
 
+# configure logging
+LOG_LEVEL = logging.DEBUG
+logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 
+# the decorator
 class PredictPostings:
     '''
     Decorator for beancount importer classes.
 
-    Applying this decorator to the a class inheriting
-    from `beancount.ingest.importer import ImporterProtocol`
-    will predict missing second postings
-    and suggest auto-completions for editing the postings
-    of the transactions that are imported.
-
-    Predictions are implemented using machine learning
-    based on training data read from a beancount file.
+    Applying this decorator to an importer class or its extract method
+    will use machine learning to learn and predict missing second postings
+    for the transactions that are imported.
 
     Example:
 
-    @PredictPostings(training_data="trainingdata.beancount")
+    @PredictPostings(
+        training_data="trainingdata.beancount",
+        filter_training_data_by_account="The:Importers:Already:Known:Accountname"
+    )
     class MyImporter(ImporterProtocol):
         def extract(file):
           # do the import, return list of entries
@@ -45,7 +48,8 @@ class PredictPostings:
     # https://andrefsp.wordpress.com/2012/08/23/writing-a-class-decorator-in-python/
 
     def __init__(
-            self, *,
+            self,
+            *,
             training_data: Union[_FileMemo, List[Transaction], str] = None,
             filter_training_data_by_account: str = None,
             predict_second_posting: bool = True,
@@ -56,31 +60,44 @@ class PredictPostings:
         self.predict_second_posting = predict_second_posting
         self.suggest_accounts = suggest_accounts
 
-    def __call__(self, OriginalImporter):
+    def __call__(self, to_be_decorated=None, *args, **kwargs):
+
+        if inspect.isclass(to_be_decorated):
+            logger.debug('The Decorator was applied to a class.')
+            return self.patched_importer_class(to_be_decorated)
+
+        elif inspect.isfunction(to_be_decorated):
+            logger.debug('The Decorator was applied to an instancemethod.')
+            return self.patched_extract_function(to_be_decorated)
+
+    def patched_importer_class(self, importer_class):
+        importer_class.extract = self.patched_extract_function(importer_class.extract)
+        return importer_class
+
+    def patched_extract_function(self, original_extract_function):
         decorator = self
 
-        class PredictPostingsImporter(OriginalImporter):
-            def extract(self, file, existing_entries=None):
-                logger.debug(f"About to call the importer's extract function to receive entries to be imported...")
-                if 'existing_entries' in inspect.signature(super().extract).parameters:
-                    decorator.imported_transactions = super().extract(file, existing_entries)
-                else:
-                    decorator.imported_transactions = super().extract(file)
-                logger.debug(
-                    f"Received {len(decorator.imported_transactions)} entries by calling the importer's extract function.")
-                return decorator._extract(
-                    file,
-                    existing_entries
-                )
+        @wraps(original_extract_function)
+        def wrapper(self, file, existing_entries=None):
+            decorator.existing_entries = existing_entries
 
-        return PredictPostingsImporter
+            logger.debug(f"About to call the importer's extract function to receive entries to be imported...")
+            if 'existing_entries' in inspect.signature(original_extract_function).parameters:
+                decorator.imported_transactions = original_extract_function(self, file, existing_entries)
+            else:
+                decorator.imported_transactions = original_extract_function(self, file)
 
-    def _extract(self, file, existing_entries):
+
+            return decorator.enhance_transactions()
+
+        return wrapper
+
+    def enhance_transactions(self):
         # load training data
         self.training_data = ml.load_training_data(
             self.training_data,
             filter_training_data_by_account=self.filter_training_data_by_account,
-            existing_entries=existing_entries)
+            existing_entries=self.existing_entries)
 
         # convert training data to a list of TxnPostings
         self.converted_training_data = [TxnPosting(t, p) for t in self.training_data for p in t.postings
