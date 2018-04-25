@@ -13,8 +13,8 @@ Status
 
 Prototype, work in progress.
 
-.. image:: https://travis-ci.org/johannesjh/smart_importer.svg?branch=master
-   :target: https://travis-ci.org/johannesjh/smart_importer
+.. image:: https://travis-ci.org/beancount/smart_importer.svg?branch=master
+    :target: https://travis-ci.org/beancount/smart_importer
 
 
 Installation
@@ -45,7 +45,7 @@ For example:
         def extract(file):
           # do the import, e.g., from a csv file
 
-If you don't want to modify your importers you can also manually instantiate this 
+If you don't want to modify your importers you can also manually instantiate this
 e.g. in our foo.import
 
 .. code:: python
