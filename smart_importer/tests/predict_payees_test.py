@@ -7,6 +7,7 @@ from typing import List
 from beancount.core.data import Transaction
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
+
 from smart_importer import machinelearning_helpers as ml
 from smart_importer.predict_payees import PredictPayees
 
@@ -97,9 +98,12 @@ class Testdata:
     ]
 
 
-class BasicImporter(ImporterProtocol):
+class BasicTestImporter(ImporterProtocol):
     def extract(self, file, existing_entries=None):
         return Testdata.test_data
+
+    def file_account(self, file):
+        return Testdata.known_account
 
 
 class PredictPayeesTest(unittest.TestCase):
@@ -118,11 +122,11 @@ class PredictPayeesTest(unittest.TestCase):
             account="Assets:US:BofA:Checking",
             overwrite_existing_payees=False
         )
-        class DecoratedImporter(BasicImporter):
+        class DecoratedTestImporter(BasicTestImporter):
             pass
 
-        self.importerClass = DecoratedImporter
-        self.importer = DecoratedImporter()
+        self.importerClass = DecoratedTestImporter
+        self.importer = DecoratedTestImporter()
 
     def test_dummy_importer(self):
         '''
@@ -192,11 +196,11 @@ class PredictPostingsDecorationTest(unittest.TestCase):
             training_data=Testdata.training_data,
             account=Testdata.known_account
         )
-        class SmartImporter(BasicImporter):
+        class SmartTestImporter(BasicTestImporter):
             pass
 
-        i = SmartImporter()
-        self.assertIsInstance(i, SmartImporter,
+        i = SmartTestImporter()
+        self.assertIsInstance(i, SmartTestImporter,
                               'The decorated importer shall still be an instance of the undecorated class.')
         transactions = i.extract('file', existing_entries=Testdata.training_data)
         predicted_payees = [transaction.payee for transaction in transactions]
@@ -210,24 +214,20 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         testcase = self
 
-        class SmartImporter(BasicImporter):
+        class SmartTestImporter(BasicTestImporter):
             @PredictPayees(
                 training_data=Testdata.training_data,
                 account=Testdata.known_account
             )
             def extract(self, file, existing_entries=None):
-                testcase.assertIsInstance(self, SmartImporter)
+                testcase.assertIsInstance(self, SmartTestImporter)
                 return super().extract(file, existing_entries=existing_entries)
 
-        i = SmartImporter()
+        i = SmartTestImporter()
         transactions = i.extract('file', existing_entries=Testdata.training_data)
         predicted_payees = [transaction.payee for transaction in transactions]
         self.assertEqual(predicted_payees, Testdata.correct_predictions)
 
-    # TODO: implement reasonable defaults to fix this test case:
-    @unittest.skip(
-        "smart imports without arguments currently fail "
-        "because the already known account is not filtered from the training data")
     def test_class_decoration_without_arguments(self):
         '''
         Verifies that the decorator can be applied to importer classes,
@@ -236,19 +236,15 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
 
         @PredictPayees()
-        class SmartImporter(BasicImporter): pass
+        class SmartTestImporter(BasicTestImporter): pass
 
-        i = SmartImporter()
-        self.assertIsInstance(i, SmartImporter,
+        i = SmartTestImporter()
+        self.assertIsInstance(i, SmartTestImporter,
                               'The decorated importer shall still be an instance of the undecorated class.')
         transactions = i.extract('file', existing_entries=Testdata.training_data)
         predicted_payees = [transaction.payee for transaction in transactions]
         self.assertEqual(predicted_payees, Testdata.correct_predictions)
 
-    # TODO: implement reasonable defaults to fix this test case:
-    @unittest.skip(
-        "smart imports without arguments currently fail "
-        "because the already known account is not filtered from the training data")
     def test_method_decoration_without_arguments(self):
         '''
         Verifies that the decorator can be applied to an importer's extract method,
@@ -257,13 +253,13 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         testcase = self
 
-        class SmartImporter(BasicImporter):
+        class SmartTestImporter(BasicTestImporter):
             @PredictPayees()
             def extract(self, file, existing_entries=None):
-                testcase.assertIsInstance(self, SmartImporter)
+                testcase.assertIsInstance(self, SmartTestImporter)
                 return super().extract(file, existing_entries=existing_entries)
 
-        i = SmartImporter()
+        i = SmartTestImporter()
         transactions = i.extract('file', existing_entries=Testdata.training_data)
         predicted_payees = [transaction.payee for transaction in transactions]
         self.assertEqual(predicted_payees, Testdata.correct_predictions)

@@ -76,14 +76,28 @@ class PredictPostings:
 
         @wraps(original_extract_function)
         def wrapper(self, file, existing_entries=None):
+
+            # read the importer's existing entries, if provided as argument to its `extract` method:
             decorator.existing_entries = existing_entries
 
+            # read the importer's `extract`ed entries
             logger.debug(f"About to call the importer's extract function to receive entries to be imported...")
             if 'existing_entries' in inspect.signature(original_extract_function).parameters:
                 decorator.imported_transactions = original_extract_function(self, file, existing_entries)
             else:
                 decorator.imported_transactions = original_extract_function(self, file)
 
+            # read the importer's file_account, to be used as default value for the decorator's known `account`:
+            if inspect.ismethod(self.file_account) and not decorator.account:
+                logger.debug("Trying to read the importer's file_account, "
+                             "to be used as default value for the decorator's `account` argument...")
+                file_account = self.file_account(file)
+                if file_account:
+                    decorator.account = file_account
+                    logger.debug(f"Read file_account {file_account} from the importer; "
+                                 f"using it as known account in the decorator.")
+                else:
+                    logger.debug(f"Could not retrieve file_account from the importer.")
 
             return decorator.enhance_transactions()
 
