@@ -32,7 +32,7 @@ class PredictPostings:
 
     @PredictPostings(
         training_data="trainingdata.beancount",
-        filter_training_data_by_account="The:Importers:Already:Known:Accountname"
+        account="The:Importers:Already:Known:Accountname"
     )
     class MyImporter(ImporterProtocol):
         def extract(file):
@@ -48,12 +48,12 @@ class PredictPostings:
             self,
             *,
             training_data: Union[_FileMemo, List[Transaction], str] = None,
-            filter_training_data_by_account: str = None,
+            account: str = None,
             predict_second_posting: bool = True,
             suggest_accounts: bool = True
     ):
         self.training_data = training_data
-        self.filter_training_data_by_account = filter_training_data_by_account
+        self.account = account
         self.predict_second_posting = predict_second_posting
         self.suggest_accounts = suggest_accounts
 
@@ -92,7 +92,7 @@ class PredictPostings:
     def enhance_transactions(self):# load training data
         self.training_data = ml.load_training_data(
             self.training_data,
-            filter_training_data_by_account=self.filter_training_data_by_account,
+            known_account=self.account,
             existing_entries=self.existing_entries)
 
         # convert training data to a list of TxnPostingAccounts

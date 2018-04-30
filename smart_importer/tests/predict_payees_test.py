@@ -85,7 +85,7 @@ class Testdata:
         """)
     assert not errors
 
-    filter_training_data_by_account = "Assets:US:BofA:Checking"
+    known_account = "Assets:US:BofA:Checking"
 
     correct_predictions = [
         'Farmer Fresh',
@@ -115,7 +115,7 @@ class PredictPayeesTest(unittest.TestCase):
         # define and decorate an importer:
         @PredictPayees(
             training_data=Testdata.training_data,
-            filter_training_data_by_account="Assets:US:BofA:Checking",
+            account="Assets:US:BofA:Checking",
             overwrite_existing_payees=False
         )
         class DecoratedImporter(BasicImporter):
@@ -190,7 +190,7 @@ class PredictPostingsDecorationTest(unittest.TestCase):
 
         @PredictPayees(
             training_data=Testdata.training_data,
-            filter_training_data_by_account=Testdata.filter_training_data_by_account
+            account=Testdata.known_account
         )
         class SmartImporter(BasicImporter):
             pass
@@ -213,7 +213,7 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         class SmartImporter(BasicImporter):
             @PredictPayees(
                 training_data=Testdata.training_data,
-                filter_training_data_by_account=Testdata.filter_training_data_by_account
+                account=Testdata.known_account
             )
             def extract(self, file, existing_entries=None):
                 testcase.assertIsInstance(self, SmartImporter)

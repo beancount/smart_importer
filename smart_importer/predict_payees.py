@@ -44,12 +44,12 @@ class PredictPayees:
 
     def __init__(self, *,
                  training_data: Union[_FileMemo, List[Transaction], str] = None,
-                 filter_training_data_by_account: str = None,
+                 account: str = None,
                  predict_payees: bool = True,
                  overwrite_existing_payees=False,
                  suggest_payees: bool = True):
         self.training_data = training_data
-        self.filter_training_data_by_account = filter_training_data_by_account
+        self.account = account
         self.predict_payees = predict_payees
         self.overwrite_existing_payees = overwrite_existing_payees
         self.suggest_payees = suggest_payees
@@ -88,7 +88,7 @@ class PredictPayees:
     def enhance_transactions(self):# load training data
         self.training_data = ml.load_training_data(
             self.training_data,
-            filter_training_data_by_account=self.filter_training_data_by_account,
+            known_account=self.account,
             existing_entries=self.existing_entries)
 
         # train the machine learning model
