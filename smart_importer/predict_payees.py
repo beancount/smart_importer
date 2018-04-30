@@ -142,15 +142,6 @@ class PredictPayees:
             self.transactions = [ml.add_payee_to_transaction(*t_p, overwrite=self.overwrite_existing_payees)
                             for t_p in zip(self.transactions, predicted_payees)]
             logger.debug("Finished adding predicted payees to the transactions to be imported.")
-        # predict payees
-        self.transactions = self.imported_transactions
-        if self.predict_payees:
-            logger.debug("About to generate predictions for payees...")
-            predicted_payees: List[str]
-            predicted_payees = self.pipeline.predict(self.imported_transactions)
-            self.transactions = [ml.add_payee_to_transaction(*t_p, overwrite=self.overwrite_existing_payees)
-                            for t_p in zip(self.imported_transactions, predicted_payees)]
-            logger.debug("Finished adding predicted payees to the transactions to be imported.")
 
         # suggest likely payees
         if self.suggest_payees:
