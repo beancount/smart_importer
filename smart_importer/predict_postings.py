@@ -32,7 +32,7 @@ class PredictPostings:
 
     @PredictPostings(
         training_data="trainingdata.beancount",
-        filter_training_data_by_account="The:Importers:Already:Known:Accountname"
+        account="The:Importers:Already:Known:Accountname"
     )
     class MyImporter(ImporterProtocol):
         def extract(file):
@@ -48,12 +48,12 @@ class PredictPostings:
             self,
             *,
             training_data: Union[_FileMemo, List[Transaction], str] = None,
-            filter_training_data_by_account: str = None,
+            account: str = None,
             predict_second_posting: bool = True,
             suggest_accounts: bool = True
     ):
         self.training_data = training_data
-        self.filter_training_data_by_account = filter_training_data_by_account
+        self.account = account
         self.predict_second_posting = predict_second_posting
         self.suggest_accounts = suggest_accounts
 
@@ -76,14 +76,28 @@ class PredictPostings:
 
         @wraps(original_extract_function)
         def wrapper(self, file, existing_entries=None):
+
+            # read the importer's existing entries, if provided as argument to its `extract` method:
             decorator.existing_entries = existing_entries
 
+            # read the importer's `extract`ed entries
             logger.debug(f"About to call the importer's extract function to receive entries to be imported...")
             if 'existing_entries' in inspect.signature(original_extract_function).parameters:
                 decorator.imported_transactions = original_extract_function(self, file, existing_entries)
             else:
                 decorator.imported_transactions = original_extract_function(self, file)
 
+            # read the importer's file_account, to be used as default value for the decorator's known `account`:
+            if inspect.ismethod(self.file_account) and not decorator.account:
+                logger.debug("Trying to read the importer's file_account, "
+                             "to be used as default value for the decorator's `account` argument...")
+                file_account = self.file_account(file)
+                if file_account:
+                    decorator.account = file_account
+                    logger.debug(f"Read file_account {file_account} from the importer; "
+                                 f"using it as known account in the decorator.")
+                else:
+                    logger.debug(f"Could not retrieve file_account from the importer.")
 
             return decorator.enhance_transactions()
 
@@ -92,7 +106,7 @@ class PredictPostings:
     def enhance_transactions(self):# load training data
         self.training_data = ml.load_training_data(
             self.training_data,
-            filter_training_data_by_account=self.filter_training_data_by_account,
+            known_account=self.account,
             existing_entries=self.existing_entries)
 
         # convert training data to a list of TxnPostingAccounts

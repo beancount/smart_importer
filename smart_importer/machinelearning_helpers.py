@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def load_training_data(training_data: Union[_FileMemo, List[Transaction], str],
-                       filter_training_data_by_account: str = None,
+                       known_account: str = None,
                        existing_entries: List[Tuple] = None) -> List[Transaction]:
     '''
     Loads training data
@@ -23,7 +23,7 @@ def load_training_data(training_data: Union[_FileMemo, List[Transaction], str],
         Can be provided as a string (the filename pointing to a beancount file),
         a _FileMemo instance,
         or a list of beancount entries
-    :param filter_training_data_by_account: Optional filter for the training data.
+    :param known_account: Optional filter for the training data.
         If provided, the training data is filtered to only include transactions that involve the specified account.
     :param existing_entries: Optional existing entries to use instead of explicit training_data
     :return: Returns a list of beancount entries.
@@ -42,11 +42,11 @@ def load_training_data(training_data: Union[_FileMemo, List[Transaction], str],
         assert not errors
         training_data = filter_txns(training_data)
     logger.debug(f"Finished reading training data.")
-    if filter_training_data_by_account:
+    if known_account:
         training_data = [t for t in training_data
-                         # ...filtered because the training data must involve the filter_training_data_by_account:
-                         if transaction_involves_account(t, filter_training_data_by_account)]
-        logger.debug(f"After filtering for account {filter_training_data_by_account}, "
+                         # ...filtered because the training data must involve the account:
+                         if transaction_involves_account(t, known_account)]
+        logger.debug(f"After filtering for account {known_account}, "
                      f"the training data consists of {len(training_data)} entries.")
     return training_data
 
