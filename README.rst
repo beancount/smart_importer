@@ -265,6 +265,15 @@ but use decorated versions of these importers in your import configuration:
     ]
 
 
+Usage with fava
+~~~~~~~~~~~~~~~
+
+Smart importers play nice with `fava <https://github.com/beancount/fava>`__.
+This means you can use smart importers together with fava in the exact same way
+as you would do with a conventional importer.
+See `fava's help on importers <https://github.com/beancount/fava/blob/master/fava/help/import.md>`__
+for more information.
+
 
 
 Development
