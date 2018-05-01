@@ -21,7 +21,7 @@ development status: alpha
 Installation
 ------------
 
-The `smart_importer` package has not yet been published on PyPI
+The ``smart_importer`` package has not yet been published on PyPI
 and must therefore be installed from source:
 
 .. code:: bash
@@ -35,14 +35,15 @@ and must therefore be installed from source:
 Quick Start
 -----------
 
-Apply `@PredictPostings()` and/or `@PredictPayees()` as decorators to a beancount importer
+Apply ``@PredictPostings()`` and/or ``@PredictPayees()`` as decorators to a beancount importer
 in order to benefit from smart predictions and suggestions provided by machine learning.
-To get started quickly, you can script all of this right in your import config file:
+To get started quickly, you can script all of it right in your import config file.
 
+The following example shows how to add the ``@PredictPostings`` decorator to a CSV importer:
 
 .. code:: python
 
-    # this is the beancount import config file:
+    # the beancount import config file:
 
     from beancount.ingest.importers import csv
     from beancount.ingest.importers.csv import Col
@@ -60,7 +61,7 @@ To get started quickly, you can script all of this right in your import config f
                  Col.AMOUNT_DEBIT: 'Funds Out',
                  Col.AMOUNT_CREDIT: 'Funds In'},
                 account,
-                'CAD',
+                'EUR',
                 [
                     'Filename: .*MyBank.*\.csv',
                     'Contents:\n.*Date, Transaction Details, Funds Out, Funds In'
@@ -68,7 +69,7 @@ To get started quickly, you can script all of this right in your import config f
             )
 
 
-    @PredictPostings(training_data='myfile.beancount')
+    @PredictPostings(training_data='myledger.beancount')
     class SmartMyBankImporter(MyBankImporter):
         '''Smart Version of the MyBankImporter'''
         pass
@@ -80,28 +81,49 @@ To get started quickly, you can script all of this right in your import config f
 
 
 
-In the above example, the `PredictPostings` decorator from `smart_importer` is applied to a beancount importer.
+In the above example, the ``PredictPostings`` decorator is applied to a beancount importer.
 The resulting smart importer enhances imported transactions using machine learning.
-The smart importer can be added to the `CONFIG` array in the same way as any other beancount importer.
+The smart importer is added to the ``CONFIG`` array in the same way as any other beancount importer.
+
+
+
+System Overview
+---------------
+
+.. figure:: docs/system-overview.png
+   :scale: 50 %
+   :alt: system overview
+
+   System overview showing the process how smart importers are used to predict and suggest values in the transactions to be imported.
+
+
+1. The user executes ``bean-extract`` in order to import downloaded bank statements into beancount.
+2. The user must specify an import configuration file for ``bean-extract``. This file defines a list of importers to be used by beancount.ingest.
+3. ```beancount.ingest`` invokes a matching importer.
+4. The importer reads the downloaded bank statement, typically a CSV file, and extracts beancount transactions from it.
+5. Smart importers read existing beancount entries and use them to train a machine learning model.
+6. Smart importers use the trained machine learning model to enhance the extracted transactions with predictions and suggestions.
+7. The resulting transactions are returned to the user.
 
 
 
 Usage
 -----
 
-This section guides through the creation of a smart beancount importer.
+This section explains relevant concepts and artifacts
+and guides through the creation of a smart beancount importer.
 
 
-Conventional Beancount Importers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Beancount Importers
+~~~~~~~~~~~~~~~~~~~~
 
 This documentation assumes you have existing beancount importers,
-as described in beancount's `documentation <http://furius.ca/beancount/doc/index>`__.
-For example, an importer called `MyImporter`:
+as described in beancount's `documentation <http://furius.ca/beancount/doc/ingest>`__.
+Let's assume an importer for statements from MyBank, which is called ``MyBankImporter``:
 
 .. code:: python
 
-    class MyImporter(importer.ImporterProtocol):
+    class MyBankImporter(importer.ImporterProtocol):
         """My existing importer"""
         # the actual importer logic would be here...
         pass
@@ -112,11 +134,13 @@ Applying `smart_importer` Decorators
 
 Any beancount importer can be converted into a smart importer by applying one of the following decorators:
 
-* `@PredictPostings()`
-* `@PredictPayees()`
+* ``@PredictPostings()``
+* ``@PredictPayees()``
 
 
-For example:
+For example, to convert an existing ``MyBankImporter`` into a smart importer
+that predicts missing second postings,
+e.g., to predict expense categories:
 
 .. code:: python
 
@@ -124,18 +148,19 @@ For example:
     from smart_importer.predict_postings import PredictPostings
     from smart_importer.predict_postings import PredictPayees
 
-    class MyImporter(ImporterProtocol):
+    class MyBankImporter(ImporterProtocol):
         def extract(self, file, existing_entries):
           # do the import, e.g., from a csv file
 
     @PredictPostings()
     @PredictPayees()
-    class MySmartImporter(MyImporter):
+    class SmartMyBankImporter(MyImporter):
         pass
 
 
 Note that the decorators can be applied to either an importer class, as shown above, or its extract method.
-In both cases, the result is the same.
+The result is the same in both cases.
+
 
 
 Specifying Training Data
@@ -143,15 +168,14 @@ Specifying Training Data
 
 The `smart_importer` decorators must be fed with training data in order to be effective.
 
-Training data can be provided directly as an argument to the decorators.
-You can simply provide the name of your beancount file, like this:
+Training data can be provided directly as an argument ``trainging_data`` to the decorators:
 
 .. code:: python
 
-    @PredictPostings(training_data='file.beancount')
+    @PredictPostings(training_data='ledger.beancount')
 
 
-If no training data is explicitly provided as an argument,
+If training data is not provided as an argument,
 the decorators try to use the `existing_entries` that can be passed to an importer's `extract` method.
 
 
@@ -159,8 +183,7 @@ the decorators try to use the `existing_entries` that can be passed to an import
 Using Smart Importers
 ~~~~~~~~~~~~~~~~~~~~~
 
-Once you have decorated your importers (or new subclasses thereof, see the below section on unit testing),
-you can start using your smart importers in the same way as conventional importers.
+You can use your smart importers in the very same way as conventional importers.
 I.e., you can add them to your beancount importer configuration file, like this:
 
 .. code:: python
@@ -175,41 +198,71 @@ Unit Testing your Importers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Smart importers are difficult to unit-test because their output depends on dynamic machine learning behavior.
-To make unit testing easy, you can continue to simply write your unit tests for conventional (undecorated) importers
-if you apply the decorators to subclasses, like this:
+To make test automation easy, write unit tests for conventional (undecorated) importers,
+but use decorated versions of these importers in your import configuration:
 
 
 .. code:: python
 
-    # The existing, conventional importer class
-    class MyImporter(importer.ImporterProtocol):
-        """My existing importer, without machine learning functionality, left undecorated to ease unit testing"""
-        # the actual importer logic would be here...
-        pass
+    import os
+
+    import nose
+    from beancount.ingest import regression
+    from beancount.ingest.importers import csv
+    from beancount.ingest.importers.csv import Col
+
+    from smart_importer.predict_postings import PredictPostings
 
 
-    # Apply the decorator to a new subclass of your importer:
-    @PredictPostings()
-    class MySmartImporter(MyConventionalImporter):
-        """
-        The smart version of my existing, conventional importer,
-        ready to be used in your import configuration file.
-        """
-        pass
+    # define a conventional (i.e., undecorated) importer:
+    class MyBankImporter(csv.Importer):
+        '''
+        Importer CSV file downloaded from MyBank.
+        Note: This undecorated class can be regression-tested with
+        beancount.ingest.regression.compare_sample_files
+        '''
+
+        def __init__(self, *, account):
+            super().__init__(
+                {Col.DATE: 'Date',
+                 Col.PAYEE: 'Transaction Details',
+                 Col.AMOUNT_DEBIT: 'Funds Out',
+                 Col.AMOUNT_CREDIT: 'Funds In'},
+                account,
+                'CAD',
+                [
+                    'Filename: .*MyBank.*\.csv',
+                    'Contents:\n.*Date, Transaction Details, Funds Out, Funds In'
+                ]
+            )
 
 
-    # MyImporter can be unit-tested,
-    # e.g., using `beancount.ingest.regression.compare_sample_files`:
+    # automated regression tests for the undecorated importer:
     def test():
-        importer = MyConventionalImporter()
+        importer = MyBankImporter()
         yield from regression.compare_sample_files(
             importer,
             directory=os.path.abspath(os.path.join(
                 os.path.dirname(__file__), 'testdata'))
         )
 
+
+    # execute regression tests if this is run as main python file:
     if __name__ == "__main__":
-        nose.main(config=Config())
+        nose.main()
+
+
+    # define a smart version of the importer:
+    @PredictPostings(training_data='myfile.beancount')
+    class SmartMyBankImporter(MyBankImporter):
+        '''Smart version of MyBankImporter'''
+        pass
+
+
+    # the import configuration:
+    CONFIG = [
+        SmartMyBankImporter(account='Assets:MyBank:MyAccount')
+    ]
 
 
 
