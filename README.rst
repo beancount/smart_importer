@@ -36,35 +36,53 @@ Quick Start
 -----------
 
 Apply `@PredictPostings()` and/or `@PredictPayees()` as decorators to a beancount importer
-in order to benefit from smart predictions and suggestions provided by machine learning:
+in order to benefit from smart predictions and suggestions provided by machine learning.
+To get started quickly, you can script all of this right in your import config file:
 
 
 .. code:: python
 
-    from beancount.ingest.importer import ImporterProtocol
+    # this is the beancount import config file:
+
+    from beancount.ingest.importers import csv
+    from beancount.ingest.importers.csv import Col
+
     from smart_importer.predict_postings import PredictPostings
 
-    class MyImporter(ImporterProtocol):
-        def extract(self, file, existing_entries):
-          # do the import, e.g., from a csv file
+
+    class MyBankImporter(csv.Importer):
+        '''Conventional importer for MyBank'''
+
+        def __init__(self, *, account):
+            super().__init__(
+                {Col.DATE: 'Date',
+                 Col.PAYEE: 'Transaction Details',
+                 Col.AMOUNT_DEBIT: 'Funds Out',
+                 Col.AMOUNT_CREDIT: 'Funds In'},
+                account,
+                'CAD',
+                [
+                    'Filename: .*MyBank.*\.csv',
+                    'Contents:\n.*Date, Transaction Details, Funds Out, Funds In'
+                ]
+            )
+
 
     @PredictPostings(training_data='myfile.beancount')
-    class MySmartImporter(MyImporter):
+    class SmartMyBankImporter(MyBankImporter):
+        '''Smart Version of the MyBankImporter'''
         pass
 
 
-In the above example, the `PredictPostings` decorator from `smart_importer` is applied to a beancount importer.
-The resulting `MySmartImporter` importer enhances imported transactions using machine learning.
-The machine learning algorithm uses training data from an existing beancount file.
-
-You can use the smart (i.e., decorated) importer in the exact same way as you would do with a regular importer.
-For example, in your beancount import configuration file:
-
-.. code:: python
-
     CONFIG = [
-        MyImporter('whatever', 'config', 'is', 'needed')
+        SmartMyBankImporter(account='Assets:MyBank:MyAccount')
     ]
+
+
+
+In the above example, the `PredictPostings` decorator from `smart_importer` is applied to a beancount importer.
+The resulting smart importer enhances imported transactions using machine learning.
+The smart importer can be added to the `CONFIG` array in the same way as any other beancount importer.
 
 
 
