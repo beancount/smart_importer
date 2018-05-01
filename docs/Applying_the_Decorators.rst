@@ -31,18 +31,27 @@ Applying the Decorators to Extract Methods
             pass
 
 
-Invoking the Decorators directly from the Importer Config File
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Applying the Decorators when Instantiating an Importer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is also possible to invoke the decorators directly in your beancount importer configuration file,
-like this:
+It is also possible to apply the decorators when instantiating an importer.
+For example, in your import config file:
+
 
 .. code:: python
 
-   from smart_importer.predict_postings import PredictPostings
+    from smart_importer.predict_postings import PredictPostings
+    from my_importers import MyBankImporter, MyOtherBankImporter
 
-   MyImporter = PredictPostings(suggest_accounts=False)(MyImporter)
-   CONFIG = [
+    # apply the decorator to define a smart importer
+    SmartMyBankImporter = PredictPostings(suggest_accounts=False)(MyBankImporter)
+
+    # use the smart importer in the config
+    CONFIG = [
       MyImporter('whatever', 'config', 'is', 'needed')
-   ]
+    ]
 
+    # same as above, but all in one step:
+    CONFIG += [
+        PredictPostings(suggest_accounts=False)(MyOtherBankImporter)('whatever', 'config')
+    ]

@@ -90,6 +90,9 @@ The smart importer is added to the ``CONFIG`` array in the same way as any other
 System Overview
 ---------------
 
+The following figure provides an overview of the import process and its components.
+
+
 .. figure:: docs/system-overview.png
    :scale: 50 %
    :alt: system overview
@@ -117,9 +120,12 @@ and guides through the creation of a smart beancount importer.
 Beancount Importers
 ~~~~~~~~~~~~~~~~~~~~
 
-This documentation assumes you have existing beancount importers,
-as described in beancount's `documentation <http://furius.ca/beancount/doc/ingest>`__.
-Let's assume an importer for statements from MyBank, which is called ``MyBankImporter``:
+The documentation on `beancount ingest <http://furius.ca/beancount/doc/ingest>`__
+describes how users can write their own importers
+and use them to convert downloaded bank statements into lists of beancount transactions.
+
+This documentation assumes you have created beancount importers already.
+For example, an importer for "MyBank" called ``MyBankImporter``:
 
 .. code:: python
 
@@ -138,9 +144,7 @@ Any beancount importer can be converted into a smart importer by applying one of
 * ``@PredictPayees()``
 
 
-For example, to convert an existing ``MyBankImporter`` into a smart importer
-that predicts missing second postings,
-e.g., to predict expense categories:
+For example, to convert an existing ``MyBankImporter`` into a smart importer:
 
 .. code:: python
 
@@ -157,18 +161,22 @@ e.g., to predict expense categories:
     class SmartMyBankImporter(MyImporter):
         pass
 
+In the above example, ``SmartMyBankImporter`` has been decorated with ``@PredictPostings``
+and thus employs machine learnign to predict missing second postings.
 
 Note that the decorators can be applied to either an importer class, as shown above, or its extract method.
 The result is the same in both cases.
+See `Applying the Decorators <docs/Applying_the_Decorators.rst>`__
+for a description of various ways how the decorators can be applied to importers.
 
 
 
 Specifying Training Data
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `smart_importer` decorators must be fed with training data in order to be effective.
+The ``smart_importer`` decorators must be fed with training data in order to be effective.
 
-Training data can be provided directly as an argument ``trainging_data`` to the decorators:
+Training data can be provided directly as an argument ``training_data`` to the decorators:
 
 .. code:: python
 
@@ -176,7 +184,7 @@ Training data can be provided directly as an argument ``trainging_data`` to the 
 
 
 If training data is not provided as an argument,
-the decorators try to use the `existing_entries` that can be passed to an importer's `extract` method.
+the decorators try to use the ``existing_entries`` that can be passed to an importer's ``extract`` method.
 
 
 
