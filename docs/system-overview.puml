@@ -1,7 +1,7 @@
 @startuml
 
 actor user
-artifact import_configuration.py
+artifact example.import
 component beancount.ingest
 component SmartImporter
 
@@ -9,16 +9,16 @@ artifact downloaded.csv
 artifact ledger.beancount
 artifact "Resulting Transactions" as output
 
-user ==> beancount.ingest: execute \nbean-extract
-import_configuration.py --> beancount.ingest: config file
-beancount.ingest ==> SmartImporter: invokes \nan importer
-downloaded.csv --> SmartImporter: transactions \n to be imported
-ledger.beancount --> SmartImporter: existing entries \n(training data)
-SmartImporter --> SmartImporter: extracts transactions, \nthen adds predictions \nand/or suggestions
-SmartImporter ==> output: output
+user ==> beancount.ingest: 1. execute \nbean-extract
+example.import --> beancount.ingest: 2. config file
+beancount.ingest ==> SmartImporter: 3. invokes \nan importer
+downloaded.csv --> SmartImporter: 4. transactions \n to be imported
+ledger.beancount --> SmartImporter: 5. existing entries \n(training data)
+SmartImporter --> SmartImporter: 6. extracts transactions, \nthen adds predictions \nand/or suggestions
+SmartImporter ==> output: 7. output
 @enduml
 
-import_configuration.py --> MyBankImporter: test
+example.import --> MyBankImporter: test
 
 
 node node3

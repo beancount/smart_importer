@@ -3,7 +3,7 @@ Applying the `smart_importer` Decorators
 
 Multiple options are available for how the `smart_importer` decorators can be applied.
 The best option is to apply the decorators to subclasses of conventional, regression-tested importers,
-as recommended in the README.
+as recommended in the `README <../README.rst>`__.
 
 
 Applying the Decorators to Importer Classes

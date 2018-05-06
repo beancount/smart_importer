@@ -87,8 +87,18 @@ The smart importer is added to the ``CONFIG`` array in the same way as any other
 
 
 
+
+Documentation
+-------------
+
+This section explains in detail
+the relevant concepts and artifacts
+needed for creating smart beancount importer.
+
+
+
 System Overview
----------------
+~~~~~~~~~~~~~~~
 
 The following figure provides an overview of the import process and its components.
 
@@ -100,29 +110,20 @@ The following figure provides an overview of the import process and its componen
    System overview showing the process how smart importers are used to predict and suggest values in the transactions to be imported.
 
 
-1. The user executes ``bean-extract`` in order to import downloaded bank statements into beancount.
-2. The user must specify an import configuration file for ``bean-extract``. This file defines a list of importers to be used by beancount.ingest.
-3. ```beancount.ingest`` invokes a matching importer.
+1. The user executes ``bean-extract -f existing_transactions.beancount`` in order to import downloaded bank statements into beancount.
+   Note: Instead of invoking the importer directly, a user may work with a GUI such as `fava <https://github.com/beancount/fava>`__.
+2. The user specifies an import configuration file for ``bean-extract``. This file can be named, for example, ``example.import``. It is a regular python file that defines a list of importers to be used by beancount.ingest.
+3. ``beancount.ingest`` invokes a matching importer.
 4. The importer reads the downloaded bank statement, typically a CSV file, and extracts beancount transactions from it.
-5. Smart importers read existing beancount entries and use them to train a machine learning model.
-6. Smart importers use the trained machine learning model to enhance the extracted transactions with predictions and suggestions.
+   Note: Beancount importers are described in the `beancount ingest <http://furius.ca/beancount/doc/ingest>`__ documentation.
+5. Smart importers extend the functionlity of regular beancount importers. They read existing beancount entries and use them to train a machine learning model.
+6. The smart importer uses the trained machine learning model to enhance the extracted transactions with predictions and suggestions.
 7. The resulting transactions are returned to the user.
 
 
 
-Usage
------
-
-This section explains relevant concepts and artifacts
-and guides through the creation of a smart beancount importer.
-
-
 Beancount Importers
 ~~~~~~~~~~~~~~~~~~~~
-
-The documentation on `beancount ingest <http://furius.ca/beancount/doc/ingest>`__
-describes how users can write their own importers
-and use them to convert downloaded bank statements into lists of beancount transactions.
 
 This documentation assumes you have created beancount importers already.
 For example, an importer for "MyBank" called ``MyBankImporter``:
@@ -133,6 +134,11 @@ For example, an importer for "MyBank" called ``MyBankImporter``:
         """My existing importer"""
         # the actual importer logic would be here...
         pass
+
+The documentation on `beancount ingest <http://furius.ca/beancount/doc/ingest>`__
+describes how users can write their own importers
+and use them to convert downloaded bank statements into lists of beancount transactions.
+
 
 
 Applying `smart_importer` Decorators
@@ -167,7 +173,7 @@ and thus employs machine learnign to predict missing second postings.
 Note that the decorators can be applied to either an importer class, as shown above, or its extract method.
 The result is the same in both cases.
 See `Applying the Decorators <docs/Applying_the_Decorators.rst>`__
-for a description of various ways how the decorators can be applied to importers.
+for a description of various alternative ways of applying the decorators to importers.
 
 
 
@@ -176,15 +182,13 @@ Specifying Training Data
 
 The ``smart_importer`` decorators must be fed with training data in order to be effective.
 
-Training data can be provided directly as an argument ``training_data`` to the decorators:
-
-.. code:: python
-
-    @PredictPostings(training_data='ledger.beancount')
+Training data can be specified by calling bean-extract with an argument that references existing beancount transactions,
+e.g., ``bean-extract -f existing_transactions.beancount``.
 
 
-If training data is not provided as an argument,
-the decorators try to use the ``existing_entries`` that can be passed to an importer's ``extract`` method.
+See `Specifying Training Data <docs/Specifying_Training_Data.rst>`__
+for additional options how training data can be provided to the decorators.
+
 
 
 
