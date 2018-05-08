@@ -178,7 +178,6 @@ class PredictPostings:
             return self.imported_entries
 
         updated_transactions: List[Transaction]
-        updated_transactions = self.imported_entries
         updated_transactions = list(filter_txns(self.imported_entries))
 
         # predict missing second postings

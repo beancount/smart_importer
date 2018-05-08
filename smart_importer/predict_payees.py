@@ -8,7 +8,7 @@ import logging
 from functools import wraps
 from typing import List, Union
 
-from beancount.core.data import Transaction
+from beancount.core.data import Transaction, filter_txns
 from beancount.ingest.cache import _FileMemo
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -77,9 +77,9 @@ class PredictPayees:
 
             logger.debug(f"About to call the importer's extract function to receive entries to be imported...")
             if 'existing_entries' in inspect.signature(original_extract_function).parameters:
-                decorator.imported_transactions = original_extract_function(self, file, existing_entries)
+                decorator.imported_entries = original_extract_function(self, file, existing_entries)
             else:
-                decorator.imported_transactions = original_extract_function(self, file)
+                decorator.imported_entries = original_extract_function(self, file)
 
             return decorator.enhance_transactions()
 
@@ -131,23 +131,25 @@ class PredictPayees:
         if not self._trained:
             logger.warning("Cannot generate predictions or suggestions "
                            "because there is no trained machine learning model.")
-            return self.imported_transactions
+            return self.imported_entries
+
+        updated_transactions: List[Transaction]
+        updated_transactions = list(filter_txns(self.imported_entries))
 
         # predict payees
-        self.transactions = self.imported_transactions
         if self.predict_payees:
             logger.debug("About to generate predictions for payees...")
             predicted_payees: List[str]
-            predicted_payees = self.pipeline.predict(self.transactions)
-            self.transactions = [ml.add_payee_to_transaction(*t_p, overwrite=self.overwrite_existing_payees)
-                            for t_p in zip(self.transactions, predicted_payees)]
+            predicted_payees = self.pipeline.predict(updated_transactions)
+            updated_transactions = [ml.add_payee_to_transaction(*t_p, overwrite=self.overwrite_existing_payees)
+                            for t_p in zip(updated_transactions, predicted_payees)]
             logger.debug("Finished adding predicted payees to the transactions to be imported.")
 
         # suggest likely payees
         if self.suggest_payees:
             # get values from the SVC decision function
             logger.debug("About to generate suggestions about likely payees...")
-            decision_values = self.pipeline.decision_function(self.imported_transactions)
+            decision_values = self.pipeline.decision_function(updated_transactions)
 
             # add a human-readable class label (i.e., payee's name) to each value, and sort by value:
             suggested_payees = [[payee for _, payee in sorted(list(zip(distance_values, self.pipeline.classes_)),
@@ -155,10 +157,17 @@ class PredictPayees:
                                 for distance_values in decision_values]
 
             # add the suggested payees to each transaction:
-            self.transactions = [ml.add_suggested_payees_to_transaction(*t_p)
-                            for t_p in zip(self.transactions, suggested_payees)]
+            updated_transactions = [ml.add_suggested_payees_to_transaction(*t_p)
+                            for t_p in zip(updated_transactions, suggested_payees)]
             logger.debug("Finished adding suggested payees to the transactions to be imported.")
 
-        return self.transactions
+        # merge the imported non trx transactions in
+        result_entries = []
+        updated_transactions_iter = iter(updated_transactions)
+        for entry in self.imported_entries:
+            if isinstance(entry, Transaction):
+                result_entries.append(next(updated_transactions_iter))
+            else:
+                result_entries.append(entry)
 
-
+        return result_entries
