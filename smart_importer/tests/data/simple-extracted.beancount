@@ -13,6 +13,8 @@
 2017-01-10 * "Walmarts" "Groceries"
     Assets:US:BofA:Checking  -53.70 USD
 
+2017-01-20 balance Assets:Foo:Bar 30 USD
+
 2017-01-10 * "Gimme Coffee" "Coffee"
     Assets:US:BofA:Checking  -5.00 USD
 

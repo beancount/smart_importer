@@ -28,3 +28,5 @@
   __suggested_accounts__: "["Expenses:Food:Coffee", "Expenses:Food:Groceries", "Expenses:Food:Restaurant", "Assets:US:BofA:Checking"]"
   Assets:US:BofA:Checking  -5.00 USD
   Expenses:Food:Coffee              
+
+2017-01-20 balance Assets:Foo:Bar                                  30 USD
