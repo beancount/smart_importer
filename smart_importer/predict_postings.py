@@ -177,23 +177,25 @@ class PredictPostings:
                            "because there is no trained machine learning model.")
             return self.imported_entries
 
-        updated_transactions: List[Transaction]
-        updated_transactions = list(filter_txns(self.imported_entries))
+        imported_transactions: List[Transaction]
+        imported_transactions = list(filter_txns(self.imported_entries))
+        enhanced_transactions: List[Transaction]
+        enhanced_transactions = list(imported_transactions)
 
         # predict missing second postings
         if self.predict_second_posting:
             logger.debug("About to generate predictions for missing second postings...")
             predicted_accounts: List[str]
-            predicted_accounts = self.pipeline.predict(updated_transactions)
-            updated_transactions = [ml.add_posting_to_transaction(*t_a)
-                                 for t_a in zip(updated_transactions, predicted_accounts)]
+            predicted_accounts = self.pipeline.predict(enhanced_transactions)
+            enhanced_transactions = [ml.add_posting_to_transaction(*t_a)
+                                 for t_a in zip(enhanced_transactions, predicted_accounts)]
             logger.debug("Finished adding predicted accounts to the transactions to be imported.")
 
         # suggest accounts that are likely involved in the transaction
         if self.suggest_accounts:
             # get values from the SVC decision function
             logger.debug("About to generate suggestions about related accounts...")
-            decision_values = self.pipeline.decision_function(updated_transactions)
+            decision_values = self.pipeline.decision_function(enhanced_transactions)
 
             # add a human-readable class label (i.e., account name) to each value, and sort by value:
             suggestions = [[account for _, account in sorted(list(zip(distance_values, self.pipeline.classes_)),
@@ -201,17 +203,8 @@ class PredictPostings:
                            for distance_values in decision_values]
 
             # add the suggested accounts to each transaction:
-            updated_transactions = [ml.add_suggested_accounts_to_transaction(*t_s)
-                                 for t_s in zip(updated_transactions, suggestions)]
+            enhanced_transactions = [ml.add_suggested_accounts_to_transaction(*t_s)
+                                 for t_s in zip(enhanced_transactions, suggestions)]
             logger.debug("Finished adding suggested accounts to the transactions to be imported.")
 
-        # merge the imported non trx transactions in
-        result_entries = []
-        updated_transactions_iter = iter(updated_transactions)
-        for entry in self.imported_entries:
-            if isinstance(entry, Transaction):
-                result_entries.append(next(updated_transactions_iter))
-            else:
-                result_entries.append(entry)
-
-        return result_entries
+        return ml.merge_non_transaction_entries(self.imported_entries, enhanced_transactions)

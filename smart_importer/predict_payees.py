@@ -133,23 +133,25 @@ class PredictPayees:
                            "because there is no trained machine learning model.")
             return self.imported_entries
 
-        updated_transactions: List[Transaction]
-        updated_transactions = list(filter_txns(self.imported_entries))
+        imported_transactions: List[Transaction]
+        imported_transactions = list(filter_txns(self.imported_entries))
+        enhanced_transactions: List[Transaction]
+        enhanced_transactions = list(imported_transactions)
 
         # predict payees
         if self.predict_payees:
             logger.debug("About to generate predictions for payees...")
             predicted_payees: List[str]
-            predicted_payees = self.pipeline.predict(updated_transactions)
-            updated_transactions = [ml.add_payee_to_transaction(*t_p, overwrite=self.overwrite_existing_payees)
-                            for t_p in zip(updated_transactions, predicted_payees)]
+            predicted_payees = self.pipeline.predict(enhanced_transactions)
+            enhanced_transactions = [ml.add_payee_to_transaction(*t_p, overwrite=self.overwrite_existing_payees)
+                            for t_p in zip(enhanced_transactions, predicted_payees)]
             logger.debug("Finished adding predicted payees to the transactions to be imported.")
 
         # suggest likely payees
         if self.suggest_payees:
             # get values from the SVC decision function
             logger.debug("About to generate suggestions about likely payees...")
-            decision_values = self.pipeline.decision_function(updated_transactions)
+            decision_values = self.pipeline.decision_function(enhanced_transactions)
 
             # add a human-readable class label (i.e., payee's name) to each value, and sort by value:
             suggested_payees = [[payee for _, payee in sorted(list(zip(distance_values, self.pipeline.classes_)),
@@ -157,17 +159,8 @@ class PredictPayees:
                                 for distance_values in decision_values]
 
             # add the suggested payees to each transaction:
-            updated_transactions = [ml.add_suggested_payees_to_transaction(*t_p)
-                            for t_p in zip(updated_transactions, suggested_payees)]
+            enhanced_transactions = [ml.add_suggested_payees_to_transaction(*t_p)
+                            for t_p in zip(enhanced_transactions, suggested_payees)]
             logger.debug("Finished adding suggested payees to the transactions to be imported.")
 
-        # merge the imported non trx transactions in
-        result_entries = []
-        updated_transactions_iter = iter(updated_transactions)
-        for entry in self.imported_entries:
-            if isinstance(entry, Transaction):
-                result_entries.append(next(updated_transactions_iter))
-            else:
-                result_entries.append(entry)
-
-        return result_entries
+        return ml.merge_non_transaction_entries(self.imported_entries, enhanced_transactions)
