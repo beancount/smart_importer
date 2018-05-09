@@ -121,6 +121,17 @@ def _add_suggestions_to_transaction(transaction: Transaction, suggestions: List[
     transaction = transaction._replace(meta=meta)
     return transaction
 
+def merge_non_transaction_entries(imported_entries, enhanced_transactions):
+    enhanced_entries = []
+    enhanced_transactions_iter = iter(enhanced_transactions)
+    for entry in imported_entries:
+        if isinstance(entry, Transaction):
+            enhanced_entries.append(next(enhanced_transactions_iter))
+        else:
+            enhanced_entries.append(entry)
+
+    return enhanced_entries
+
 TxnPostingAccount = NamedTuple('TxnPostingAccount', [
     ('txn', Transaction),
     ('posting', Posting),

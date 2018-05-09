@@ -7,7 +7,7 @@ import logging
 from functools import wraps
 from typing import List, Union
 
-from beancount.core.data import Transaction, TxnPosting
+from beancount.core.data import Transaction, TxnPosting, filter_txns
 from beancount.ingest.cache import _FileMemo
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -83,9 +83,9 @@ class PredictPostings:
             # read the importer's `extract`ed entries
             logger.debug(f"About to call the importer's extract function to receive entries to be imported...")
             if 'existing_entries' in inspect.signature(original_extract_function).parameters:
-                decorator.imported_transactions = original_extract_function(self, file, existing_entries)
+                decorator.imported_entries = original_extract_function(self, file, existing_entries)
             else:
-                decorator.imported_transactions = original_extract_function(self, file)
+                decorator.imported_entries = original_extract_function(self, file)
 
             # read the importer's file_account, to be used as default value for the decorator's known `account`:
             if inspect.ismethod(self.file_account) and not decorator.account:
@@ -175,23 +175,27 @@ class PredictPostings:
         if not self._trained:
             logger.warning("Cannot generate predictions or suggestions "
                            "because there is no trained machine learning model.")
-            return self.imported_transactions
+            return self.imported_entries
+
+        imported_transactions: List[Transaction]
+        imported_transactions = list(filter_txns(self.imported_entries))
+        enhanced_transactions: List[Transaction]
+        enhanced_transactions = list(imported_transactions)
 
         # predict missing second postings
-        self.transactions = self.imported_transactions
         if self.predict_second_posting:
             logger.debug("About to generate predictions for missing second postings...")
             predicted_accounts: List[str]
-            predicted_accounts = self.pipeline.predict(self.imported_transactions)
-            self.transactions = [ml.add_posting_to_transaction(*t_a)
-                                 for t_a in zip(self.transactions, predicted_accounts)]
+            predicted_accounts = self.pipeline.predict(enhanced_transactions)
+            enhanced_transactions = [ml.add_posting_to_transaction(*t_a)
+                                 for t_a in zip(enhanced_transactions, predicted_accounts)]
             logger.debug("Finished adding predicted accounts to the transactions to be imported.")
 
         # suggest accounts that are likely involved in the transaction
         if self.suggest_accounts:
             # get values from the SVC decision function
             logger.debug("About to generate suggestions about related accounts...")
-            decision_values = self.pipeline.decision_function(self.imported_transactions)
+            decision_values = self.pipeline.decision_function(enhanced_transactions)
 
             # add a human-readable class label (i.e., account name) to each value, and sort by value:
             suggestions = [[account for _, account in sorted(list(zip(distance_values, self.pipeline.classes_)),
@@ -199,8 +203,8 @@ class PredictPostings:
                            for distance_values in decision_values]
 
             # add the suggested accounts to each transaction:
-            self.transactions = [ml.add_suggested_accounts_to_transaction(*t_s)
-                                 for t_s in zip(self.transactions, suggestions)]
+            enhanced_transactions = [ml.add_suggested_accounts_to_transaction(*t_s)
+                                 for t_s in zip(enhanced_transactions, suggestions)]
             logger.debug("Finished adding suggested accounts to the transactions to be imported.")
 
-        return self.transactions
+        return ml.merge_non_transaction_entries(self.imported_entries, enhanced_transactions)
