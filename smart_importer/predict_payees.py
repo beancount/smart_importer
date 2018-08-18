@@ -17,12 +17,14 @@ from sklearn.svm import SVC
 from smart_importer import machinelearning_helpers as ml
 
 # configure logging
+from smart_importer.decorator_baseclass import SmartImporterDecorator
+
 LOG_LEVEL = logging.DEBUG
 logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 
-class PredictPayees:
+class PredictPayees(SmartImporterDecorator):
     '''
     Applying this decorator to a beancount importer or its extract method
     will predict and auto-complete missing payees
@@ -54,38 +56,11 @@ class PredictPayees:
         self.overwrite_existing_payees = overwrite_existing_payees
         self.suggest_payees = suggest_payees
 
-    def __call__(self, to_be_decorated=None, *args, **kwargs):
-
-        if inspect.isclass(to_be_decorated):
-            logger.debug('The Decorator was applied to a class.')
-            return self.patched_importer_class(to_be_decorated)
-
-        elif inspect.isfunction(to_be_decorated):
-            logger.debug('The Decorator was applied to an instancemethod.')
-            return self.patched_extract_function(to_be_decorated)
-
-    def patched_importer_class(self, importer_class):
-        importer_class.extract = self.patched_extract_function(importer_class.extract)
-        return importer_class
-
-    def patched_extract_function(self, original_extract_function):
-        decorator = self
-
-        @wraps(original_extract_function)
-        def wrapper(self, file, existing_entries=None):
-            decorator.existing_entries = existing_entries
-
-            logger.debug(f"About to call the importer's extract function to receive entries to be imported...")
-            if 'existing_entries' in inspect.signature(original_extract_function).parameters:
-                decorator.imported_entries = original_extract_function(self, file, existing_entries)
-            else:
-                decorator.imported_entries = original_extract_function(self, file)
-
-            return decorator.enhance_transactions()
-
-        return wrapper
-
-    def enhance_transactions(self):# load training data
+    def enhance_transactions(self):
+        '''
+        Adds predicted payees to the transactions.
+        '''
+        # load training data
         self.training_data = ml.load_training_data(
             self.training_data,
             known_account=self.account,
@@ -144,7 +119,7 @@ class PredictPayees:
             predicted_payees: List[str]
             predicted_payees = self.pipeline.predict(enhanced_transactions)
             enhanced_transactions = [ml.add_payee_to_transaction(*t_p, overwrite=self.overwrite_existing_payees)
-                            for t_p in zip(enhanced_transactions, predicted_payees)]
+                                     for t_p in zip(enhanced_transactions, predicted_payees)]
             logger.debug("Finished adding predicted payees to the transactions to be imported.")
 
         # suggest likely payees
@@ -160,7 +135,7 @@ class PredictPayees:
 
             # add the suggested payees to each transaction:
             enhanced_transactions = [ml.add_suggested_payees_to_transaction(*t_p)
-                            for t_p in zip(enhanced_transactions, suggested_payees)]
+                                     for t_p in zip(enhanced_transactions, suggested_payees)]
             logger.debug("Finished adding suggested payees to the transactions to be imported.")
 
         return ml.merge_non_transaction_entries(self.imported_entries, enhanced_transactions)
