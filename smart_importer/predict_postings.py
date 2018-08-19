@@ -38,11 +38,6 @@ class PredictPostings(SmartImporterDecorator):
           # do the import, return list of entries
     '''
 
-    # Implementation notes for how to write decorators for classes, see e.g.,
-    # https://stackoverflow.com/a/9910180
-    # https://www.codementor.io/sheena/advanced-use-python-decorators-class-function-du107nxsv
-    # https://andrefsp.wordpress.com/2012/08/23/writing-a-class-decorator-in-python/
-
     def __init__(
             self,
             *,
@@ -58,6 +53,10 @@ class PredictPostings(SmartImporterDecorator):
         self._trained = False
 
     def main(self):
+        '''
+        The decorator's main method predicts and auto-completes missing second postings
+        of the transactions to be imported.
+        '''
         try:
             self.load_training_data()
             self.prepare_training_data()
@@ -69,12 +68,23 @@ class PredictPostings(SmartImporterDecorator):
             return self.imported_entries
 
     def load_training_data(self):
+        '''
+        Loads training data, i.e., a list of beancount entries.
+        '''
         self.training_data = ml.load_training_data(
             self.training_data,
             known_account=self.account,
             existing_entries=self.existing_entries)
 
     def prepare_training_data(self):
+        '''
+        Prepares the training data in preparation for defining and training the machine learning pipeline.
+        Specifically, this method converts the training data into a list of `TxnPostingAccount` objects.
+        This list contains tuples of:
+        * one transaction (for each transaction within the training data),
+        * one posting (for each posting in every transaction), primarily used for that posting's account name,
+        * and one other account name (for each other account in the same transaction).
+        '''
         self.converted_training_data = [ml.TxnPostingAccount(t, p, pRef.account)
                                         for t in self.training_data
                                         for pRef in t.postings
@@ -82,6 +92,11 @@ class PredictPostings(SmartImporterDecorator):
                                         if p.account != pRef.account]
 
     def define_pipeline(self):
+        '''
+        Defines the machine learning pipeline.
+        The pipeline definition is created dynamically depending on available training data.
+        For example, payees are only included as feature in the pipeline if the training data contains payees.
+        '''
         if not self.converted_training_data:
             raise ValueError("Cannot define the machine learning pipeline "
                              "because the converted training data is empty")
@@ -130,6 +145,9 @@ class PredictPostings(SmartImporterDecorator):
         ])
 
     def train_pipeline(self):
+        '''
+        Trains the machine learning pipeline.
+        '''
         if not self.converted_training_data:
             raise ValueError("Cannot train the machine learning model "
                              "because the converted training data is empty")
@@ -144,8 +162,8 @@ class PredictPostings(SmartImporterDecorator):
 
     def process_entries(self) -> List[Union[ALL_DIRECTIVES]]:
         '''
-        Processes all imported entries (transactions and others).
-        All transactions are enhanced, all other entries are left as is.
+        Processes all imported entries (transactions as well as other types of entries).
+        Transactions are enhanced, but all other entries are left as is.
         :return: Returns the list of entries to be imported.
         '''
         imported_transactions: List[Transaction]

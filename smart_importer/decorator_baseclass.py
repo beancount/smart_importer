@@ -40,6 +40,11 @@ class SmartImporterDecorator(metaclass=ABCMeta):
         '''
         self.training_data = training_data
 
+    # Implementation notes for how to write decorators for classes, see e.g.,
+    # https://stackoverflow.com/a/9910180
+    # https://www.codementor.io/sheena/advanced-use-python-decorators-class-function-du107nxsv
+    # https://andrefsp.wordpress.com/2012/08/23/writing-a-class-decorator-in-python/
+
     def __call__(self, to_be_decorated=None, *args, **kwargs):
         '''
         This method is called when the decorator is applied.
@@ -103,7 +108,7 @@ class SmartImporterDecorator(metaclass=ABCMeta):
     @abstractmethod
     def main(self) -> List[Union[ALL_DIRECTIVES]]:
         '''
-        The decorator's main method, to be implemented by decorators that inherit from this class:
+        The decorator's main method, to be implemented by inheriting classes with the following functionality:
         1. read `self.imported_entries`
         2. process these entries
         3. return possibly modified entries
