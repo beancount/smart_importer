@@ -2,12 +2,10 @@
 Decorator for Beancount Importer classes
 that suggests and predicts postings using machine learning.
 """
-import inspect
 import logging
-from functools import wraps
 from typing import List, Union
 
-from beancount.core.data import Transaction, filter_txns
+from beancount.core.data import Transaction, filter_txns, ALL_DIRECTIVES
 from beancount.ingest.cache import _FileMemo
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -59,13 +57,13 @@ class PredictPostings(SmartImporterDecorator):
         self.suggest_accounts = suggest_accounts
         self._trained = False
 
-    def enhance_transactions(self):
+    def main(self):
         try:
             self.load_training_data()
             self.prepare_training_data()
             self.define_pipeline()
             self.train_pipeline()
-            return self.process_transactions()
+            return self.process_entries()
         except (ValueError, AssertionError) as e:
             logger.error(e)
             return self.imported_entries
@@ -144,25 +142,38 @@ class PredictPostings(SmartImporterDecorator):
                           ml.GetPostingAccount().transform(self.converted_training_data))
         logger.info("Finished training the machine learning model.")
 
-    def process_transactions(self):
+    def process_entries(self) -> List[Union[ALL_DIRECTIVES]]:
+        '''
+        Processes all imported entries (transactions and others).
+        All transactions are enhanced, all other entries are left as is.
+        :return: Returns the list of entries to be imported.
+        '''
         imported_transactions: List[Transaction]
         imported_transactions = list(filter_txns(self.imported_entries))
-        enhanced_transactions: List[Transaction]
-        enhanced_transactions = list(imported_transactions)
+        enhanced_transactions = self.process_transactions(list(imported_transactions))
+        return ml.merge_non_transaction_entries(self.imported_entries, enhanced_transactions)
 
+    def process_transactions(self, transactions: List[Transaction]) -> List[Transaction]:
+        '''
+        Processes all imported transactions:
+        * Predicts missing second postings.
+        * Suggests accounts that are likely also involved in the transaction
+        :param transactions: List of beancount transactions
+        :return: List of beancount transactions
+        '''
         # predict missing second postings
         if self.predict_second_posting:
             logger.debug("About to generate predictions for missing second postings...")
             predicted_accounts: List[str]
-            predicted_accounts = self.pipeline.predict(enhanced_transactions)
-            enhanced_transactions = [ml.add_posting_to_transaction(*t_a)
-                                     for t_a in zip(enhanced_transactions, predicted_accounts)]
+            predicted_accounts = self.pipeline.predict(transactions)
+            transactions = [ml.add_posting_to_transaction(*t_a)
+                            for t_a in zip(transactions, predicted_accounts)]
             logger.debug("Finished adding predicted accounts to the transactions to be imported.")
         # suggest accounts that are likely involved in the transaction
         if self.suggest_accounts:
             # get values from the SVC decision function
             logger.debug("About to generate suggestions about related accounts...")
-            decision_values = self.pipeline.decision_function(enhanced_transactions)
+            decision_values = self.pipeline.decision_function(transactions)
 
             # add a human-readable class label (i.e., account name) to each value, and sort by value:
             suggestions = [[account for _, account in sorted(list(zip(distance_values, self.pipeline.classes_)),
@@ -170,7 +181,7 @@ class PredictPostings(SmartImporterDecorator):
                            for distance_values in decision_values]
 
             # add the suggested accounts to each transaction:
-            enhanced_transactions = [ml.add_suggested_accounts_to_transaction(*t_s)
-                                     for t_s in zip(enhanced_transactions, suggestions)]
+            transactions = [ml.add_suggested_accounts_to_transaction(*t_s)
+                            for t_s in zip(transactions, suggestions)]
             logger.debug("Finished adding suggested accounts to the transactions to be imported.")
-        return ml.merge_non_transaction_entries(self.imported_entries, enhanced_transactions)
+        return transactions

@@ -44,7 +44,7 @@ class SmartImporterDecorator(metaclass=ABCMeta):
         '''
         This method is called when the decorator is applied.
         It may be applied to a beancount importer class or to its extract method,
-        the resulting behavior is the same.
+        the resulting behavior shall be the same.
         '''
         if inspect.isclass(to_be_decorated):
             logger.debug('The Decorator was applied to a class.')
@@ -52,33 +52,37 @@ class SmartImporterDecorator(metaclass=ABCMeta):
 
         elif inspect.isfunction(to_be_decorated):
             logger.debug('The Decorator was applied to an instancemethod.')
-            return self.patched_extract_function(to_be_decorated)
+            return self.patched_extract_method(to_be_decorated)
 
     def patched_importer_class(self, importer_class):
         '''
-        Patches a beancount importer class by modifying its extract function.
+        Patches a beancount importer class by modifying its extract method.
+        :param importer_class: The original importer class
+        :return: The modified importer class with a patched extract method.
         '''
-        importer_class.extract = self.patched_extract_function(importer_class.extract)
+        importer_class.extract = self.patched_extract_method(importer_class.extract)
         return importer_class
 
-    def patched_extract_function(self, original_extract_function):
+    def patched_extract_method(self, original_extract_method):
         '''
         Patches a beancount importer's extract method by wrapping it.
+        :param original_extract_method: The importer's original extract method
+        :return: A patched extract method, created by wrapping the original extract method.
         '''
         decorator = self
 
-        @wraps(original_extract_function)
+        @wraps(original_extract_method)
         def wrapper(self, file, existing_entries=None):
 
             # read the importer's existing entries, if provided as argument to its `extract` method:
             decorator.existing_entries = existing_entries
 
             # read the importer's `extract`ed entries
-            logger.debug(f"About to call the importer's extract function to receive entries to be imported...")
-            if 'existing_entries' in inspect.signature(original_extract_function).parameters:
-                decorator.imported_entries = original_extract_function(self, file, existing_entries)
+            logger.debug(f"About to call the importer's extract method to receive entries to be imported...")
+            if 'existing_entries' in inspect.signature(original_extract_method).parameters:
+                decorator.imported_entries = original_extract_method(self, file, existing_entries)
             else:
-                decorator.imported_entries = original_extract_function(self, file)
+                decorator.imported_entries = original_extract_method(self, file)
 
             # read the importer's file_account, to be used as default value for the decorator's known `account`:
             if inspect.ismethod(self.file_account) and not decorator.account:
@@ -92,14 +96,16 @@ class SmartImporterDecorator(metaclass=ABCMeta):
                 else:
                     logger.debug(f"Could not retrieve file_account from the importer.")
 
-            return decorator.enhance_transactions()
+            return decorator.main()
 
         return wrapper
 
     @abstractmethod
-    def enhance_transactions(self) -> List[Union[ALL_DIRECTIVES]]:
+    def main(self) -> List[Union[ALL_DIRECTIVES]]:
         '''
-        Decorators that inherit from `SmartImporterDecorator` shall implement this method to enhance and then return
-        `self.imported_entries`.
+        The decorator's main method, to be implemented by decorators that inherit from this class:
+        1. read `self.imported_entries`
+        2. process these entries
+        3. return possibly modified entries
         '''
         pass

@@ -56,7 +56,7 @@ class PredictPayees(SmartImporterDecorator):
         self.overwrite_existing_payees = overwrite_existing_payees
         self.suggest_payees = suggest_payees
 
-    def enhance_transactions(self):
+    def main(self):
         '''
         Adds predicted payees to the transactions.
         '''
