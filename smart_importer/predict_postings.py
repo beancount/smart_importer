@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 class PredictPostings(SmartImporterDecorator):
     '''
     Applying this decorator to a beancount importer or its extract method
-    will predict and auto-complete missing second postings
-    of the transactions to be imported.
+    will predict and suggest account names
+    for imported transactions.
 
     Example:
 
@@ -50,12 +50,11 @@ class PredictPostings(SmartImporterDecorator):
         self.account = account
         self.predict_second_posting = predict_second_posting
         self.suggest_accounts = suggest_accounts
-        self._trained = False
 
     def main(self):
         '''
-        The decorator's main method predicts and auto-completes missing second postings
-        of the transactions to be imported.
+        The decorator's main method predicts and suggests the account names
+        for imported transactions.
         '''
         try:
             self.load_training_data()
@@ -93,7 +92,7 @@ class PredictPostings(SmartImporterDecorator):
 
     def define_pipeline(self):
         '''
-        Defines the machine learning pipeline.
+        Defines the machine learning pipeline for predicting and suggesting postings.
         The pipeline definition is created dynamically depending on available training data.
         For example, payees are only included as feature in the pipeline if the training data contains payees.
         '''
