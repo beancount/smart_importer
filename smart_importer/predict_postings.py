@@ -60,29 +60,15 @@ class PredictPostings(SmartImporterDecorator):
         self._trained = False
 
     def enhance_transactions(self):
-        self.load_training_data()
-        self.prepare_training_data()
-
-        if not self.converted_training_data:
-            logger.warning("Cannot train the machine learning model "
-                           "because the training data is empty.")
-        elif len(self.converted_training_data) < 2:
-            logger.warning("Cannot train the machine learning model "
-                           "because the training data consists of less than two elements.")
-        else:
+        try:
+            self.load_training_data()
+            self.prepare_training_data()
             self.define_pipeline()
-            logger.debug("About to train the machine learning model...")
-            self.pipeline.fit(self.converted_training_data,
-                              ml.GetPostingAccount().transform(self.converted_training_data))
-            logger.info("Finished training the machine learning model.")
-            self._trained = True
-
-        if not self._trained:
-            logger.warning("Cannot generate predictions or suggestions "
-                           "because there is no trained machine learning model.")
+            self.train_pipeline()
+            return self.process_transactions()
+        except (ValueError, AssertionError) as e:
+            logger.error(e)
             return self.imported_entries
-
-        return self.process_transactions()
 
     def load_training_data(self):
         self.training_data = ml.load_training_data(
@@ -98,6 +84,14 @@ class PredictPostings(SmartImporterDecorator):
                                         if p.account != pRef.account]
 
     def define_pipeline(self):
+        if not self.converted_training_data:
+            raise ValueError("Cannot define the machine learning pipeline "
+                             "because the converted training data is empty")
+
+        if len(self.converted_training_data) < 2:
+            raise ValueError("Cannot define the machine learning pipeline "
+                             "because the training data consists of less than two elements.")
+
         transformers = []
         transformer_weights = {}
         transformers.append(
@@ -137,11 +131,25 @@ class PredictPostings(SmartImporterDecorator):
             ('svc', SVC(kernel='linear')),
         ])
 
+    def train_pipeline(self):
+        if not self.converted_training_data:
+            raise ValueError("Cannot train the machine learning model "
+                             "because the converted training data is empty")
+
+        if len(self.converted_training_data) < 2:
+            raise ValueError("Cannot train the machine learning model "
+                             "because the training data consists of less than two elements.")
+
+        self.pipeline.fit(self.converted_training_data,
+                          ml.GetPostingAccount().transform(self.converted_training_data))
+        logger.info("Finished training the machine learning model.")
+
     def process_transactions(self):
         imported_transactions: List[Transaction]
         imported_transactions = list(filter_txns(self.imported_entries))
         enhanced_transactions: List[Transaction]
         enhanced_transactions = list(imported_transactions)
+
         # predict missing second postings
         if self.predict_second_posting:
             logger.debug("About to generate predictions for missing second postings...")
