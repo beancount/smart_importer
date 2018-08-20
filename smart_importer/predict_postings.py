@@ -44,7 +44,7 @@ class PredictPostings(SmartImporterDecorator):
             training_data: Union[_FileMemo, List[Transaction], str] = None,
             account: str = None,
             predict_second_posting: bool = True,
-            suggest_accounts: bool = True
+            suggest_accounts: bool = False,
     ):
         self.training_data = training_data
         self.account = account

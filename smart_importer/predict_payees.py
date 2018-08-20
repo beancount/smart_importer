@@ -47,7 +47,7 @@ class PredictPayees(SmartImporterDecorator):
                  account: str = None,
                  predict_payees: bool = True,
                  overwrite_existing_payees=False,
-                 suggest_payees: bool = True):
+                 suggest_payees: bool = False):
         self.training_data = training_data
         self.account = account
         self.predict_payees = predict_payees
