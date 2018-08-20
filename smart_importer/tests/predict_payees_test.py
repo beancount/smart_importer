@@ -120,7 +120,8 @@ class PredictPayeesTest(unittest.TestCase):
         @PredictPayees(
             training_data=Testdata.training_data,
             account="Assets:US:BofA:Checking",
-            overwrite_existing_payees=False
+            overwrite_existing_payees=False,
+            suggest_payees=True,
         )
         class DecoratedTestImporter(BasicTestImporter):
             pass

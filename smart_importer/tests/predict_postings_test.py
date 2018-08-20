@@ -115,7 +115,8 @@ class PredictPostingsTest(unittest.TestCase):
         # define and decorate an importer:
         @PredictPostings(
             training_data=Testdata.training_data,
-            account="Assets:US:BofA:Checking"
+            account="Assets:US:BofA:Checking",
+            suggest_accounts=True,
         )
         class DecoratedTestImporter(BasicTestImporter):
             pass
