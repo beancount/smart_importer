@@ -6,8 +6,6 @@ from typing import List, Union
 
 from beancount.core.data import Transaction, ALL_DIRECTIVES
 
-LOG_LEVEL = logging.DEBUG
-logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 

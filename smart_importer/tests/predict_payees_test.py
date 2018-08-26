@@ -11,17 +11,7 @@ from beancount.parser import parser
 from smart_importer import machinelearning_helpers as ml
 from smart_importer.predict_payees import PredictPayees
 
-LOG_LEVEL = logging.DEBUG
-logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
-
-# colorize the log output if the coloredlogs package is available
-try:
-    import coloredlogs
-except ImportError as e:
-    coloredlogs = None
-if coloredlogs:
-    coloredlogs.install(level=LOG_LEVEL)
 
 
 class Testdata:
@@ -267,6 +257,18 @@ class PredictPostingsDecorationTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    # configure log level
+    LOG_LEVEL = logging.DEBUG
+    logging.basicConfig(level=LOG_LEVEL)
+
+    # colorize the log output if the coloredlogs package is available
+    try:
+        import coloredlogs
+    except ImportError as e:
+        coloredlogs = None
+    if coloredlogs:
+        coloredlogs.install(level=LOG_LEVEL)
+
     # show test case execution output iff logging level is DEBUG or finer:
     show_output = LOG_LEVEL <= logging.DEBUG
     unittest.main(buffer=not show_output)

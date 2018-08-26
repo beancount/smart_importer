@@ -10,18 +10,7 @@ from beancount.parser import parser
 
 from smart_importer.predict_postings import PredictPostings
 
-LOG_LEVEL = logging.DEBUG
-logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
-
-# colorize the log output if the coloredlogs package is available
-try:
-    import coloredlogs
-except ImportError as e:
-    coloredlogs = None
-if coloredlogs:
-    coloredlogs.install(level=LOG_LEVEL)
-
 
 class Testdata:
     test_data: List[Transaction]
@@ -253,6 +242,18 @@ class PredictPostingsDecorationTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    # set log level to debug
+    LOG_LEVEL = logging.DEBUG
+    logging.basicConfig(level=LOG_LEVEL)
+
+    # use colored logs module, if available
+    try:
+        import coloredlogs
+    except ImportError as e:
+        coloredlogs = None
+    if coloredlogs:
+        coloredlogs.install(level=LOG_LEVEL)
+
     # show test case execution output iff logging level is DEBUG or finer:
     show_output = LOG_LEVEL <= logging.DEBUG
     unittest.main(buffer=not show_output)
