@@ -93,7 +93,9 @@ Documentation
 
 This section explains in detail
 the relevant concepts and artifacts
-needed for creating smart beancount importer.
+needed for enhancing beancount importers
+with machine learning
+using `smart_importer` decorators.
 
 
 
@@ -125,8 +127,12 @@ The following figure provides an overview of the import process and its componen
 Beancount Importers
 ~~~~~~~~~~~~~~~~~~~~
 
-This documentation assumes you have created beancount importers already.
-For example, an importer for "MyBank" called ``MyBankImporter``:
+This documentation assumes you know how to create beancount importers.
+Relevant documentation can be found under `beancount ingest <http://furius.ca/beancount/doc/ingest>`__.
+Using beancount.ingest, users can write their own importers
+and use them to convert downloaded bank statements into lists of beancount entries.
+
+For example, let's assume you have created an importer for "MyBank" called ``MyBankImporter``:
 
 .. code:: python
 
@@ -135,9 +141,6 @@ For example, an importer for "MyBank" called ``MyBankImporter``:
         # the actual importer logic would be here...
         pass
 
-The documentation on `beancount ingest <http://furius.ca/beancount/doc/ingest>`__
-describes how users can write their own importers
-and use them to convert downloaded bank statements into lists of beancount transactions.
 
 
 
@@ -293,6 +296,46 @@ Development
 
 Pull requests welcome!
 
+
+Executing the Unit Tests
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Simply run:
+
+.. code:: bash
+
+    # to run unittests:
+    make test
+
+
+
+Configuring Logging
+~~~~~~~~~~~~~~~~~~~
+
+Python's `logging` module is used by the smart_importer decorators.
+The decorators' log level can be increased (or otherwise changed)
+by modifying loggers named after the smart_importer module structure,
+for example as follows:
+
+
+.. code:: python
+
+    import logging
+    import smart_importer
+
+    # change smart_importer's log level:
+    smart_importer_logger = logging.getLogger(smart_importer.__name__)
+    smart_importer_logger.setLevel(logging.DEBUG)
+
+
+
+Colorizing the Log Output
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+smart_importer's unit tests produce colorized console output
+if the `coloredlogs` module is available.
+To make use of this feature, simply install coloredlogs,
+as follows:
 
 .. code:: bash
 

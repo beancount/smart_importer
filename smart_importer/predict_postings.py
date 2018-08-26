@@ -12,12 +12,8 @@ from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 
 from smart_importer import machinelearning_helpers as ml
-
-# configure logging
 from smart_importer.decorator_baseclass import SmartImporterDecorator
 
-LOG_LEVEL = logging.DEBUG
-logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 
