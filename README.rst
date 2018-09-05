@@ -27,8 +27,7 @@ and must therefore be installed from source:
 .. code:: bash
 
     git clone https://github.com/beancount/smart_importer.git
-    cd smart_importer
-    pip install --editable .
+    pip install --editable smart_importer
 
 
 
