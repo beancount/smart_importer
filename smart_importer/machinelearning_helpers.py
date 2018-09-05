@@ -66,8 +66,8 @@ def add_posting_to_transaction(transaction: Transaction, postings_account: str) 
     Adds a posting with specified postings_account to a transaction.
     '''
 
-    ## implementation note:
-    ## for how to modify transactions, see this code from beancount.core.interpolate.py:
+    # implementation note:
+    # for how to modify transactions, see this code from beancount.core.interpolate.py:
     # new_postings = list(entry.postings)
     # new_postings.extend(get_residual_postings(residual, account_rounding))
     # entry = entry._replace(postings=new_postings)
@@ -121,6 +121,7 @@ def _add_suggestions_to_transaction(transaction: Transaction, suggestions: List[
     transaction = transaction._replace(meta=meta)
     return transaction
 
+
 def merge_non_transaction_entries(imported_entries, enhanced_transactions):
     enhanced_entries = []
     enhanced_transactions_iter = iter(enhanced_transactions)
@@ -132,10 +133,12 @@ def merge_non_transaction_entries(imported_entries, enhanced_transactions):
 
     return enhanced_entries
 
+
 TxnPostingAccount = NamedTuple('TxnPostingAccount', [
     ('txn', Transaction),
     ('posting', Posting),
     ('account', str)])
+
 
 class ItemSelector(BaseEstimator, TransformerMixin):
     """
@@ -279,6 +282,7 @@ class GetPostingAccount(TransformerMixin, NoFitMixin):
         elif isinstance(d, TxnPostingAccount):
             return d.posting.account
 
+
 class GetReferencePostingAccount(TransformerMixin, NoFitMixin):
     '''
     Scikit-learn transformer to extract the reference account name.
@@ -295,6 +299,7 @@ class GetReferencePostingAccount(TransformerMixin, NoFitMixin):
             return d.postings[0].account
         elif isinstance(d, TxnPostingAccount):
             return d.account
+
 
 class GetDayOfMonth(TransformerMixin, NoFitMixin):
     '''
