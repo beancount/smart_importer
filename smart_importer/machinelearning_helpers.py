@@ -2,10 +2,9 @@
 
 import json
 import logging
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Tuple, NamedTuple
 
 import numpy as np
-from typing import Tuple, NamedTuple
 from beancount import loader
 from beancount.core.data import Transaction, Posting, TxnPosting, filter_txns
 from beancount.ingest.cache import _FileMemo
@@ -17,17 +16,19 @@ logger = logging.getLogger(__name__)
 def load_training_data(training_data: Union[_FileMemo, List[Transaction], str],
                        known_account: str = None,
                        existing_entries: List[Tuple] = None) -> List[Transaction]:
-    '''
-    Loads training data
+    """Load training data.
+
     :param training_data: The training data that shall be loaded.
         Can be provided as a string (the filename pointing to a beancount file),
         a _FileMemo instance,
-        or a list of beancount entries
+        or a list of Beancount entries
     :param known_account: Optional filter for the training data.
-        If provided, the training data is filtered to only include transactions that involve the specified account.
-    :param existing_entries: Optional existing entries to use instead of explicit training_data
-    :return: Returns a list of beancount entries.
-    '''
+        If provided, the training data is filtered to only include transactions
+        that involve the specified account.
+    :param existing_entries: Optional existing entries to use instead of
+        explicit training_data
+    :return: A list of Beancount entries.
+    """
     if not training_data and existing_entries:
         logger.debug("Using existing entries for training data")
         training_data = list(filter_txns(existing_entries))
@@ -52,19 +53,19 @@ def load_training_data(training_data: Union[_FileMemo, List[Transaction], str],
 
 
 def transaction_involves_account(transaction: Transaction, account: Optional[str]) -> bool:
-    '''
+    """
     Returns whether a transactions involves a specific account,
     i.e., if any one of the transaction's postings uses the specified account name.
-    '''
+    """
     if account is None:
         return True
     return any([posting.account == account for posting in transaction.postings])
 
 
 def add_posting_to_transaction(transaction: Transaction, postings_account: str) -> Transaction:
-    '''
+    """
     Adds a posting with specified postings_account to a transaction.
-    '''
+    """
 
     # implementation note:
     # for how to modify transactions, see this code from beancount.core.interpolate.py:
@@ -84,9 +85,9 @@ def add_posting_to_transaction(transaction: Transaction, postings_account: str) 
 
 
 def add_payee_to_transaction(transaction: Transaction, payee: str, overwrite=False) -> Transaction:
-    '''
+    """
     Sets a transactions's payee.
-    '''
+    """
     if not transaction.payee or overwrite:
         transaction = transaction._replace(payee=payee)
     return transaction
@@ -220,22 +221,22 @@ class ArrayCaster(BaseEstimator, TransformerMixin):
 
 
 class NoFitMixin:
-    '''
+    """
     Mixin that helps implementing a custom scikit-learn transformer.
     This mixing implements a transformer's fit method that simply returns self.
     Compare https://signal-to-noise.xyz/post/sklearn-pipeline/
-    '''
+    """
 
     def fit(self, X, y=None):
         return self
 
 
 class GetPayee(TransformerMixin, NoFitMixin):
-    '''
+    """
     Scikit-learn transformer to extract the payee.
     The input can be of type List[Transaction] or List[TxnPostingAccount],
     the output is a List[str].
-    '''
+    """
 
     def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._get_payee(d) for d in data]
@@ -248,11 +249,11 @@ class GetPayee(TransformerMixin, NoFitMixin):
 
 
 class GetNarration(TransformerMixin, NoFitMixin):
-    '''
+    """
     Scikit-learn transformer to extract the narration.
     The input can be of type List[Transaction] or List[TxnPostingAccount],
     the output is a List[str].
-    '''
+    """
 
     def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._get_narration(d) for d in data]
@@ -265,13 +266,13 @@ class GetNarration(TransformerMixin, NoFitMixin):
 
 
 class GetPostingAccount(TransformerMixin, NoFitMixin):
-    '''
+    """
     Scikit-learn transformer to extract the account name.
     The input can be of type List[Transaction] or List[TxnPostingAccount].
     The account name is extracted from the last posting of each transaction,
     or from TxnPostingAccount.posting.account of each TxnPostingAccount.
     The output is a List[str].
-    '''
+    """
 
     def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
         return [self._get_posting_account(d) for d in data]
@@ -284,12 +285,12 @@ class GetPostingAccount(TransformerMixin, NoFitMixin):
 
 
 class GetReferencePostingAccount(TransformerMixin, NoFitMixin):
-    '''
+    """
     Scikit-learn transformer to extract the reference account name.
     The input can be of type List[Transaction] or List[TxnPostingAccount].
     The reference account name is extracted from the first posting of each transaction.
     The output is a List[str].
-    '''
+    """
 
     def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._get_posting_account(d) for d in data]
@@ -302,11 +303,11 @@ class GetReferencePostingAccount(TransformerMixin, NoFitMixin):
 
 
 class GetDayOfMonth(TransformerMixin, NoFitMixin):
-    '''
+    """
     Scikit-learn transformer to extract the day of month when a transaction happened.
     The input can be of type List[Transaction] or List[TxnPostingAccount],
     the output is a List[Date].
-    '''
+    """
 
     def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._get_day_of_month(d) for d in data]

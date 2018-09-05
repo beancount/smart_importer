@@ -1,24 +1,24 @@
-"""
-Decorator for Beancount Importer classes
-that suggests and predicts postings using machine learning.
-"""
+"""Decorator for Beancount importers that predicts postings."""
+
 import logging
 from typing import List, Union
 
-from beancount.core.data import Transaction, filter_txns, ALL_DIRECTIVES
-from beancount.ingest.cache import _FileMemo
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 
+from beancount.core.data import Transaction
+from beancount.ingest.cache import _FileMemo
+
 from smart_importer import machinelearning_helpers as ml
+from smart_importer.machinelearning_helpers import TxnPostingAccount
 from smart_importer.decorator_baseclass import SmartImporterDecorator
 
 logger = logging.getLogger(__name__)
 
 
 class PredictPostings(SmartImporterDecorator):
-    '''
+    """
     Applying this decorator to a beancount importer or its extract method
     will predict and suggest account names
     for imported transactions.
@@ -32,7 +32,7 @@ class PredictPostings(SmartImporterDecorator):
     class MyImporter(ImporterProtocol):
         def extract(file):
           # do the import, return list of entries
-    '''
+    """
 
     def __init__(
             self,
@@ -42,37 +42,15 @@ class PredictPostings(SmartImporterDecorator):
             predict_second_posting: bool = True,
             suggest_accounts: bool = False,
     ):
-        self.training_data = training_data
+        super().__init__(training_data)
         self.account = account
         self.predict_second_posting = predict_second_posting
         self.suggest_accounts = suggest_accounts
-
-    def main(self):
-        '''
-        The decorator's main method predicts and suggests the account names
-        for imported transactions.
-        '''
-        try:
-            self.load_training_data()
-            self.prepare_training_data()
-            self.define_pipeline()
-            self.train_pipeline()
-            return self.process_entries()
-        except (ValueError, AssertionError) as exception:
-            logger.error(exception)
-            return self.imported_entries
-
-    def load_training_data(self):
-        '''
-        Loads training data, i.e., a list of beancount entries.
-        '''
-        self.training_data = ml.load_training_data(
-            self.training_data,
-            known_account=self.account,
-            existing_entries=self.existing_entries)
+        self.converted_training_data = None
+        self.pipeline = None
 
     def prepare_training_data(self):
-        '''
+        """
         Prepares the training data in preparation for defining and training the
         machine learning pipeline.  Specifically, this method converts the
         training data into a list of `TxnPostingAccount` objects.  This list
@@ -82,20 +60,20 @@ class PredictPostings(SmartImporterDecorator):
         * one posting (for each posting in every transaction), primarily used
           for that posting's account name,
         * and one other account name (for each other account in the same transaction).
-        '''
+        """
         self.converted_training_data = [
-            ml.TxnPostingAccount(t, p, pRef.account)
+            TxnPostingAccount(t, p, pRef.account)
             for t in self.training_data for pRef in t.postings
             for p in t.postings if p.account != pRef.account
         ]
 
     def define_pipeline(self):
-        '''
+        """
         Defines the machine learning pipeline for predicting and suggesting
         postings.  The pipeline definition is created dynamically depending on
         available training data.  For example, payees are only included as
         feature in the pipeline if the training data contains payees.
-        '''
+        """
         if not self.converted_training_data:
             raise ValueError("Cannot define the machine learning pipeline "
                              "because the converted training data is empty")
@@ -147,9 +125,9 @@ class PredictPostings(SmartImporterDecorator):
         ])
 
     def train_pipeline(self):
-        '''
+        """
         Trains the machine learning pipeline.
-        '''
+        """
         if not self.converted_training_data:
             raise ValueError("Cannot train the machine learning model "
                              "because the converted training data is empty")
@@ -165,29 +143,15 @@ class PredictPostings(SmartImporterDecorator):
             ml.GetPostingAccount().transform(self.converted_training_data))
         logger.info("Finished training the machine learning model.")
 
-    def process_entries(self) -> List[Union[ALL_DIRECTIVES]]:
-        '''
-        Processes all imported entries (transactions as well as other types of
-        entries).  Transactions are enhanced, but all other entries are left as
-        is.
-        :return: Returns the list of entries to be imported.
-        '''
-        imported_transactions: List[Transaction]
-        imported_transactions = list(filter_txns(self.imported_entries))
-        enhanced_transactions = self.process_transactions(
-            list(imported_transactions))
-        return ml.merge_non_transaction_entries(self.imported_entries,
-                                                enhanced_transactions)
-
     def process_transactions(
             self, transactions: List[Transaction]) -> List[Transaction]:
-        '''
+        """
         Processes all imported transactions:
         * Predicts missing second postings.
         * Suggests accounts that are likely also involved in the transaction
         :param transactions: List of beancount transactions
         :return: List of beancount transactions
-        '''
+        """
         # predict missing second postings
         if self.predict_second_posting:
             logger.debug(
