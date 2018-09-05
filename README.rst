@@ -48,7 +48,7 @@ The following example shows how to add the ``@PredictPostings`` decorator to a C
     from beancount.ingest.importers import csv
     from beancount.ingest.importers.csv import Col
 
-    from smart_importer.predict_postings import PredictPostings
+    from smart_importer import PredictPostings
 
 
     class MyBankImporter(csv.Importer):
@@ -158,8 +158,8 @@ For example, to convert an existing ``MyBankImporter`` into a smart importer:
 .. code:: python
 
     from beancount.ingest.importer import ImporterProtocol
-    from smart_importer.predict_postings import PredictPostings
-    from smart_importer.predict_postings import PredictPayees
+    from smart_importer import PredictPostings
+    from smart_importer import PredictPayees
 
     class MyBankImporter(ImporterProtocol):
         def extract(self, file, existing_entries):
@@ -226,7 +226,7 @@ but use decorated versions of these importers in your import configuration:
     from beancount.ingest.importers import csv
     from beancount.ingest.importers.csv import Col
 
-    from smart_importer.predict_postings import PredictPostings
+    from smart_importer import PredictPostings
 
 
     # define a conventional (i.e., undecorated) importer:
