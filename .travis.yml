@@ -8,3 +8,5 @@ matrix:
   include:
     - env: TRAVIS_BUILD=py36
     - env: TRAVIS_BUILD=lint
+  allow_failures:
+    - env: TRAVIS_BUILD=lint
