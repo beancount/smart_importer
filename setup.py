@@ -24,7 +24,7 @@ with open(path.join(path.dirname(__file__), 'README.rst')) as readme:
 setup(
     name='smart_importer',
     version=VERSION,
-    description='Smart importer for beancount and fava.',
+    description='Smart importer for Beancount and Fava.',
     long_description=LONG_DESCRIPTION,
     url='https://github.com/johannesjh/smart_importer',
     author='Johannes Harms',

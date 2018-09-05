@@ -2,8 +2,8 @@ smart_importer
 ==============
 
 A smart importer for
-`beancount <https://github.com/beancount/beancount>`__ and
-`fava <https://github.com/beancount/fava>`__, currently in development
+`Beancount <http://furius.ca/beancount/>`__ and
+`Fava <https://github.com/beancount/fava>`__, currently in development
 as a suggestion for `#579 Import: Intelligent suggestions for account
 names <https://github.com/beancount/fava/issues/579>`__
 
@@ -35,7 +35,7 @@ and must therefore be installed from source:
 Quick Start
 -----------
 
-Apply ``@PredictPostings()`` and/or ``@PredictPayees()`` as decorators to a beancount importer
+Apply ``@PredictPostings()`` and/or ``@PredictPayees()`` as decorators to a Beancount importer
 in order to benefit from smart predictions and suggestions provided by machine learning.
 To get started quickly, you can script all of it right in your import config file.
 
@@ -81,9 +81,9 @@ The following example shows how to add the ``@PredictPostings`` decorator to a C
 
 
 
-In the above example, the ``PredictPostings`` decorator is applied to a beancount importer.
+In the above example, the ``PredictPostings`` decorator is applied to a Beancount importer.
 The resulting smart importer enhances imported transactions using machine learning.
-The smart importer is added to the ``CONFIG`` array in the same way as any other beancount importer.
+The smart importer is added to the ``CONFIG`` array in the same way as any other Beancount importer.
 
 
 
@@ -93,7 +93,7 @@ Documentation
 
 This section explains in detail
 the relevant concepts and artifacts
-needed for enhancing beancount importers
+needed for enhancing Beancount importers
 with machine learning
 using `smart_importer` decorators.
 
@@ -112,13 +112,13 @@ The following figure provides an overview of the import process and its componen
    System overview showing the process how smart importers are used to predict and suggest values in the transactions to be imported.
 
 
-1. The user executes ``bean-extract -f existing_transactions.beancount`` in order to import downloaded bank statements into beancount.
-   Note: Instead of invoking the importer directly, a user may work with a GUI such as `fava <https://github.com/beancount/fava>`__.
+1. The user executes ``bean-extract -f existing_transactions.beancount`` in order to import downloaded bank statements into Beancount.
+   Note: Instead of invoking the importer directly, a user may work with a GUI such as `Fava <https://github.com/beancount/fava>`__.
 2. The user specifies an import configuration file for ``bean-extract``. This file can be named, for example, ``example.import``. It is a regular python file that defines a list of importers to be used by beancount.ingest.
 3. ``beancount.ingest`` invokes a matching importer.
-4. The importer reads the downloaded bank statement, typically a CSV file, and extracts beancount transactions from it.
+4. The importer reads the downloaded bank statement, typically a CSV file, and extracts Beancount transactions from it.
    Note: Beancount importers are described in the `beancount ingest <http://furius.ca/beancount/doc/ingest>`__ documentation.
-5. Smart importers extend the functionlity of regular beancount importers. They read existing beancount entries and use them to train a machine learning model.
+5. Smart importers extend the functionlity of regular Beancount importers. They read existing Beancount entries and use them to train a machine learning model.
 6. The smart importer uses the trained machine learning model to enhance the extracted transactions with predictions and suggestions.
 7. The resulting transactions are returned to the user.
 
@@ -127,10 +127,10 @@ The following figure provides an overview of the import process and its componen
 Beancount Importers
 ~~~~~~~~~~~~~~~~~~~~
 
-This documentation assumes you know how to create beancount importers.
+This documentation assumes you know how to create Beancount importers.
 Relevant documentation can be found under `beancount ingest <http://furius.ca/beancount/doc/ingest>`__.
 Using beancount.ingest, users can write their own importers
-and use them to convert downloaded bank statements into lists of beancount entries.
+and use them to convert downloaded bank statements into lists of Beancount entries.
 
 For example, let's assume you have created an importer for "MyBank" called ``MyBankImporter``:
 
@@ -147,7 +147,7 @@ For example, let's assume you have created an importer for "MyBank" called ``MyB
 Applying `smart_importer` Decorators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Any beancount importer can be converted into a smart importer by applying one of the following decorators:
+Any Beancount importer can be converted into a smart importer by applying one of the following decorators:
 
 * ``@PredictPostings()``
 * ``@PredictPayees()``
@@ -185,7 +185,7 @@ Specifying Training Data
 
 The ``smart_importer`` decorators must be fed with training data in order to be effective.
 
-Training data can be specified by calling bean-extract with an argument that references existing beancount transactions,
+Training data can be specified by calling bean-extract with an argument that references existing Beancount transactions,
 e.g., ``bean-extract -f existing_transactions.beancount``.
 
 
@@ -199,7 +199,7 @@ Using Smart Importers
 ~~~~~~~~~~~~~~~~~~~~~
 
 You can use your smart importers in the very same way as conventional importers.
-I.e., you can add them to your beancount importer configuration file, like this:
+I.e., you can add them to your Beancount importer configuration file, like this:
 
 .. code:: python
 
@@ -280,13 +280,13 @@ but use decorated versions of these importers in your import configuration:
     ]
 
 
-Usage with fava
+Usage with Fava
 ~~~~~~~~~~~~~~~
 
-Smart importers play nice with `fava <https://github.com/beancount/fava>`__.
-This means you can use smart importers together with fava in the exact same way
+Smart importers play nice with `Fava <https://github.com/beancount/fava>`__.
+This means you can use smart importers together with Fava in the exact same way
 as you would do with a conventional importer.
-See `fava's help on importers <https://github.com/beancount/fava/blob/master/fava/help/import.md>`__
+See `Fava's help on importers <https://github.com/beancount/fava/blob/master/fava/help/import.md>`__
 for more information.
 
 
