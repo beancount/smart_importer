@@ -17,18 +17,6 @@ class ImporterDecorator():
 
     Instance Variables:
 
-    * `existing_entries`: List[Transaction]
-      Existing entries are obtained from the `existing_entries` argument that
-      may be provided to a beancount importer's extract method. These entries
-      are pre-existing data, typically transactions from a beancount file prior
-      to starting the import.
-
-    * `imported_entries`: List[Transaction]
-      Imported entries result from calling the importer's extract method.
-      These entries are the data to be imported.  Decorators that inherit from
-      SmartImporterDecorator will typically modify or enhance these entries in
-      some way.
-
     * `account`: str
       The target account for the entries to be imported.
       It is obtained by calling the importer's file_account method.
@@ -42,8 +30,6 @@ class ImporterDecorator():
         """
         self.training_data = training_data
         self.account = None
-        self.existing_entries = None
-        self.imported_entries = None
 
     def __call__(self, to_be_decorated):
         """Apply the decorator.
@@ -60,26 +46,24 @@ class ImporterDecorator():
         logger.debug('The decorator was applied to an instancemethod.')
         return self.patch_extract_method(to_be_decorated)
 
-    def patch_extract_method(self, original_extract_method):
+    def patch_extract_method(self, unpatched_extract):
         """Patch a Beancount importer's extract method.
 
-        :param original_extract_method: The importer's original extract method
+        :param unpatched_extract: The importer's original extract method
         :return: A patched extract method.
         """
         decorator = self
 
-        @wraps(original_extract_method)
+        @wraps(unpatched_extract)
         def wrapper(self, file, existing_entries=None):
-            decorator.existing_entries = existing_entries
 
             logger.debug("Calling the importer's extract method.")
             if 'existing_entries' in inspect.signature(
-                    original_extract_method).parameters:
-                decorator.imported_entries = original_extract_method(
-                    self, file, existing_entries)
+                    unpatched_extract).parameters:
+                imported_entries = unpatched_extract(self, file,
+                                                     existing_entries)
             else:
-                decorator.imported_entries = original_extract_method(
-                    self, file)
+                imported_entries = unpatched_extract(self, file)
 
             if not decorator.account:
                 logger.debug(
@@ -97,34 +81,34 @@ class ImporterDecorator():
                     logger.debug(
                         "Could not retrieve file_account from the importer.")
 
-            return decorator.main()
+            return decorator.main(imported_entries, existing_entries)
 
         return wrapper
 
-    def main(self) -> List[Union[ALL_DIRECTIVES]]:
+    def main(self, imported_entries, existing_entries):
         """Predict and suggest attributes for imported transactions."""
         pass
 
 
 class SmartImporterDecorator(ImporterDecorator):
-    def main(self) -> List[Union[ALL_DIRECTIVES]]:
+    def main(self, imported_entries, existing_entries):
         """Predict and suggest attributes for imported transactions."""
         try:
-            self.load_training_data()
+            self.load_training_data(existing_entries)
             self.prepare_training_data()
             self.define_pipeline()
             self.train_pipeline()
-            return self.process_entries()
+            return self.process_entries(imported_entries)
         except (ValueError, AssertionError) as exception:
             logger.error(exception)
-            return self.imported_entries
+            return imported_entries
 
-    def load_training_data(self):
+    def load_training_data(self, existing_entries):
         """Load training data, i.e., a list of Beancount entries."""
         self.training_data = load_training_data(
             self.training_data,
             known_account=self.account,
-            existing_entries=self.existing_entries)
+            existing_entries=existing_entries)
 
     def prepare_training_data(self):
         pass
@@ -135,7 +119,7 @@ class SmartImporterDecorator(ImporterDecorator):
     def train_pipeline(self):
         raise NotImplementedError
 
-    def process_entries(self) -> List[Union[ALL_DIRECTIVES]]:
+    def process_entries(self, imported_entries) -> List[Union[ALL_DIRECTIVES]]:
         """Process imported entries.
 
         Transactions are enhanced, all other entries are left as is.
@@ -143,10 +127,10 @@ class SmartImporterDecorator(ImporterDecorator):
         :return: Returns the list of entries to be imported.
         """
         imported_transactions: List[Transaction]
-        imported_transactions = list(filter_txns(self.imported_entries))
+        imported_transactions = list(filter_txns(imported_entries))
         enhanced_transactions = self.process_transactions(
             list(imported_transactions))
-        return merge_non_transaction_entries(self.imported_entries,
+        return merge_non_transaction_entries(imported_entries,
                                              enhanced_transactions)
 
     def process_transactions(self, transactions):
