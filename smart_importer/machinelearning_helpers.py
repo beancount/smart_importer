@@ -7,14 +7,13 @@ from typing import List, Union, Tuple, NamedTuple
 import numpy as np
 from beancount import loader
 from beancount.core.data import Transaction, Posting, TxnPosting, filter_txns
-from beancount.ingest.cache import _FileMemo
 from sklearn.base import BaseEstimator, TransformerMixin
 
 logger = logging.getLogger(__name__)
 
 
 def load_training_data(
-        training_data: Union[_FileMemo, List[Transaction], str],
+        training_data: Union[List[Transaction], str],
         known_account: str = None,
         existing_entries: List[Tuple] = None) -> List[Transaction]:
     """Load training data.
@@ -22,7 +21,6 @@ def load_training_data(
     :param training_data: The training data that shall be loaded.
         Can be provided as a string (the filename pointing to a beancount
             file),
-        a _FileMemo instance,
         or a list of Beancount entries
     :param known_account: Optional filter for the training data.
         If provided, the training data is filtered to only include transactions
@@ -34,11 +32,6 @@ def load_training_data(
     if not training_data and existing_entries:
         logger.debug("Using existing entries for training data")
         training_data = list(existing_entries)
-    elif isinstance(training_data, _FileMemo):
-        logger.debug(
-            f"Reading training data from _FileMemo \"{training_data.name}\"."
-        )
-        training_data, _, __ = loader.load_file(training_data.name)
     elif isinstance(training_data, str):
         logger.debug(f"Reading training data from file \"{training_data}\".")
         training_data, _, __ = loader.load_file(training_data)
