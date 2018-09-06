@@ -7,7 +7,6 @@ import logging
 from typing import List, Union
 
 from beancount.core.data import Transaction
-from beancount.ingest.cache import _FileMemo
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
@@ -41,7 +40,7 @@ class PredictPayees(SmartImporterDecorator):
     def __init__(
             self,
             *,
-            training_data: Union[_FileMemo, List[Transaction], str] = None,
+            training_data: Union[List[Transaction], str] = None,
             account: str = None,
             predict_payees: bool = True,
             overwrite_existing_payees=False,

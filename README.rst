@@ -299,11 +299,10 @@ Pull requests welcome!
 Executing the Unit Tests
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Simply run:
+Simply run (requires tox):
 
 .. code:: bash
 
-    # to run unittests:
     make test
 
 
@@ -312,19 +311,14 @@ Configuring Logging
 ~~~~~~~~~~~~~~~~~~~
 
 Python's `logging` module is used by the smart_importer decorators.
-The decorators' log level can be increased (or otherwise changed)
-by modifying loggers named after the smart_importer module structure,
-for example as follows:
+The decorators' log level can be changed as follows:
 
 
 .. code:: python
 
     import logging
-    import smart_importer
 
-    # change smart_importer's log level:
-    smart_importer_logger = logging.getLogger(smart_importer.__name__)
-    smart_importer_logger.setLevel(logging.DEBUG)
+    logging.getLogger('smart_importer').setLevel(logging.DEBUG)
 
 
 

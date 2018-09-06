@@ -8,7 +8,6 @@ from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 
 from beancount.core.data import Transaction
-from beancount.ingest.cache import _FileMemo
 
 from smart_importer import machinelearning_helpers as ml
 from smart_importer.machinelearning_helpers import TxnPostingAccount
@@ -36,7 +35,7 @@ class PredictPostings(SmartImporterDecorator):
 
     def __init__(
             self,
-            training_data: Union[_FileMemo, List[Transaction], str] = None,
+            training_data: Union[List[Transaction], str] = None,
             account: str = None,
             predict_second_posting: bool = True,
             suggest_accounts: bool = False,
