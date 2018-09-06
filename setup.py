@@ -38,11 +38,6 @@ setup(
         'numpy>= 1.8.2',
         'scipy>=0.13.3'
     ],
-    extras_require={
-        'dev': [
-            'coloredlogs',
-        ]
-    },
     zip_safe=False,
     classifiers=[
         'Development Status :: 1 - Planning',

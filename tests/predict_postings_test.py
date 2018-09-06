@@ -1,6 +1,5 @@
 """Tests for the `PredictPostings` decorator"""
 
-import logging
 import unittest
 from typing import List
 
@@ -8,9 +7,7 @@ from beancount.core.data import Transaction
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
-from smart_importer.predict_postings import PredictPostings
-
-logger = logging.getLogger(__name__)
+from smart_importer import PredictPostings
 
 
 class Testdata:
@@ -118,7 +115,6 @@ class PredictPostingsTest(unittest.TestCase):
         '''
         Verifies that the decorator leaves the narration intact
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         correct_narrations = [transaction.narration for transaction in Testdata.test_data]
         extracted_narrations = [transaction.narration for transaction in self.importer.extract("dummy-data")]
         self.assertEqual(extracted_narrations, correct_narrations)
@@ -127,7 +123,6 @@ class PredictPostingsTest(unittest.TestCase):
         '''
         Verifies that the decorator leaves the first posting intact
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         correct_first_postings = [transaction.postings[0] for transaction in Testdata.test_data]
         extracted_first_postings = [transaction.postings[0] for transaction in self.importer.extract("dummy-data")]
         self.assertEqual(extracted_first_postings, correct_first_postings)
@@ -136,7 +131,6 @@ class PredictPostingsTest(unittest.TestCase):
         '''
         Verifies that the decorator adds predicted postings.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         transactions = self.importer.extract("dummy-data")
         predicted_accounts = [entry.postings[-1].account for entry in transactions]
         self.assertEqual(predicted_accounts, Testdata.correct_predictions)
@@ -148,7 +142,6 @@ class PredictPostingsTest(unittest.TestCase):
         Verifies that the decorator adds suggestions about accounts
         that are likely to be involved in the transaction.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         transactions = self.importer.extract("dummy-data")
         for transaction in transactions:
             suggestions = transaction.meta['__suggested_accounts__']
@@ -167,7 +160,6 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         Verifies that the decorator can be applied to importer classes,
         with arguments supplied to the decorator.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
 
         @PredictPostings(
             training_data=Testdata.training_data,
@@ -188,7 +180,6 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         Verifies that the decorator can be applied to an importer's extract method,
         with arguments supplied to the decorator.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         testcase = self
 
         class SmartTestImporter(BasicTestImporter):
@@ -210,7 +201,6 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         Verifies that the decorator can be applied to importer classes,
         without supplying any arguments to the decorator.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
 
         @PredictPostings()
         class SmartTestImporter(BasicTestImporter):
@@ -228,7 +218,6 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         Verifies that the decorator can be applied to an importer's extract method,
         without supplying any arguments to the decorator.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         testcase = self
 
         class SmartTestImporter(BasicTestImporter):
@@ -241,21 +230,3 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         transactions = i.extract('file', existing_entries=Testdata.training_data)
         predicted_accounts = [entry.postings[-1].account for entry in transactions]
         self.assertEqual(predicted_accounts, Testdata.correct_predictions)
-
-
-if __name__ == '__main__':
-    # set log level to debug
-    LOG_LEVEL = logging.DEBUG
-    logging.basicConfig(level=LOG_LEVEL)
-
-    # use colored logs module, if available
-    try:
-        import coloredlogs
-    except ImportError as e:
-        coloredlogs = None
-    if coloredlogs:
-        coloredlogs.install(level=LOG_LEVEL)
-
-    # show test case execution output iff logging level is DEBUG or finer:
-    show_output = LOG_LEVEL <= logging.DEBUG
-    unittest.main(buffer=not show_output)

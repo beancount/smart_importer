@@ -1,6 +1,5 @@
 """Tests for the `PredictPostings` decorator"""
 
-import logging
 import unittest
 from typing import List
 
@@ -10,8 +9,6 @@ from beancount.parser import parser
 
 from smart_importer import machinelearning_helpers as ml
 from smart_importer.predict_payees import PredictPayees
-
-logger = logging.getLogger(__name__)
 
 
 class Testdata:
@@ -123,7 +120,6 @@ class PredictPayeesTest(unittest.TestCase):
         '''
         Verifies the dummy importer
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         undecorated_importer = super(self.importerClass, self.importer)
         entries = undecorated_importer.extract('dummy-data')
         self.assertEqual(entries[0].narration, "Buying groceries")
@@ -134,7 +130,6 @@ class PredictPayeesTest(unittest.TestCase):
         '''
         Verifies that the decorator leaves the narration intact
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         correct_narrations = [transaction.narration for transaction in Testdata.test_data]
         extracted_narrations = [transaction.narration for transaction in self.importer.extract("dummy-data")]
         self.assertEqual(extracted_narrations, correct_narrations)
@@ -143,7 +138,6 @@ class PredictPayeesTest(unittest.TestCase):
         '''
         Verifies that the decorator leaves the first posting intact
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         correct_first_postings = [transaction.postings[0] for transaction in Testdata.test_data]
         extracted_first_postings = [transaction.postings[0] for transaction in self.importer.extract("dummy-data")]
         self.assertEqual(extracted_first_postings, correct_first_postings)
@@ -152,7 +146,6 @@ class PredictPayeesTest(unittest.TestCase):
         '''
         Verifies that the decorator adds predicted postings.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         transactions = self.importer.extract("dummy-data")
         predicted_payees = [transaction.payee for transaction in transactions]
         self.assertEqual(predicted_payees, Testdata.correct_predictions)
@@ -162,7 +155,6 @@ class PredictPayeesTest(unittest.TestCase):
         Verifies that the decorator adds suggestions about accounts
         that are likely to be involved in the transaction.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         transactions = self.importer.extract("dummy-data")
         for transaction in transactions:
             suggestions = transaction.meta[ml.METADATA_KEY_SUGGESTED_PAYEES]
@@ -181,7 +173,6 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         Verifies that the decorator can be applied to importer classes,
         with training data provided as argument.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
 
         @PredictPayees(
             training_data=Testdata.training_data,
@@ -202,7 +193,6 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         Verifies that the decorator can be applied to an importer's extract method,
         with training data provided as argument.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         testcase = self
 
         class SmartTestImporter(BasicTestImporter):
@@ -224,7 +214,6 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         Verifies that the decorator can be applied to importer classes,
         without supplying any arguments.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
 
         @PredictPayees()
         class SmartTestImporter(BasicTestImporter):
@@ -242,7 +231,6 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         Verifies that the decorator can be applied to an importer's extract method,
         without supplying any arguments.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         testcase = self
 
         class SmartTestImporter(BasicTestImporter):
@@ -255,21 +243,3 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         transactions = i.extract('file', existing_entries=Testdata.training_data)
         predicted_payees = [transaction.payee for transaction in transactions]
         self.assertEqual(predicted_payees, Testdata.correct_predictions)
-
-
-if __name__ == '__main__':
-    # configure log level
-    LOG_LEVEL = logging.DEBUG
-    logging.basicConfig(level=LOG_LEVEL)
-
-    # colorize the log output if the coloredlogs package is available
-    try:
-        import coloredlogs
-    except ImportError as e:
-        coloredlogs = None
-    if coloredlogs:
-        coloredlogs.install(level=LOG_LEVEL)
-
-    # show test case execution output iff logging level is DEBUG or finer:
-    show_output = LOG_LEVEL <= logging.DEBUG
-    unittest.main(buffer=not show_output)

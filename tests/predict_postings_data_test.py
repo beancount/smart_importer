@@ -1,7 +1,6 @@
 """Tests for the `PredictPostings` decorator"""
 
 import io
-import logging
 import os
 import unittest
 from typing import List, Union
@@ -13,8 +12,6 @@ from beancount.parser import parser, printer
 
 from smart_importer.predict_postings import PredictPostings
 
-logger = logging.getLogger(__name__)
-
 
 class PredictPostingsTest(unittest.TestCase):
     '''
@@ -25,14 +22,12 @@ class PredictPostingsTest(unittest.TestCase):
         '''
         Test with a simple testset.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         self.run_testset('simple')
 
     def test_multiaccounts(self):
         '''
         Test where the only differing factor is the account.
         '''
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         self.run_testset('multiaccounts')
 
     def run_testset(self, testset):
@@ -68,21 +63,3 @@ class PredictPostingsTest(unittest.TestCase):
         data, errors, _ = parser.parse_file(filename)
         assert not errors
         return data
-
-
-if __name__ == '__main__':
-    # configure the log level
-    LOG_LEVEL = logging.DEBUG
-    logging.basicConfig(level=LOG_LEVEL)
-
-    # colorize the log output if the coloredlogs package is available
-    try:
-        import coloredlogs
-    except ImportError as e:
-        coloredlogs = None
-    if coloredlogs:
-        coloredlogs.install(level=LOG_LEVEL)
-
-    # show test case execution output iff logging level is DEBUG or finer:
-    show_output = LOG_LEVEL <= logging.DEBUG
-    unittest.main(buffer=not show_output)

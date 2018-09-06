@@ -319,21 +319,3 @@ The decorators' log level can be changed as follows:
     import logging
 
     logging.getLogger('smart_importer').setLevel(logging.DEBUG)
-
-
-
-Colorizing the Log Output
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-smart_importer's unit tests produce colorized console output
-if the `coloredlogs` module is available.
-To make use of this feature, simply install coloredlogs,
-as follows:
-
-.. code:: bash
-
-    # for nicer test output:
-    pip install coloredlogs
-
-    # to run unittests:
-    make test
