@@ -125,9 +125,7 @@ class PredictPostings(SmartImporterDecorator):
         ])
 
     def train_pipeline(self):
-        """
-        Trains the machine learning pipeline.
-        """
+        """Train the machine learning pipeline."""
         if not self.converted_training_data:
             raise ValueError("Cannot train the machine learning model "
                              "because the converted training data is empty")
@@ -141,7 +139,7 @@ class PredictPostings(SmartImporterDecorator):
         self.pipeline.fit(
             self.converted_training_data,
             ml.GetPostingAccount().transform(self.converted_training_data))
-        logger.info("Finished training the machine learning model.")
+        logger.debug("Finished training the machine learning model.")
 
     def process_transactions(
             self, transactions: List[Transaction]) -> List[Transaction]:

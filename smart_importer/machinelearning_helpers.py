@@ -33,20 +33,18 @@ def load_training_data(
     """
     if not training_data and existing_entries:
         logger.debug("Using existing entries for training data")
-        training_data = list(filter_txns(existing_entries))
+        training_data = list(existing_entries)
     elif isinstance(training_data, _FileMemo):
         logger.debug(
-            f"Reading training data from _FileMemo \"{training_data.name}\"..."
+            f"Reading training data from _FileMemo \"{training_data.name}\"."
         )
-        training_data, errors, _ = loader.load_file(training_data.name)
-        assert not errors
-        training_data = filter_txns(training_data)
+        training_data, _, __ = loader.load_file(training_data.name)
     elif isinstance(training_data, str):
-        logger.debug(f"Reading training data from file \"{training_data}\"...")
-        training_data, errors, _ = loader.load_file(training_data)
-        assert not errors
-        training_data = filter_txns(training_data)
+        logger.debug(f"Reading training data from file \"{training_data}\".")
+        training_data, _, __ = loader.load_file(training_data)
     logger.debug(f"Finished reading training data.")
+    if training_data:
+        training_data = list(filter_txns(training_data))
     if known_account:
         training_data = [
             txn for txn in training_data
