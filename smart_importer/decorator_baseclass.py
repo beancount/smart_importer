@@ -41,6 +41,7 @@ class ImporterDecorator():
         training data to be used for machine learning.
         """
         self.training_data = training_data
+        self.account = None
         self.existing_entries = None
         self.imported_entries = None
 
@@ -71,8 +72,7 @@ class ImporterDecorator():
         def wrapper(self, file, existing_entries=None):
             decorator.existing_entries = existing_entries
 
-            logger.debug("About to call the importer's extract method to "
-                         "receive entries to be imported...")
+            logger.debug("Calling the importer's extract method.")
             if 'existing_entries' in inspect.signature(
                     original_extract_method).parameters:
                 decorator.imported_entries = original_extract_method(
@@ -81,9 +81,7 @@ class ImporterDecorator():
                 decorator.imported_entries = original_extract_method(
                     self, file)
 
-            # read the importer's file_account, to be used as default value for
-            # the decorator's known `account`:
-            if inspect.ismethod(self.file_account) and not decorator.account:
+            if not decorator.account:
                 logger.debug(
                     "Trying to read the importer's file_account, "
                     "to be used as default value for the decorator's "
@@ -104,23 +102,13 @@ class ImporterDecorator():
         return wrapper
 
     def main(self) -> List[Union[ALL_DIRECTIVES]]:
-        """
-        The decorator's main method, to be implemented by inheriting classes
-        with the following functionality:
-
-        1. read `self.imported_entries`
-        2. process these entries
-        3. return possibly modified entries
-        """
+        """Predict and suggest attributes for imported transactions."""
         pass
 
 
 class SmartImporterDecorator(ImporterDecorator):
     def main(self) -> List[Union[ALL_DIRECTIVES]]:
-        """
-        The decorator's main method predicts and suggests the account names
-        for imported transactions.
-        """
+        """Predict and suggest attributes for imported transactions."""
         try:
             self.load_training_data()
             self.prepare_training_data()
