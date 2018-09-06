@@ -41,51 +41,36 @@ class ImporterDecorator():
         training data to be used for machine learning.
         """
         self.training_data = training_data
-
-    # Implementation notes for how to write decorators for classes, see e.g.,
-    # https://stackoverflow.com/a/9910180
-    # https://www.codementor.io/sheena/advanced-use-python-decorators-class-function-du107nxsv
-    # https://andrefsp.wordpress.com/2012/08/23/writing-a-class-decorator-in-python/
+        self.existing_entries = None
+        self.imported_entries = None
 
     def __call__(self, to_be_decorated):
-        """
-        This method is called when the decorator is applied. It may be applied
-        to a Beancount importer class or to its extract method.
+        """Apply the decorator.
+
+        It may be applied to a Beancount importer class or to its extract
+        method.
         """
         if inspect.isclass(to_be_decorated):
-            logger.debug('The Decorator was applied to a class.')
-            return self.patched_importer_class(to_be_decorated)
-        elif inspect.isfunction(to_be_decorated):
-            logger.debug('The Decorator was applied to an instancemethod.')
-            return self.patched_extract_method(to_be_decorated)
+            logger.debug('The decorator was applied to a class.')
+            to_be_decorated.extract = self.patch_extract_method(
+                to_be_decorated.extract)
+            return to_be_decorated
+        assert inspect.isfunction(to_be_decorated)
+        logger.debug('The decorator was applied to an instancemethod.')
+        return self.patch_extract_method(to_be_decorated)
 
-    def patched_importer_class(self, importer_class):
-        """
-        Patches a beancount importer class by modifying its extract method.
-        :param importer_class: The original importer class
-        :return: The modified importer class with a patched extract method.
-        """
-        importer_class.extract = self.patched_extract_method(
-            importer_class.extract)
-        return importer_class
+    def patch_extract_method(self, original_extract_method):
+        """Patch a Beancount importer's extract method.
 
-    def patched_extract_method(self, original_extract_method):
-        """
-        Patches a beancount importer's extract method by wrapping it.
         :param original_extract_method: The importer's original extract method
-        :return: A patched extract method, created by wrapping the original
-            extract method.
+        :return: A patched extract method.
         """
         decorator = self
 
         @wraps(original_extract_method)
         def wrapper(self, file, existing_entries=None):
-
-            # read the importer's existing entries, if provided as argument to
-            # its `extract` method:
             decorator.existing_entries = existing_entries
 
-            # read the importer's `extract`ed entries
             logger.debug("About to call the importer's extract method to "
                          "receive entries to be imported...")
             if 'existing_entries' in inspect.signature(
@@ -112,7 +97,7 @@ class ImporterDecorator():
                         f"using it as known account in the decorator.")
                 else:
                     logger.debug(
-                        f"Could not retrieve file_account from the importer.")
+                        "Could not retrieve file_account from the importer.")
 
             return decorator.main()
 
@@ -131,7 +116,7 @@ class ImporterDecorator():
 
 
 class SmartImporterDecorator(ImporterDecorator):
-    def main(self):
+    def main(self) -> List[Union[ALL_DIRECTIVES]]:
         """
         The decorator's main method predicts and suggests the account names
         for imported transactions.
@@ -147,7 +132,7 @@ class SmartImporterDecorator(ImporterDecorator):
             return self.imported_entries
 
     def load_training_data(self):
-        """Loads training data, i.e., a list of Beancount entries."""
+        """Load training data, i.e., a list of Beancount entries."""
         self.training_data = load_training_data(
             self.training_data,
             known_account=self.account,
@@ -163,10 +148,10 @@ class SmartImporterDecorator(ImporterDecorator):
         raise NotImplementedError
 
     def process_entries(self) -> List[Union[ALL_DIRECTIVES]]:
-        """
-        Processes all imported entries (transactions as well as other types of
-        entries).  Transactions are enhanced, but all other entries are left as
-        is.
+        """Process imported entries.
+
+        Transactions are enhanced, all other entries are left as is.
+
         :return: Returns the list of entries to be imported.
         """
         imported_transactions: List[Transaction]

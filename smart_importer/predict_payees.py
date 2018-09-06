@@ -105,7 +105,7 @@ class PredictPayees(SmartImporterDecorator):
         logger.debug("About to train the machine learning model...")
         self.pipeline.fit(self.training_data,
                           ml.GetPayee().transform(self.training_data))
-        logger.info("Finished training the machine learning model.")
+        logger.debug("Finished training the machine learning model.")
 
     def process_transactions(
             self, transactions: List[Transaction]) -> List[Transaction]:

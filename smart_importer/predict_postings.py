@@ -36,7 +36,6 @@ class PredictPostings(SmartImporterDecorator):
 
     def __init__(
             self,
-            *,
             training_data: Union[_FileMemo, List[Transaction], str] = None,
             account: str = None,
             predict_second_posting: bool = True,
@@ -146,32 +145,26 @@ class PredictPostings(SmartImporterDecorator):
 
     def process_transactions(
             self, transactions: List[Transaction]) -> List[Transaction]:
-        """
-        Processes all imported transactions:
+        """Process all imported transactions.
+
         * Predicts missing second postings.
         * Suggests accounts that are likely also involved in the transaction
-        :param transactions: List of beancount transactions
+
+        :param transactions: List of Beancount transactions
         :return: List of beancount transactions
         """
-        # predict missing second postings
         if self.predict_second_posting:
-            logger.debug(
-                "About to generate predictions for missing second postings...")
+            logger.debug("Generate predictions for missing second postings.")
             predicted_accounts: List[str]
             predicted_accounts = self.pipeline.predict(transactions)
             transactions = [
                 ml.add_posting_to_transaction(*t_a)
                 for t_a in zip(transactions, predicted_accounts)
             ]
-            logger.debug(
-                "Finished adding predicted accounts to the transactions "
-                "to be imported."
-            )
-        # suggest accounts that are likely involved in the transaction
+            logger.debug("Added predicted accounts.")
         if self.suggest_accounts:
             # get values from the SVC decision function
-            logger.debug(
-                "About to generate suggestions about related accounts...")
+            logger.debug("Generate suggestions about related accounts.")
             decision_values = self.pipeline.decision_function(transactions)
 
             # add a human-readable class label (i.e., account name) to each
@@ -188,8 +181,5 @@ class PredictPostings(SmartImporterDecorator):
                 ml.add_suggested_accounts_to_transaction(*t_s)
                 for t_s in zip(transactions, suggestions)
             ]
-            logger.debug(
-                "Finished adding suggested accounts to the transactions "
-                "to be imported."
-            )
+            logger.debug("Added suggested accounts.")
         return transactions
