@@ -88,7 +88,7 @@ class MachinelearningTest(unittest.TestCase):
         self.assertEqual(ml.GetPayee().transform(self.test_data),
                          ['Farmer Fresh', 'Starbucks', 'Farmer Fresh', 'Gimme Coffee'])
 
-    def test_get_payee(self):
+    def test_get_payee2(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         self.assertEqual(ml.GetNarration().transform(self.test_data),
                          ['Buying groceries', 'Coffee', 'Groceries', 'Coffee'])

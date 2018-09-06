@@ -12,6 +12,7 @@ from smart_importer.predict_postings import PredictPostings
 
 logger = logging.getLogger(__name__)
 
+
 class Testdata:
     test_data: List[Transaction]
     test_data, errors, _ = parser.parse_string("""
@@ -212,7 +213,8 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
 
         @PredictPostings()
-        class SmartTestImporter(BasicTestImporter): pass
+        class SmartTestImporter(BasicTestImporter):
+            pass
 
         i = SmartTestImporter()
         self.assertIsInstance(i, SmartTestImporter,

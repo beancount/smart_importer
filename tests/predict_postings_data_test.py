@@ -42,7 +42,7 @@ class PredictPostingsTest(unittest.TestCase):
         @PredictPostings(suggest_accounts=True)
         class DummyImporter(ImporterProtocol):
             def extract(self, file: _FileMemo, existing_entries: List[Union[ALL_DIRECTIVES]]) -> List[
-                Union[ALL_DIRECTIVES]]:
+                    Union[ALL_DIRECTIVES]]:
                 return extracted_data
 
         importer = DummyImporter()

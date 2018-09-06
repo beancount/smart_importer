@@ -227,7 +227,8 @@ class PredictPostingsDecorationTest(unittest.TestCase):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
 
         @PredictPayees()
-        class SmartTestImporter(BasicTestImporter): pass
+        class SmartTestImporter(BasicTestImporter):
+            pass
 
         i = SmartTestImporter()
         self.assertIsInstance(i, SmartTestImporter,
