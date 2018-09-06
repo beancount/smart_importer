@@ -60,12 +60,6 @@ class MachinelearningTest(unittest.TestCase):
         )
         self.assertEqual(existing_entries, actual)
 
-    def test_transaction_involves_account(self):
-        logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
-        self.assertTrue(ml.transaction_involves_account(self.test_transaction, None))
-        self.assertTrue(ml.transaction_involves_account(self.test_transaction, 'Assets:US:BofA:Checking'))
-        self.assertFalse(ml.transaction_involves_account(self.test_transaction, 'Some:Unknown:Account'))
-
     def test_add_predicted_posting_to_transaction(self):
         logger.info("Running Test Case: {id}".format(id=self.id().split('.')[-1]))
         transaction: Transaction

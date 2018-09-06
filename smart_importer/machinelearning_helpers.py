@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import List, Union, Optional, Tuple, NamedTuple
+from typing import List, Union, Tuple, NamedTuple
 
 import numpy as np
 from beancount import loader
@@ -44,43 +44,22 @@ def load_training_data(training_data: Union[_FileMemo, List[Transaction], str],
         training_data = filter_txns(training_data)
     logger.debug(f"Finished reading training data.")
     if known_account:
-        training_data = [t for t in training_data
-                         # ...filtered because the training data must involve the account:
-                         if transaction_involves_account(t, known_account)]
+        training_data = [txn for txn in training_data
+                         if any([pos.account == known_account for pos in txn.postings])]
         logger.debug(f"After filtering for account {known_account}, "
                      f"the training data consists of {len(training_data)} entries.")
     return training_data
 
 
-def transaction_involves_account(transaction: Transaction, account: Optional[str]) -> bool:
-    """
-    Returns whether a transactions involves a specific account,
-    i.e., if any one of the transaction's postings uses the specified account name.
-    """
-    if account is None:
-        return True
-    return any([posting.account == account for posting in transaction.postings])
-
-
-def add_posting_to_transaction(transaction: Transaction, postings_account: str) -> Transaction:
-    """
-    Adds a posting with specified postings_account to a transaction.
-    """
-
-    # implementation note:
-    # for how to modify transactions, see this code from beancount.core.interpolate.py:
-    # new_postings = list(entry.postings)
-    # new_postings.extend(get_residual_postings(residual, account_rounding))
-    # entry = entry._replace(postings=new_postings)
+def add_posting_to_transaction(transaction: Transaction, account: str) -> Transaction:
+    """Adds an empty posting with the given account to a transaction."""
 
     if len(transaction.postings) != 1:
         return transaction
 
-    additionalPosting: Posting
-    additionalPosting = Posting(postings_account, None, None, None, None, None)
-    new_postings_list = list(transaction.postings)
-    new_postings_list.extend([additionalPosting])
-    transaction = transaction._replace(postings=new_postings_list)
+    additional_posting: Posting
+    additional_posting = Posting(account, None, None, None, None, None)
+    transaction.postings.append(additional_posting)
     return transaction
 
 
@@ -98,18 +77,12 @@ METADATA_KEY_SUGGESTED_PAYEES = '__suggested_payees__'
 
 
 def add_suggested_accounts_to_transaction(transaction: Transaction, suggestions: List[str]) -> Transaction:
-    """
-    Adds suggested related accounts to a transaction.
-    This function is a convenience wrapper over `_add_suggestions_to_transaction`.
-    """
+    """Adds suggested related accounts to a transaction."""
     return _add_suggestions_to_transaction(transaction, suggestions, key=METADATA_KEY_SUGGESTED_ACCOUNTS)
 
 
 def add_suggested_payees_to_transaction(transaction: Transaction, suggestions: List[str]) -> Transaction:
-    """
-    Adds suggested payees to a transaction.
-    This function is a convenience wrapper over `_add_suggestions_to_transaction`.
-    """
+    """Adds suggested payees to a transaction."""
     return _add_suggestions_to_transaction(transaction, suggestions, key=METADATA_KEY_SUGGESTED_PAYEES)
 
 
