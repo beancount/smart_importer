@@ -6,7 +6,8 @@ from typing import List, Union
 from beancount.core.data import Transaction, ALL_DIRECTIVES, filter_txns
 
 from smart_importer.machinelearning_helpers import load_training_data
-from smart_importer.machinelearning_helpers import merge_non_transaction_entries
+from smart_importer.machinelearning_helpers import \
+    merge_non_transaction_entries
 
 logger = logging.getLogger(__name__)
 
@@ -64,41 +65,54 @@ class ImporterDecorator():
         :param importer_class: The original importer class
         :return: The modified importer class with a patched extract method.
         """
-        importer_class.extract = self.patched_extract_method(importer_class.extract)
+        importer_class.extract = self.patched_extract_method(
+            importer_class.extract)
         return importer_class
 
     def patched_extract_method(self, original_extract_method):
         """
         Patches a beancount importer's extract method by wrapping it.
         :param original_extract_method: The importer's original extract method
-        :return: A patched extract method, created by wrapping the original extract method.
+        :return: A patched extract method, created by wrapping the original
+            extract method.
         """
         decorator = self
 
         @wraps(original_extract_method)
         def wrapper(self, file, existing_entries=None):
 
-            # read the importer's existing entries, if provided as argument to its `extract` method:
+            # read the importer's existing entries, if provided as argument to
+            # its `extract` method:
             decorator.existing_entries = existing_entries
 
             # read the importer's `extract`ed entries
-            logger.debug("About to call the importer's extract method to receive entries to be imported...")
-            if 'existing_entries' in inspect.signature(original_extract_method).parameters:
-                decorator.imported_entries = original_extract_method(self, file, existing_entries)
+            logger.debug("About to call the importer's extract method to "
+                         "receive entries to be imported...")
+            if 'existing_entries' in inspect.signature(
+                    original_extract_method).parameters:
+                decorator.imported_entries = original_extract_method(
+                    self, file, existing_entries)
             else:
-                decorator.imported_entries = original_extract_method(self, file)
+                decorator.imported_entries = original_extract_method(
+                    self, file)
 
-            # read the importer's file_account, to be used as default value for the decorator's known `account`:
+            # read the importer's file_account, to be used as default value for
+            # the decorator's known `account`:
             if inspect.ismethod(self.file_account) and not decorator.account:
-                logger.debug("Trying to read the importer's file_account, "
-                             "to be used as default value for the decorator's `account` argument...")
+                logger.debug(
+                    "Trying to read the importer's file_account, "
+                    "to be used as default value for the decorator's "
+                    "`account` argument..."
+                )
                 file_account = self.file_account(file)
                 if file_account:
                     decorator.account = file_account
-                    logger.debug(f"Read file_account {file_account} from the importer; "
-                                 f"using it as known account in the decorator.")
+                    logger.debug(
+                        f"Read file_account {file_account} from the importer; "
+                        f"using it as known account in the decorator.")
                 else:
-                    logger.debug(f"Could not retrieve file_account from the importer.")
+                    logger.debug(
+                        f"Could not retrieve file_account from the importer.")
 
             return decorator.main()
 
@@ -106,7 +120,9 @@ class ImporterDecorator():
 
     def main(self) -> List[Union[ALL_DIRECTIVES]]:
         """
-        The decorator's main method, to be implemented by inheriting classes with the following functionality:
+        The decorator's main method, to be implemented by inheriting classes
+        with the following functionality:
+
         1. read `self.imported_entries`
         2. process these entries
         3. return possibly modified entries

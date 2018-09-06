@@ -59,12 +59,13 @@ class PredictPostings(SmartImporterDecorator):
         * one transaction (for each transaction within the training data),
         * one posting (for each posting in every transaction), primarily used
           for that posting's account name,
-        * and one other account name (for each other account in the same transaction).
+        * and one other account name (for each other account in the same
+          transaction).
         """
         self.converted_training_data = [
-            TxnPostingAccount(t, p, pRef.account)
-            for t in self.training_data for pRef in t.postings
-            for p in t.postings if p.account != pRef.account
+            TxnPostingAccount(t, p, pRef.account) for t in self.training_data
+            for pRef in t.postings for p in t.postings
+            if p.account != pRef.account
         ]
 
     def define_pipeline(self):
@@ -163,7 +164,8 @@ class PredictPostings(SmartImporterDecorator):
                 for t_a in zip(transactions, predicted_accounts)
             ]
             logger.debug(
-                "Finished adding predicted accounts to the transactions to be imported."
+                "Finished adding predicted accounts to the transactions "
+                "to be imported."
             )
         # suggest accounts that are likely involved in the transaction
         if self.suggest_accounts:
@@ -187,6 +189,7 @@ class PredictPostings(SmartImporterDecorator):
                 for t_s in zip(transactions, suggestions)
             ]
             logger.debug(
-                "Finished adding suggested accounts to the transactions to be imported."
+                "Finished adding suggested accounts to the transactions "
+                "to be imported."
             )
         return transactions

@@ -13,13 +13,15 @@ from sklearn.base import BaseEstimator, TransformerMixin
 logger = logging.getLogger(__name__)
 
 
-def load_training_data(training_data: Union[_FileMemo, List[Transaction], str],
-                       known_account: str = None,
-                       existing_entries: List[Tuple] = None) -> List[Transaction]:
+def load_training_data(
+        training_data: Union[_FileMemo, List[Transaction], str],
+        known_account: str = None,
+        existing_entries: List[Tuple] = None) -> List[Transaction]:
     """Load training data.
 
     :param training_data: The training data that shall be loaded.
-        Can be provided as a string (the filename pointing to a beancount file),
+        Can be provided as a string (the filename pointing to a beancount
+            file),
         a _FileMemo instance,
         or a list of Beancount entries
     :param known_account: Optional filter for the training data.
@@ -33,7 +35,9 @@ def load_training_data(training_data: Union[_FileMemo, List[Transaction], str],
         logger.debug("Using existing entries for training data")
         training_data = list(filter_txns(existing_entries))
     elif isinstance(training_data, _FileMemo):
-        logger.debug(f"Reading training data from _FileMemo \"{training_data.name}\"...")
+        logger.debug(
+            f"Reading training data from _FileMemo \"{training_data.name}\"..."
+        )
         training_data, errors, _ = loader.load_file(training_data.name)
         assert not errors
         training_data = filter_txns(training_data)
@@ -44,14 +48,18 @@ def load_training_data(training_data: Union[_FileMemo, List[Transaction], str],
         training_data = filter_txns(training_data)
     logger.debug(f"Finished reading training data.")
     if known_account:
-        training_data = [txn for txn in training_data
-                         if any([pos.account == known_account for pos in txn.postings])]
-        logger.debug(f"After filtering for account {known_account}, "
-                     f"the training data consists of {len(training_data)} entries.")
+        training_data = [
+            txn for txn in training_data
+            if any([pos.account == known_account for pos in txn.postings])
+        ]
+        logger.debug(
+            f"After filtering for account {known_account}, "
+            f"the training data consists of {len(training_data)} entries.")
     return training_data
 
 
-def add_posting_to_transaction(transaction: Transaction, account: str) -> Transaction:
+def add_posting_to_transaction(transaction: Transaction,
+                               account: str) -> Transaction:
     """Adds an empty posting with the given account to a transaction."""
 
     if len(transaction.postings) != 1:
@@ -63,7 +71,9 @@ def add_posting_to_transaction(transaction: Transaction, account: str) -> Transa
     return transaction
 
 
-def add_payee_to_transaction(transaction: Transaction, payee: str, overwrite=False) -> Transaction:
+def add_payee_to_transaction(transaction: Transaction,
+                             payee: str,
+                             overwrite=False) -> Transaction:
     """
     Sets a transactions's payee.
     """
@@ -76,19 +86,25 @@ METADATA_KEY_SUGGESTED_ACCOUNTS = '__suggested_accounts__'
 METADATA_KEY_SUGGESTED_PAYEES = '__suggested_payees__'
 
 
-def add_suggested_accounts_to_transaction(transaction: Transaction, suggestions: List[str]) -> Transaction:
+def add_suggested_accounts_to_transaction(
+        transaction: Transaction, suggestions: List[str]) -> Transaction:
     """Adds suggested related accounts to a transaction."""
-    return _add_suggestions_to_transaction(transaction, suggestions, key=METADATA_KEY_SUGGESTED_ACCOUNTS)
+    return _add_suggestions_to_transaction(
+        transaction, suggestions, key=METADATA_KEY_SUGGESTED_ACCOUNTS)
 
 
-def add_suggested_payees_to_transaction(transaction: Transaction, suggestions: List[str]) -> Transaction:
+def add_suggested_payees_to_transaction(transaction: Transaction,
+                                        suggestions: List[str]) -> Transaction:
     """Adds suggested payees to a transaction."""
-    return _add_suggestions_to_transaction(transaction, suggestions, key=METADATA_KEY_SUGGESTED_PAYEES)
+    return _add_suggestions_to_transaction(
+        transaction, suggestions, key=METADATA_KEY_SUGGESTED_PAYEES)
 
 
-def _add_suggestions_to_transaction(transaction: Transaction, suggestions: List[str], key='__suggestions__'):
+def _add_suggestions_to_transaction(transaction: Transaction,
+                                    suggestions: List[str],
+                                    key='__suggestions__'):
     """
-    Adds a list of suggested accounts to a transaction under transaction.meta[key].
+    Adds a list of suggestions to a transaction under transaction.meta[key].
     """
     meta = transaction.meta
     meta[key] = json.dumps(suggestions)
@@ -108,10 +124,9 @@ def merge_non_transaction_entries(imported_entries, enhanced_transactions):
     return enhanced_entries
 
 
-TxnPostingAccount = NamedTuple('TxnPostingAccount', [
-    ('txn', Transaction),
-    ('posting', Posting),
-    ('account', str)])
+TxnPostingAccount = NamedTuple('TxnPostingAccount',
+                               [('txn', Transaction), ('posting', Posting),
+                                ('account', str)])
 
 
 class ItemSelector(BaseEstimator, TransformerMixin):
@@ -211,7 +226,8 @@ class GetPayee(TransformerMixin, NoFitMixin):
     the output is a List[str].
     """
 
-    def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
+    def transform(self,
+                  data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._get_payee(d) for d in data]
 
     def _get_payee(self, d):
@@ -228,7 +244,8 @@ class GetNarration(TransformerMixin, NoFitMixin):
     the output is a List[str].
     """
 
-    def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
+    def transform(self,
+                  data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._get_narration(d) for d in data]
 
     def _get_narration(self, d):
@@ -259,13 +276,14 @@ class GetPostingAccount(TransformerMixin, NoFitMixin):
 
 class GetReferencePostingAccount(TransformerMixin, NoFitMixin):
     """
-    Scikit-learn transformer to extract the reference account name.
-    The input can be of type List[Transaction] or List[TxnPostingAccount].
-    The reference account name is extracted from the first posting of each transaction.
-    The output is a List[str].
+    Scikit-learn transformer to extract the reference account name.  The input
+    can be of type List[Transaction] or List[TxnPostingAccount].  The reference
+    account name is extracted from the first posting of each transaction.  The
+    output is a List[str].
     """
 
-    def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
+    def transform(self,
+                  data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._get_posting_account(d) for d in data]
 
     def _get_posting_account(self, d):
@@ -277,12 +295,13 @@ class GetReferencePostingAccount(TransformerMixin, NoFitMixin):
 
 class GetDayOfMonth(TransformerMixin, NoFitMixin):
     """
-    Scikit-learn transformer to extract the day of month when a transaction happened.
-    The input can be of type List[Transaction] or List[TxnPostingAccount],
-    the output is a List[Date].
+    Scikit-learn transformer to extract the day of month when a transaction
+    happened. The input can be of type List[Transaction] or
+    List[TxnPostingAccount], the output is a List[Date].
     """
 
-    def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
+    def transform(self,
+                  data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._get_day_of_month(d) for d in data]
 
     def _get_day_of_month(self, d):
