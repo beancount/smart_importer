@@ -6,8 +6,7 @@ from typing import List, Union
 from beancount.core.data import Transaction, ALL_DIRECTIVES, filter_txns
 
 from smart_importer.machinelearning_helpers import load_training_data
-from smart_importer.machinelearning_helpers import \
-    merge_non_transaction_entries
+from smart_importer.entries import merge_non_transaction_entries
 
 logger = logging.getLogger(__name__)
 

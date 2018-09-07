@@ -10,8 +10,10 @@ from sklearn.svm import SVC
 from beancount.core.data import Transaction
 
 from smart_importer import machinelearning_helpers as ml
-from smart_importer.machinelearning_helpers import TxnPostingAccount
 from smart_importer.decorator_baseclass import SmartImporterDecorator
+from smart_importer.entries import (add_posting_to_transaction,
+                                    add_suggested_accounts_to_transaction)
+from smart_importer.machinelearning_helpers import TxnPostingAccount
 
 logger = logging.getLogger(__name__)
 
@@ -156,8 +158,8 @@ class PredictPostings(SmartImporterDecorator):
             predicted_accounts: List[str]
             predicted_accounts = self.pipeline.predict(transactions)
             transactions = [
-                ml.add_posting_to_transaction(*t_a)
-                for t_a in zip(transactions, predicted_accounts)
+                add_posting_to_transaction(txn, account)
+                for txn, account in zip(transactions, predicted_accounts)
             ]
             logger.debug("Added predicted accounts.")
         if self.suggest_accounts:
@@ -176,8 +178,8 @@ class PredictPostings(SmartImporterDecorator):
 
             # add the suggested accounts to each transaction:
             transactions = [
-                ml.add_suggested_accounts_to_transaction(*t_s)
-                for t_s in zip(transactions, suggestions)
+                add_suggested_accounts_to_transaction(txn, suggestions)
+                for txn, suggestions in zip(transactions, suggestions)
             ]
             logger.debug("Added suggested accounts.")
         return transactions

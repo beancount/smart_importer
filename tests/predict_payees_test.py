@@ -7,7 +7,7 @@ from beancount.core.data import Transaction
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
-from smart_importer import machinelearning_helpers as ml
+from smart_importer.entries import METADATA_KEY_SUGGESTED_PAYEES
 from smart_importer.predict_payees import PredictPayees
 
 
@@ -157,7 +157,7 @@ class PredictPayeesTest(unittest.TestCase):
         '''
         transactions = self.importer.extract("dummy-data")
         for transaction in transactions:
-            suggestions = transaction.meta[ml.METADATA_KEY_SUGGESTED_PAYEES]
+            suggestions = transaction.meta[METADATA_KEY_SUGGESTED_PAYEES]
             self.assertTrue(len(suggestions),
                             msg=f"The list of suggested accounts should not be empty, "
                                 f"but was found to be empty for transaction {transaction}.")
