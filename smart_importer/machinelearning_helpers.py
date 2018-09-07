@@ -53,18 +53,6 @@ TxnPostingAccount = NamedTuple('TxnPostingAccount',
                                 ('account', str)])
 
 
-class ArrayCaster(BaseEstimator, TransformerMixin):
-    """
-    Helper class for casting data into array shape.
-    """
-
-    def fit(self, x, y=None):
-        return self
-
-    def transform(self, data):
-        return numpy.transpose(numpy.matrix(data))
-
-
 class NoFitMixin:
     """
     Mixin that helps implementing a custom scikit-learn transformer.
@@ -76,93 +64,63 @@ class NoFitMixin:
         return self
 
 
-class GetPayee(TransformerMixin, NoFitMixin):
+class ArrayCaster(BaseEstimator, TransformerMixin, NoFitMixin):
     """
-    Scikit-learn transformer to extract the payee.
-    The input can be of type List[Transaction] or List[TxnPostingAccount],
-    the output is a List[str].
+    Helper class for casting data into array shape.
     """
 
+    def transform(self, data):
+        return numpy.transpose(numpy.matrix(data))
+
+
+class Getter(TransformerMixin, NoFitMixin):
     def transform(self,
                   data: Union[List[TxnPostingAccount], List[Transaction]]):
-        return [self._get_payee(d) for d in data]
+        return [self._getter(d) for d in data]
 
-    def _get_payee(self, d):
-        if isinstance(d, Transaction):
-            return d.payee or ''
-        elif isinstance(d, TxnPostingAccount):
-            return d.txn.payee or ''
+    def _getter(self, txn):
+        if isinstance(txn, TxnPostingAccount):
+            txn = txn.txn
+        return self._txn_getter(txn)
 
-
-class GetNarration(TransformerMixin, NoFitMixin):
-    """
-    Scikit-learn transformer to extract the narration.
-    The input can be of type List[Transaction] or List[TxnPostingAccount],
-    the output is a List[str].
-    """
-
-    def transform(self,
-                  data: Union[List[TxnPostingAccount], List[Transaction]]):
-        return [self._get_narration(d) for d in data]
-
-    def _get_narration(self, d):
-        if isinstance(d, Transaction):
-            return d.narration
-        elif isinstance(d, TxnPostingAccount):
-            return d.txn.narration
+    def _txn_getter(self, txn):
+        pass
 
 
-class GetPostingAccount(TransformerMixin, NoFitMixin):
-    """
-    Scikit-learn transformer to extract the account name.
-    The input can be of type List[Transaction] or List[TxnPostingAccount].
-    The account name is extracted from the last posting of each transaction,
-    or from TxnPostingAccount.posting.account of each TxnPostingAccount.
-    The output is a List[str].
-    """
+class GetPayee(Getter):
+    """Payee of the transaction."""
 
-    def transform(self, data: Union[List[TxnPosting], List[Transaction]]):
-        return [self._get_posting_account(d) for d in data]
-
-    def _get_posting_account(self, d):
-        if isinstance(d, Transaction):
-            return d.postings[-1].account
-        elif isinstance(d, TxnPostingAccount):
-            return d.posting.account
+    def _txn_getter(self, txn):
+        return txn.payee or ''
 
 
-class GetReferencePostingAccount(TransformerMixin, NoFitMixin):
-    """
-    Scikit-learn transformer to extract the reference account name.  The input
-    can be of type List[Transaction] or List[TxnPostingAccount].  The reference
-    account name is extracted from the first posting of each transaction.  The
-    output is a List[str].
-    """
+class GetNarration(Getter):
+    """Narration of the transaction."""
 
-    def transform(self,
-                  data: Union[List[TxnPostingAccount], List[Transaction]]):
-        return [self._get_posting_account(d) for d in data]
-
-    def _get_posting_account(self, d):
-        if isinstance(d, Transaction):
-            return d.postings[0].account
-        elif isinstance(d, TxnPostingAccount):
-            return d.account
+    def _txn_getter(self, txn):
+        return txn.narration
 
 
-class GetDayOfMonth(TransformerMixin, NoFitMixin):
-    """
-    Scikit-learn transformer to extract the day of month when a transaction
-    happened. The input can be of type List[Transaction] or
-    List[TxnPostingAccount], the output is a List[Date].
-    """
+class GetDayOfMonth(Getter):
+    """Day of month of the transaction."""
 
-    def transform(self,
-                  data: Union[List[TxnPostingAccount], List[Transaction]]):
-        return [self._get_day_of_month(d) for d in data]
+    def _txn_getter(self, txn):
+        return txn.date.day
 
-    def _get_day_of_month(self, d):
-        if isinstance(d, Transaction):
-            return d.date.day
-        elif isinstance(d, TxnPostingAccount):
-            return d.txn.date.day
+
+class GetPostingAccount(Getter):
+    """Account of the last posting or of TxnPostingAccount.posting."""
+
+    def _getter(self, txn):
+        if isinstance(txn, TxnPostingAccount):
+            return txn.posting.account
+        return txn.postings[-1].account
+
+
+class GetReferencePostingAccount(Getter):
+    """Account of the first posting or of TxnPostingAccount."""
+
+    def _getter(self, txn):
+        if isinstance(txn, TxnPostingAccount):
+            return txn.account
+        return txn.postings[0].account
