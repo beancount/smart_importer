@@ -13,6 +13,8 @@ from sklearn.svm import SVC
 
 from smart_importer import machinelearning_helpers as ml
 from smart_importer.decorator_baseclass import SmartImporterDecorator
+from smart_importer.entries import (add_payee_to_transaction,
+                                    add_suggested_payees_to_transaction)
 
 logger = logging.getLogger(__name__)
 
@@ -123,9 +125,9 @@ class PredictPayees(SmartImporterDecorator):
             predicted_payees: List[str]
             predicted_payees = self.pipeline.predict(transactions)
             transactions = [
-                ml.add_payee_to_transaction(
-                    *t_p, overwrite=self.overwrite_existing_payees)
-                for t_p in zip(transactions, predicted_payees)
+                add_payee_to_transaction(txn, payee,
+                                         overwrite=self.overwrite_existing_payees)
+                for txn, payee in zip(transactions, predicted_payees)
             ]
             logger.debug(
                 "Finished adding predicted payees to the transactions "
@@ -150,7 +152,7 @@ class PredictPayees(SmartImporterDecorator):
 
             # add the suggested payees to each transaction:
             transactions = [
-                ml.add_suggested_payees_to_transaction(*t_p)
+                add_suggested_payees_to_transaction(*t_p)
                 for t_p in zip(transactions, suggested_payees)
             ]
             logger.debug(

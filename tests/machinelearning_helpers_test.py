@@ -55,21 +55,6 @@ class MachinelearningTest(unittest.TestCase):
         )
         self.assertEqual(existing_entries, actual)
 
-    def test_add_predicted_posting_to_transaction(self):
-        transaction: Transaction
-        transaction = ml.add_posting_to_transaction(self.test_transaction, "Expenses:Food:Groceries")
-        self.assertEqual(transaction.postings[1].account, "Expenses:Food:Groceries")
-
-    def test_add_suggested_accounts_to_transaction(self):
-        suggestions: List[str]
-        suggestions = ["Expenses:Food:Groceries",
-                       "Expenses:Food:Restaurant",
-                       "Expenses:Household",
-                       "Expenses:Gifts"]
-        transaction: Transaction
-        transaction = ml.add_suggested_accounts_to_transaction(self.test_transaction, suggestions)
-        self.assertEqual(transaction.meta['__suggested_accounts__'], json.dumps(suggestions))
-
     def test_get_payee(self):
         self.assertEqual(ml.GetPayee().transform(self.test_data),
                          ['Farmer Fresh', 'Starbucks', 'Farmer Fresh', 'Gimme Coffee'])
