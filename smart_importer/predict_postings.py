@@ -3,16 +3,11 @@
 import logging
 from typing import List, Union
 
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.svm import SVC
-
 from beancount.core.data import Transaction
 
-from smart_importer import machinelearning_helpers as ml
 from smart_importer.decorator_baseclass import SmartImporterDecorator
-from smart_importer.entries import (add_posting_to_transaction,
-                                    add_suggested_accounts_to_transaction)
+from smart_importer.entries import add_posting_to_transaction
+from smart_importer.entries import add_suggested_accounts_to_transaction
 from smart_importer.machinelearning_helpers import TxnPostingAccount
 
 logger = logging.getLogger(__name__)
@@ -43,19 +38,23 @@ class PredictPostings(SmartImporterDecorator):
             suggest_accounts: bool = False,
     ):
         super().__init__()
+
         self.account = account
         self.training_data = training_data
         self.predict_second_posting = predict_second_posting
         self.suggest_accounts = suggest_accounts
-        self.converted_training_data = None
-        self.pipeline = None
+
+        self.weights = {
+            'narration': 0.8,
+            'first_posting_account': 0.8,
+            'date.day': 0.1,
+        }
 
     def prepare_training_data(self):
-        """
-        Prepares the training data in preparation for defining and training the
-        machine learning pipeline.  Specifically, this method converts the
-        training data into a list of `TxnPostingAccount` objects.  This list
-        contains tuples of:
+        """Prepare the training data.
+
+        Convert the training data into a list of `TxnPostingAccount` objects.
+        This list contains tuples of:
 
         * one transaction (for each transaction within the training data),
         * one posting (for each posting in every transaction), primarily used
@@ -63,85 +62,21 @@ class PredictPostings(SmartImporterDecorator):
         * and one other account name (for each other account in the same
           transaction).
         """
-        self.converted_training_data = [
+        self.training_data = [
             TxnPostingAccount(t, p, pRef.account) for t in self.training_data
             for pRef in t.postings for p in t.postings
             if p.account != pRef.account
         ]
-
-    def define_pipeline(self):
-        """
-        Defines the machine learning pipeline for predicting and suggesting
-        postings.  The pipeline definition is created dynamically depending on
-        available training data.  For example, payees are only included as
-        feature in the pipeline if the training data contains payees.
-        """
-        if not self.converted_training_data:
-            raise ValueError("Cannot define the machine learning pipeline "
-                             "because the converted training data is empty")
-
-        if len(self.converted_training_data) < 2:
-            raise ValueError(
-                "Cannot define the machine learning pipeline "
-                "because the training data consists of less than two elements."
-            )
-
-        transformers = []
-        transformer_weights = {}
-        transformers.append(('narration',
-                             Pipeline([
-                                 ('getNarration', ml.GetNarration()),
-                                 ('vect', CountVectorizer(ngram_range=(1, 3))),
-                             ])))
-        transformer_weights['narration'] = 0.8
-        transformers.append(('account',
-                             Pipeline([
-                                 ('getReferencePostingAccount',
-                                  ml.GetReferencePostingAccount()),
-                                 ('vect', CountVectorizer(ngram_range=(1, 3))),
-                             ])))
-        transformer_weights['account'] = 0.8
         distinct_payees = set(
-            map(lambda trx: trx.txn.payee, self.converted_training_data))
+            map(lambda trx: trx.txn.payee, self.training_data or []))
         if len(distinct_payees) > 1:
-            transformers.append(('payee',
-                                 Pipeline([
-                                     ('getPayee', ml.GetPayee()),
-                                     ('vect',
-                                      CountVectorizer(ngram_range=(1, 3))),
-                                 ])))
-            transformer_weights['payee'] = 0.5
-        transformers.append((
-            'dayOfMonth',
-            Pipeline([
-                ('getDayOfMonth', ml.GetDayOfMonth()),
-                ('caster', ml.ArrayCaster()),  # need for issue with data shape
-            ])))
-        transformer_weights['dayOfMonth'] = 0.1
-        self.pipeline = Pipeline([
-            ('union',
-             FeatureUnion(
-                 transformer_list=transformers,
-                 transformer_weights=transformer_weights)),
-            ('svc', SVC(kernel='linear')),
-        ])
+            self.weights['payee'] = 0.5
+        elif 'payee' in self.weights:
+            del self.weights['payee']
 
-    def train_pipeline(self):
-        """Train the machine learning pipeline."""
-        if not self.converted_training_data:
-            raise ValueError("Cannot train the machine learning model "
-                             "because the converted training data is empty")
-
-        if len(self.converted_training_data) < 2:
-            raise ValueError(
-                "Cannot train the machine learning model "
-                "because the training data consists of less than two elements."
-            )
-
-        self.pipeline.fit(
-            self.converted_training_data,
-            ml.GetPostingAccount().transform(self.converted_training_data))
-        logger.debug("Finished training the machine learning model.")
+    @property
+    def targets(self):
+        return [txn.posting.account for txn in self.training_data]
 
     def process_transactions(
             self, transactions: List[Transaction]) -> List[Transaction]:

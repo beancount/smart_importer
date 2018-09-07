@@ -1,12 +1,18 @@
+"""Importer decorators."""
+
 import inspect
 import logging
 from functools import wraps
 from typing import List, Union
 
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.svm import SVC
+
 from beancount.core.data import Transaction, ALL_DIRECTIVES, filter_txns
 
 from smart_importer.machinelearning_helpers import load_training_data
 from smart_importer.entries import merge_non_transaction_entries
+from smart_importer.pipelines import PIPELINES
 
 logger = logging.getLogger(__name__)
 
@@ -64,11 +70,6 @@ class ImporterDecorator():
                 imported_entries = unpatched_extract(self, file)
 
             if not decorator.account:
-                logger.debug(
-                    "Trying to read the importer's file_account, "
-                    "to be used as default value for the decorator's "
-                    "`account` argument..."
-                )
                 file_account = self.file_account(file)
                 if file_account:
                     decorator.account = file_account
@@ -89,6 +90,10 @@ class ImporterDecorator():
 
 
 class SmartImporterDecorator(ImporterDecorator):
+    def __init__(self):
+        self.pipeline = None
+        self.weights = {}
+
     def main(self, imported_entries, existing_entries):
         """Predict and suggest attributes for imported transactions."""
         try:
@@ -108,14 +113,42 @@ class SmartImporterDecorator(ImporterDecorator):
             known_account=self.account,
             existing_entries=existing_entries)
 
+    @property
+    def targets(self):
+        """The training targets for the given training data."""
+        raise NotImplementedError
+
     def prepare_training_data(self):
         pass
 
     def define_pipeline(self):
-        raise NotImplementedError
+        """Defines the machine learning pipeline based on given weights."""
+
+        transformers = [(attribute, PIPELINES[attribute])
+                        for attribute in self.weights]
+
+        self.pipeline = Pipeline([
+            ('union',
+             FeatureUnion(
+                 transformer_list=transformers,
+                 transformer_weights=self.weights)),
+            ('svc', SVC(kernel='linear')),
+        ])
 
     def train_pipeline(self):
-        raise NotImplementedError
+        """Train the machine learning pipeline."""
+
+        if not self.training_data:
+            raise ValueError("Cannot train the machine learning model "
+                             "because the training data is empty.")
+        elif len(self.training_data) < 2:
+            raise ValueError(
+                "Cannot train the machine learning model "
+                "because the training data consists of less than two elements."
+            )
+
+        self.pipeline.fit(self.training_data, self.targets)
+        logger.debug("Trained the machine learning model.")
 
     def process_entries(self, imported_entries) -> List[Union[ALL_DIRECTIVES]]:
         """Process imported entries.

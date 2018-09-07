@@ -59,6 +59,7 @@ def _add_suggestions_to_transaction(transaction: Transaction,
 
 
 def merge_non_transaction_entries(imported_entries, enhanced_transactions):
+    """Merge modified transactions back into a list of entries."""
     enhanced_entries = []
     enhanced_transactions_iter = iter(enhanced_transactions)
     for entry in imported_entries:

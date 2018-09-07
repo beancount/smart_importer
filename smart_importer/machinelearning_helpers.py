@@ -5,7 +5,7 @@ from typing import List, Union, Tuple, NamedTuple
 
 import numpy
 from beancount import loader
-from beancount.core.data import Transaction, Posting, TxnPosting, filter_txns
+from beancount.core.data import Transaction, Posting, filter_txns
 from sklearn.base import BaseEstimator, TransformerMixin
 
 logger = logging.getLogger(__name__)
@@ -54,11 +54,7 @@ TxnPostingAccount = NamedTuple('TxnPostingAccount',
 
 
 class NoFitMixin:
-    """
-    Mixin that helps implementing a custom scikit-learn transformer.
-    This mixing implements a transformer's fit method that simply returns self.
-    Compare https://signal-to-noise.xyz/post/sklearn-pipeline/
-    """
+    """Mixin that implements a transformer's fit method that returns self."""
 
     def fit(self, X, y=None):
         return self
@@ -106,15 +102,6 @@ class GetDayOfMonth(Getter):
 
     def _txn_getter(self, txn):
         return txn.date.day
-
-
-class GetPostingAccount(Getter):
-    """Account of the last posting or of TxnPostingAccount.posting."""
-
-    def _getter(self, txn):
-        if isinstance(txn, TxnPostingAccount):
-            return txn.posting.account
-        return txn.postings[-1].account
 
 
 class GetReferencePostingAccount(Getter):
