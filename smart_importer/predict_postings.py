@@ -40,8 +40,9 @@ class PredictPostings(SmartImporterDecorator):
             predict_second_posting: bool = True,
             suggest_accounts: bool = False,
     ):
-        super().__init__(training_data)
+        super().__init__()
         self.account = account
+        self.training_data = training_data
         self.predict_second_posting = predict_second_posting
         self.suggest_accounts = suggest_accounts
         self.converted_training_data = None

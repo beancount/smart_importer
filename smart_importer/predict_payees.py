@@ -45,8 +45,9 @@ class PredictPayees(SmartImporterDecorator):
             predict_payees: bool = True,
             overwrite_existing_payees=False,
             suggest_payees: bool = False):
-        super().__init__(training_data)
+        super().__init__()
         self.account = account
+        self.training_data = training_data
         self.predict_payees = predict_payees
         self.overwrite_existing_payees = overwrite_existing_payees
         self.suggest_payees = suggest_payees

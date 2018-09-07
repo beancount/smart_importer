@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class ImporterDecorator():
-    """Abstract base class for Beancount importer class or method decorators.
+    """Base class for Beancount importer class or method decorators.
 
     Instance Variables:
 
@@ -22,13 +22,12 @@ class ImporterDecorator():
       It is obtained by calling the importer's file_account method.
     """
 
-    def __init__(self, training_data: List[Transaction]):
+    def __init__(self):
         """
         Decorators that inherit from this class shall overwrite and implement
         this method, with parameters they need, for example a parameter for
         training data to be used for machine learning.
         """
-        self.training_data = training_data
         self.account = None
 
     def __call__(self, to_be_decorated):
@@ -86,7 +85,7 @@ class ImporterDecorator():
         return wrapper
 
     def main(self, imported_entries, existing_entries):
-        """Predict and suggest attributes for imported transactions."""
+        """Modify imported entries."""
         pass
 
 
