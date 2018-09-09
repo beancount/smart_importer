@@ -1,13 +1,10 @@
 """Machine Learning Helpers."""
 
 import logging
-from typing import List, Union, Tuple, NamedTuple
-import operator
+from typing import List, Union, Tuple
 
-import numpy
 from beancount import loader
-from beancount.core.data import Transaction, Posting, filter_txns
-from sklearn.base import BaseEstimator, TransformerMixin
+from beancount.core.data import Transaction, filter_txns
 
 logger = logging.getLogger(__name__)
 
@@ -47,59 +44,3 @@ def load_training_data(
             f"After filtering for account {known_account}, "
             f"the training data consists of {len(training_data)} entries.")
     return training_data
-
-
-TxnPostingAccount = NamedTuple('TxnPostingAccount',
-                               [('txn', Transaction), ('posting', Posting),
-                                ('account', str)])
-
-
-class NoFitMixin:
-    """Mixin that implements a transformer's fit method that returns self."""
-
-    def fit(self, X, y=None):
-        return self
-
-
-class ArrayCaster(BaseEstimator, TransformerMixin, NoFitMixin):
-    """
-    Helper class for casting data into array shape.
-    """
-
-    def transform(self, data):
-        return numpy.transpose(numpy.matrix(data))
-
-
-class Getter(TransformerMixin, NoFitMixin):
-    def transform(self,
-                  data: Union[List[TxnPostingAccount], List[Transaction]]):
-        return [self._getter(d) for d in data]
-
-    def _getter(self, txn):
-        if isinstance(txn, TxnPostingAccount):
-            txn = txn.txn
-        return self._txn_getter(txn)
-
-    def _txn_getter(self, txn):
-        pass
-
-
-class GetPayee(Getter):
-    """Payee of the transaction."""
-
-    def _txn_getter(self, txn):
-        return txn.payee or ''
-
-
-class AttrGetter(Getter):
-    def __init__(self, attr):
-        self._txn_getter = operator.attrgetter(attr)
-
-
-class GetReferencePostingAccount(Getter):
-    """Account of the first posting or of TxnPostingAccount."""
-
-    def _getter(self, txn):
-        if isinstance(txn, TxnPostingAccount):
-            return txn.account
-        return txn.postings[0].account

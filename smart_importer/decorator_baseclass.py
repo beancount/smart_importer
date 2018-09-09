@@ -5,7 +5,7 @@ import logging
 from functools import wraps
 from typing import List, Union
 
-from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.pipeline import make_pipeline, FeatureUnion
 from sklearn.svm import SVC
 
 from beancount.core.data import Transaction, ALL_DIRECTIVES, filter_txns
@@ -127,13 +127,12 @@ class SmartImporterDecorator(ImporterDecorator):
         transformers = [(attribute, PIPELINES[attribute])
                         for attribute in self.weights]
 
-        self.pipeline = Pipeline([
-            ('union',
-             FeatureUnion(
-                 transformer_list=transformers,
-                 transformer_weights=self.weights)),
-            ('svc', SVC(kernel='linear')),
-        ])
+        self.pipeline = make_pipeline(
+            FeatureUnion(
+                transformer_list=transformers,
+                transformer_weights=self.weights),
+            SVC(kernel='linear'),
+        )
 
     def train_pipeline(self):
         """Train the machine learning pipeline."""

@@ -1,6 +1,7 @@
 """Decorator for a Beancount importer that suggests and predicts payees."""
 
 import logging
+import operator
 from typing import List, Union
 
 from beancount.core.data import Transaction
@@ -23,7 +24,7 @@ class PredictPayees(SmartImporterDecorator):
 
     Example:
 
-    @PredictPayees(training_data="trainingdata.beancount")
+    @PredictPayees()
     class MyImporter(ImporterProtocol):
         def extract(file):
           # do the import, return list of entries
@@ -43,7 +44,6 @@ class PredictPayees(SmartImporterDecorator):
         self.overwrite = overwrite_existing_payees
         self.suggest = suggest_payees
 
-        self.pipeline = None
         self.weights = {'narration': 0.8, 'payee': 0.5, 'date.day': 0.1}
 
     @property
@@ -52,15 +52,11 @@ class PredictPayees(SmartImporterDecorator):
 
     def process_transactions(
             self, transactions: List[Transaction]) -> List[Transaction]:
-        """
-        Processes all imported transactions:
-        * Predicts payees
-        * Suggests payees that are likely also involved in the transaction
-        :param transactions: List of beancount transactions
-        :return: List of beancount transactions
+        """Processes all imported transactions.
+
+        Predict payees and suggest payees.
         """
 
-        # predict payees
         if self.predict:
             predictions = self.pipeline.predict(transactions)
             transactions = [
@@ -78,7 +74,7 @@ class PredictPayees(SmartImporterDecorator):
             suggestions = [[
                 payee for _, payee in sorted(
                     list(zip(distance_values, self.pipeline.classes_)),
-                    key=lambda x: x[0],
+                    key=operator.itemgetter(0),
                     reverse=True)
             ] for distance_values in decision_values]
 
