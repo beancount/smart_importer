@@ -37,25 +37,26 @@ class MachinelearningTest(unittest.TestCase):
 
     def test_load_training_data(self):
         test_data = ml.load_training_data(
-            training_data=os.path.join(os.path.dirname(__file__), 'sample_training.beancount')
-        )
+            training_data=os.path.join(
+                os.path.dirname(__file__), 'sample_training.beancount'))
         self.assertEqual(1, len(list(test_data)))
 
     def test_load_training_data_use_existing(self):
         existing_entries = self.test_data
         actual = ml.load_training_data(
-            training_data=None,
-            existing_entries=existing_entries
-        )
+            training_data=None, existing_entries=existing_entries)
         self.assertEqual(existing_entries, actual)
 
     def test_get_payee(self):
-        self.assertEqual(ml.GetPayee().transform(self.test_data),
-                         ['Farmer Fresh', 'Starbucks', 'Farmer Fresh', 'Gimme Coffee'])
+        self.assertEqual(
+            ml.GetPayee().transform(self.test_data),
+            ['Farmer Fresh', 'Starbucks', 'Farmer Fresh', 'Gimme Coffee'])
 
     def test_get_payee2(self):
-        self.assertEqual(ml.AttrGetter('narration').transform(self.test_data),
-                         ['Buying groceries', 'Coffee', 'Groceries', 'Coffee'])
+        self.assertEqual(
+            ml.AttrGetter('narration').transform(self.test_data),
+            ['Buying groceries', 'Coffee', 'Groceries', 'Coffee'])
 
     def test_get_day_of_month(self):
-        self.assertEqual(ml.AttrGetter('date.day').transform(self.test_data), [6, 7, 7, 8])
+        self.assertEqual(
+            ml.AttrGetter('date.day').transform(self.test_data), [6, 7, 7, 8])

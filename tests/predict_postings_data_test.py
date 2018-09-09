@@ -36,12 +36,14 @@ class PredictPostingsTest(unittest.TestCase):
 
         @PredictPostings(suggest_accounts=True)
         class DummyImporter(ImporterProtocol):
-            def extract(self, file: _FileMemo, existing_entries: List[Union[ALL_DIRECTIVES]]) -> List[
-                    Union[ALL_DIRECTIVES]]:
+            def extract(self, file: _FileMemo,
+                        existing_entries: List[Union[ALL_DIRECTIVES]]
+                        ) -> List[Union[ALL_DIRECTIVES]]:
                 return extracted_data
 
         importer = DummyImporter()
-        actualTrxs = importer.extract("dummy-data", existing_entries=training_data)
+        actualTrxs = importer.extract(
+            "dummy-data", existing_entries=training_data)
         with io.StringIO() as buffer:
             printer.print_entries(actualTrxs, file=buffer)
             actual = buffer.getvalue()
@@ -56,7 +58,9 @@ class PredictPostingsTest(unittest.TestCase):
                 expected_file.write(actual)
 
     def generate_file_name(self, testset, kind):
-        return os.path.join(os.path.dirname(__file__), 'data', testset + '-' + kind + '.beancount')
+        return os.path.join(
+            os.path.dirname(__file__), 'data',
+            testset + '-' + kind + '.beancount')
 
     def load_test_data(self, testset, kind):
         filename = self.generate_file_name(testset, kind)
