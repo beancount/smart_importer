@@ -13,7 +13,8 @@ TEST_TRANSACTION = TEST_DATA[0]
 
 
 def test_add_posting_to_transaction():
-    transaction = add_posting_to_transaction(TEST_TRANSACTION, "Expenses:Food:Groceries")
+    transaction = add_posting_to_transaction(
+        TEST_TRANSACTION, "Expenses:Food:Groceries")
     assert transaction.postings[1].account == "Expenses:Food:Groceries"
 
 
@@ -22,5 +23,7 @@ def test_add_suggested_accounts_to_transaction():
                    "Expenses:Food:Restaurant",
                    "Expenses:Household",
                    "Expenses:Gifts"]
-    transaction = add_suggested_accounts_to_transaction(TEST_TRANSACTION, suggestions)
-    assert transaction.meta['__suggested_accounts__'] == json.dumps(suggestions)
+    transaction = add_suggested_accounts_to_transaction(
+        TEST_TRANSACTION, suggestions)
+    assert transaction.meta['__suggested_accounts__'] == \
+        json.dumps(suggestions)

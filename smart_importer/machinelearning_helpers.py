@@ -2,6 +2,7 @@
 
 import logging
 from typing import List, Union, Tuple, NamedTuple
+import operator
 
 import numpy
 from beancount import loader
@@ -90,18 +91,9 @@ class GetPayee(Getter):
         return txn.payee or ''
 
 
-class GetNarration(Getter):
-    """Narration of the transaction."""
-
-    def _txn_getter(self, txn):
-        return txn.narration
-
-
-class GetDayOfMonth(Getter):
-    """Day of month of the transaction."""
-
-    def _txn_getter(self, txn):
-        return txn.date.day
+class AttrGetter(Getter):
+    def __init__(self, attr):
+        self._txn_getter = operator.attrgetter(attr)
 
 
 class GetReferencePostingAccount(Getter):

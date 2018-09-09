@@ -8,7 +8,7 @@ from smart_importer import machinelearning_helpers as ml
 
 PIPELINES = {
     'narration': Pipeline([
-        ('get_narration', ml.GetNarration()),
+        ('get_narration', ml.AttrGetter('narration')),
         ('vect', CountVectorizer(ngram_range=(1, 3))),
     ]),
     'payee': Pipeline([
@@ -20,7 +20,7 @@ PIPELINES = {
         ('vect', CountVectorizer(ngram_range=(1, 3))),
     ]),
     'date.day': Pipeline([
-        ('get_date.day', ml.GetDayOfMonth()),
+        ('get_date.day', ml.AttrGetter('date.day')),
         ('caster', ml.ArrayCaster()),
     ]),
 }

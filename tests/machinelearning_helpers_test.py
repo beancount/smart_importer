@@ -54,8 +54,8 @@ class MachinelearningTest(unittest.TestCase):
                          ['Farmer Fresh', 'Starbucks', 'Farmer Fresh', 'Gimme Coffee'])
 
     def test_get_payee2(self):
-        self.assertEqual(ml.GetNarration().transform(self.test_data),
+        self.assertEqual(ml.AttrGetter('narration').transform(self.test_data),
                          ['Buying groceries', 'Coffee', 'Groceries', 'Coffee'])
 
     def test_get_day_of_month(self):
-        self.assertEqual(ml.GetDayOfMonth().transform(self.test_data), [6, 7, 7, 8])
+        self.assertEqual(ml.AttrGetter('date.day').transform(self.test_data), [6, 7, 7, 8])
