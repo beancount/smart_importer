@@ -116,7 +116,11 @@ class SmartImporterDecorator(ImporterDecorator):
 
     @property
     def targets(self):
-        """The training targets for the given training data."""
+        """The training targets for the given training data.
+
+        Returns:
+            A list training targets (of the same length as the training data).
+        """
         raise NotImplementedError
 
     def prepare_training_data(self):

@@ -5,7 +5,7 @@ from typing import List, Union
 
 from beancount.core.data import Transaction
 
-from smart_importer.decorator_baseclass import SmartImporterDecorator
+from smart_importer.decorator import SmartImporterDecorator
 from smart_importer.entries import add_posting_to_transaction
 from smart_importer.entries import add_suggested_accounts_to_transaction
 from smart_importer.pipelines import TxnPostingAccount

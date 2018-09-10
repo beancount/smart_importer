@@ -6,7 +6,7 @@ from typing import List, Union
 
 from beancount.core.data import Transaction
 
-from smart_importer.decorator_baseclass import SmartImporterDecorator
+from smart_importer.decorator import SmartImporterDecorator
 from smart_importer.entries import add_payee_to_transaction
 from smart_importer.entries import add_suggested_payees_to_transaction
 
