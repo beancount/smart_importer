@@ -19,7 +19,7 @@ TxnPostingAccount = NamedTuple('TxnPostingAccount',
 class NoFitMixin:
     """Mixin that implements a transformer's fit method that returns self."""
 
-    def fit(self, X, y=None):
+    def fit(self, *_, **__):
         return self
 
 

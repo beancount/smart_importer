@@ -11,8 +11,7 @@ names <https://github.com/beancount/fava/issues/579>`__
 Status
 ------
 
-First working protoype,
-development status: alpha
+First working protoype, development status: alpha
 
 .. image:: https://travis-ci.org/beancount/smart_importer.svg?branch=master
     :target: https://travis-ci.org/beancount/smart_importer
@@ -68,7 +67,7 @@ The following example shows how to add the ``@PredictPostings`` decorator to a C
             )
 
 
-    @PredictPostings(training_data='myledger.beancount')
+    @PredictPostings()
     class SmartMyBankImporter(MyBankImporter):
         '''Smart Version of the MyBankImporter'''
         pass
@@ -122,7 +121,6 @@ The following figure provides an overview of the import process and its componen
 7. The resulting transactions are returned to the user.
 
 
-
 Beancount Importers
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -141,8 +139,6 @@ For example, let's assume you have created an importer for "MyBank" called ``MyB
         pass
 
 
-
-
 Applying `smart_importer` Decorators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -151,47 +147,40 @@ Any Beancount importer can be converted into a smart importer by applying one of
 * ``@PredictPostings()``
 * ``@PredictPayees()``
 
-
 For example, to convert an existing ``MyBankImporter`` into a smart importer:
 
 .. code:: python
 
     from beancount.ingest.importer import ImporterProtocol
-    from smart_importer import PredictPostings
     from smart_importer import PredictPayees
-
-    class MyBankImporter(ImporterProtocol):
-        def extract(self, file, existing_entries):
-          # do the import, e.g., from a csv file
+    from smart_importer import PredictPostings
 
     @PredictPostings()
     @PredictPayees()
-    class SmartMyBankImporter(MyImporter):
-        pass
+    class MyBankImporter(ImporterProtocol):
+        # [...] importer logic
 
-In the above example, ``SmartMyBankImporter`` has been decorated with ``@PredictPostings``
-and thus employs machine learnign to predict missing second postings.
+In the above example, ``MyBankImporter`` has been decorated with
+``PredictPostings`` and ``PredictPayees`` and thus employs machine learnign to
+predict missing payees and second postings.
 
-Note that the decorators can be applied to either an importer class, as shown above, or its extract method.
-The result is the same in both cases.
-See `Applying the Decorators <docs/Applying_the_Decorators.rst>`__
-for a description of various alternative ways of applying the decorators to importers.
-
+Note that the decorators can be applied to either an importer class, as shown
+above, or its extract method.  The result is the same in both cases.  See
+`Applying the Decorators <docs/Applying_the_Decorators.rst>`__ for a
+description of various alternative ways of applying the decorators to
+importers.
 
 
 Specifying Training Data
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``smart_importer`` decorators must be fed with training data in order to be effective.
-
-Training data can be specified by calling bean-extract with an argument that references existing Beancount transactions,
-e.g., ``bean-extract -f existing_transactions.beancount``.
-
+The ``smart_importer`` decorators need training data, i.e. an existing list of
+transactions in order to be effective. Training data can be specified by
+calling bean-extract with an argument that references existing Beancount
+transactions, e.g., ``bean-extract -f existing_transactions.beancount``.
 
 See `Specifying Training Data <docs/Specifying_Training_Data.rst>`__
 for additional options how training data can be provided to the decorators.
-
-
 
 
 Using Smart Importers

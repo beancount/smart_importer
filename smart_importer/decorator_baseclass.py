@@ -46,7 +46,6 @@ class ImporterDecorator():
             to_be_decorated.extract = self.patch_extract_method(
                 to_be_decorated.extract)
             return to_be_decorated
-        assert inspect.isfunction(to_be_decorated)
         logger.debug('The decorator was applied to an instancemethod.')
         return self.patch_extract_method(to_be_decorated)
 
@@ -91,6 +90,8 @@ class ImporterDecorator():
 
 class SmartImporterDecorator(ImporterDecorator):
     def __init__(self):
+        super().__init__()
+        self.training_data = None
         self.pipeline = None
         self.weights = {}
 
@@ -119,6 +120,7 @@ class SmartImporterDecorator(ImporterDecorator):
         raise NotImplementedError
 
     def prepare_training_data(self):
+        """Modify the training data if necessary."""
         pass
 
     def define_pipeline(self):
@@ -152,7 +154,7 @@ class SmartImporterDecorator(ImporterDecorator):
     def process_entries(self, imported_entries) -> List[Union[ALL_DIRECTIVES]]:
         """Process imported entries.
 
-        Transactions are enhanced, all other entries are left as is.
+        Transactions might be modified, all other entries are left as is.
 
         :return: Returns the list of entries to be imported.
         """
@@ -164,4 +166,5 @@ class SmartImporterDecorator(ImporterDecorator):
                                              enhanced_transactions)
 
     def process_transactions(self, transactions):
+        """Process the imported transactions."""
         raise NotImplementedError

@@ -13,9 +13,7 @@ def add_posting_to_transaction(transaction: Transaction,
     if len(transaction.postings) != 1:
         return transaction
 
-    additional_posting: Posting
-    additional_posting = Posting(account, None, None, None, None, None)
-    transaction.postings.append(additional_posting)
+    transaction.postings.append(Posting(account, None, None, None, None, None))
     return transaction
 
 

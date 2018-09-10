@@ -31,7 +31,6 @@ class Testdata:
         2017-01-10 * "Gimme Coffee" "Coffee"
           Assets:US:BofA:Checking  -5.00 USD
         """)
-    assert not errors
 
     training_data: List[Transaction]
     training_data, errors, _ = parser.parse_string("""
@@ -71,7 +70,6 @@ class Testdata:
           Assets:US:BofA:Checking  -30.50 USD
           Expenses:Food:Groceries
         """)
-    assert not errors
 
     known_account = "Assets:US:BofA:Checking"
 
@@ -119,8 +117,6 @@ class PredictPayeesTest(unittest.TestCase):
         undecorated_importer = super(self.importerClass, self.importer)
         entries = undecorated_importer.extract('dummy-data')
         self.assertEqual(entries[0].narration, "Buying groceries")
-        # print("Entries without predicted postings:")
-        # printer.print_entries(entries)
 
     def test_unchanged_narrations(self):
         '''
@@ -168,91 +164,3 @@ class PredictPayeesTest(unittest.TestCase):
                 len(suggestions),
                 msg=f"The list of suggested accounts should not be empty, "
                 f"but was found to be empty for transaction {transaction}.")
-
-
-class PredictPostingsDecorationTest(unittest.TestCase):
-    '''
-    Tests for the different variants how the decoration can be applied.
-    '''
-
-    def test_class_decoration_with_arguments(self):
-        '''
-        Verifies that the decorator can be applied to importer classes,
-        with training data provided as argument.
-        '''
-
-        @PredictPayees(
-            training_data=Testdata.training_data,
-            account=Testdata.known_account)
-        class SmartTestImporter(BasicTestImporter):
-            pass
-
-        i = SmartTestImporter()
-        self.assertIsInstance(
-            i, SmartTestImporter,
-            'The decorated importer shall still be an instance of the undecorated class.'
-        )
-        transactions = i.extract(
-            'file', existing_entries=Testdata.training_data)
-        predicted_payees = [transaction.payee for transaction in transactions]
-        self.assertEqual(predicted_payees, Testdata.correct_predictions)
-
-    def test_method_decoration_with_arguments(self):
-        '''
-        Verifies that the decorator can be applied to an importer's extract method,
-        with training data provided as argument.
-        '''
-        testcase = self
-
-        class SmartTestImporter(BasicTestImporter):
-            @PredictPayees(
-                training_data=Testdata.training_data,
-                account=Testdata.known_account)
-            def extract(self, file, existing_entries=None):
-                testcase.assertIsInstance(self, SmartTestImporter)
-                return super().extract(file, existing_entries=existing_entries)
-
-        i = SmartTestImporter()
-        transactions = i.extract(
-            'file', existing_entries=Testdata.training_data)
-        predicted_payees = [transaction.payee for transaction in transactions]
-        self.assertEqual(predicted_payees, Testdata.correct_predictions)
-
-    def test_class_decoration_without_arguments(self):
-        '''
-        Verifies that the decorator can be applied to importer classes,
-        without supplying any arguments.
-        '''
-
-        @PredictPayees()
-        class SmartTestImporter(BasicTestImporter):
-            pass
-
-        i = SmartTestImporter()
-        self.assertIsInstance(
-            i, SmartTestImporter,
-            'The decorated importer shall still be an instance of the undecorated class.'
-        )
-        transactions = i.extract(
-            'file', existing_entries=Testdata.training_data)
-        predicted_payees = [transaction.payee for transaction in transactions]
-        self.assertEqual(predicted_payees, Testdata.correct_predictions)
-
-    def test_method_decoration_without_arguments(self):
-        '''
-        Verifies that the decorator can be applied to an importer's extract method,
-        without supplying any arguments.
-        '''
-        testcase = self
-
-        class SmartTestImporter(BasicTestImporter):
-            @PredictPayees()
-            def extract(self, file, existing_entries=None):
-                testcase.assertIsInstance(self, SmartTestImporter)
-                return super().extract(file, existing_entries=existing_entries)
-
-        i = SmartTestImporter()
-        transactions = i.extract(
-            'file', existing_entries=Testdata.training_data)
-        predicted_payees = [transaction.payee for transaction in transactions]
-        self.assertEqual(predicted_payees, Testdata.correct_predictions)
