@@ -10,7 +10,7 @@ from beancount.ingest.cache import _FileMemo
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser, printer
 
-from smart_importer.predict_postings import PredictPostings
+from smart_importer import PredictPostings
 
 
 class PredictPostingsTest(unittest.TestCase):
