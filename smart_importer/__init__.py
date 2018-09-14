@@ -4,10 +4,10 @@ __version__ = '0.0.1'
 __copyright__ = "Copyright (C) 2018 Johannes Harms"
 __license__ = "MIT"
 
-from smart_importer.decorator import SmartImporterDecorator
 from smart_importer.entries import add_payee_to_transaction
 from smart_importer.entries import add_suggested_payees_to_transaction
 from smart_importer.predict_postings import PredictPostings  # noqa
+from smart_importer.predictor import SmartImporterDecorator
 
 
 class PredictPayees(SmartImporterDecorator):
