@@ -33,16 +33,16 @@ class PredictPayees(SmartImporterDecorator):
     def __init__(self,
                  training_data: Union[List[Transaction], str] = None,
                  account: str = None,
-                 predict_payees: bool = True,
-                 overwrite_existing_payees=False,
-                 suggest_payees: bool = False):
+                 predict: bool = True,
+                 overwrite: bool = False,
+                 suggest: bool = False):
         super().__init__()
         self.account = account
         self.training_data = training_data
 
-        self.predict = predict_payees
-        self.overwrite = overwrite_existing_payees
-        self.suggest = suggest_payees
+        self.predict = predict
+        self.overwrite = overwrite
+        self.suggest = suggest
 
         self.weights = {'narration': 0.8, 'payee': 0.5, 'date.day': 0.1}
 

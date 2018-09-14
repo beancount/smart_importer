@@ -34,15 +34,15 @@ class PredictPostings(SmartImporterDecorator):
             self,
             training_data: Union[List[Transaction], str] = None,
             account: str = None,
-            predict_second_posting: bool = True,
-            suggest_accounts: bool = False,
+            predict: bool = True,
+            suggest: bool = False,
     ):
         super().__init__()
 
         self.account = account
         self.training_data = training_data
-        self.predict_second_posting = predict_second_posting
-        self.suggest_accounts = suggest_accounts
+        self.predict = predict
+        self.suggest = suggest
 
         self.weights = {
             'narration': 0.8,
@@ -88,7 +88,7 @@ class PredictPostings(SmartImporterDecorator):
         :param transactions: List of Beancount transactions
         :return: List of beancount transactions
         """
-        if self.predict_second_posting:
+        if self.predict:
             logger.debug("Generate predictions for missing second postings.")
             predicted_accounts: List[str]
             predicted_accounts = self.pipeline.predict(transactions)
@@ -97,7 +97,7 @@ class PredictPostings(SmartImporterDecorator):
                 for txn, account in zip(transactions, predicted_accounts)
             ]
             logger.debug("Added predicted accounts.")
-        if self.suggest_accounts:
+        if self.suggest:
             # get values from the SVC decision function
             logger.debug("Generate suggestions about related accounts.")
             decision_values = self.pipeline.decision_function(transactions)

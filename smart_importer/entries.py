@@ -21,7 +21,7 @@ def add_payee_to_transaction(transaction: Transaction,
                              payee: str,
                              overwrite=False) -> Transaction:
     """Sets a transactions's payee."""
-    if not transaction.payee or overwrite:
+    if payee and (not transaction.payee or overwrite):
         transaction = transaction._replace(payee=payee)
     return transaction
 

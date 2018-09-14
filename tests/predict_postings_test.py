@@ -100,7 +100,7 @@ class PredictPostingsTest(unittest.TestCase):
         @PredictPostings(
             training_data=Testdata.training_data,
             account="Assets:US:BofA:Checking",
-            suggest_accounts=True,
+            suggest=True,
         )
         class DecoratedTestImporter(BasicTestImporter):
             pass
