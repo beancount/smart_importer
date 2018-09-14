@@ -2,7 +2,7 @@
 
 import logging
 import operator
-from typing import List, Union
+from typing import List
 
 from beancount.core.data import Transaction
 
@@ -30,15 +30,8 @@ class PredictPayees(SmartImporterDecorator):
           # do the import, return list of entries
     """
 
-    def __init__(self,
-                 training_data: Union[List[Transaction], str] = None,
-                 account: str = None,
-                 predict: bool = True,
-                 overwrite: bool = False,
-                 suggest: bool = False):
+    def __init__(self, predict=True, overwrite=False, suggest=False):
         super().__init__()
-        self.account = account
-        self.training_data = training_data
 
         self.predict = predict
         self.overwrite = overwrite
