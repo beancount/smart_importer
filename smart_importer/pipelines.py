@@ -20,6 +20,7 @@ class NoFitMixin:
     """Mixin that implements a transformer's fit method that returns self."""
 
     def fit(self, *_, **__):
+        """A noop."""
         return self
 
 

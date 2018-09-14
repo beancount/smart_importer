@@ -14,11 +14,9 @@ class PredictPayees(SmartImporterDecorator):
     """Suggest and predict payees."""
 
     def __init__(self, predict=True, overwrite=False, suggest=False):
-        super().__init__()
+        super().__init__(predict, suggest)
 
-        self.predict = predict
         self.overwrite = overwrite
-        self.suggest = suggest
 
         self.weights = {'narration': 0.8, 'payee': 0.5, 'date.day': 0.1}
 

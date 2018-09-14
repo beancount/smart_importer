@@ -19,7 +19,7 @@ class PredictPostings(SmartImporterDecorator):
             predict: bool = True,
             suggest: bool = False,
     ):
-        super().__init__()
+        super().__init__(predict, suggest)
 
         self.account = account
         self.predict = predict

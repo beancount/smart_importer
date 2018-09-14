@@ -17,11 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 class SmartImporterDecorator(ImporterDecorator):
-    def __init__(self):
+    def __init__(self, predict, suggest):
         super().__init__()
         self.training_data = None
         self.pipeline = None
         self.weights = {}
+
+        self.predict = predict
+        self.suggest = suggest
 
     def main(self, imported_entries, existing_entries):
         """Predict and suggest attributes for imported transactions."""

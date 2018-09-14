@@ -1,7 +1,5 @@
 """Tests for the Machine Learning Helpers."""
 
-import os
-
 from beancount.parser import parser
 
 from smart_importer.pipelines import AttrGetter
