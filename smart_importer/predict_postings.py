@@ -1,9 +1,6 @@
 """Decorator for Beancount importers that predicts postings."""
 
 import logging
-from typing import List
-
-from beancount.core.data import Transaction
 
 from smart_importer.entries import add_posting_to_transaction
 from smart_importer.entries import add_suggested_accounts_to_transaction
@@ -14,21 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class PredictPostings(SmartImporterDecorator):
-    """
-    Applying this decorator to a beancount importer or its extract method
-    will predict and suggest account names
-    for imported transactions.
-
-    Example:
-
-    @PredictPostings(
-        training_data="trainingdata.beancount",
-        account="The:Importers:Already:Known:Accountname"
-    )
-    class MyImporter(ImporterProtocol):
-        def extract(file):
-          # do the import, return list of entries
-    """
+    """Predict one missing posting."""
 
     def __init__(
             self,
@@ -76,43 +59,8 @@ class PredictPostings(SmartImporterDecorator):
     def targets(self):
         return [txn.posting.account for txn in self.training_data]
 
-    def process_transactions(
-            self, transactions: List[Transaction]) -> List[Transaction]:
-        """Process all imported transactions.
+    def apply_prediction(self, entry, prediction):
+        return add_posting_to_transaction(entry, prediction)
 
-        * Predicts missing second postings.
-        * Suggests accounts that are likely also involved in the transaction
-
-        :param transactions: List of Beancount transactions
-        :return: List of beancount transactions
-        """
-        if self.predict:
-            logger.debug("Generate predictions for missing second postings.")
-            predicted_accounts: List[str]
-            predicted_accounts = self.pipeline.predict(transactions)
-            transactions = [
-                add_posting_to_transaction(txn, account)
-                for txn, account in zip(transactions, predicted_accounts)
-            ]
-            logger.debug("Added predicted accounts.")
-        if self.suggest:
-            # get values from the SVC decision function
-            logger.debug("Generate suggestions about related accounts.")
-            decision_values = self.pipeline.decision_function(transactions)
-
-            # add a human-readable class label (i.e., account name) to each
-            # value, and sort by value:
-            suggestions = [[
-                account for _, account in sorted(
-                    list(zip(distance_values, self.pipeline.classes_)),
-                    key=lambda x: x[0],
-                    reverse=True)
-            ] for distance_values in decision_values]
-
-            # add the suggested accounts to each transaction:
-            transactions = [
-                add_suggested_accounts_to_transaction(txn, suggestions)
-                for txn, suggestions in zip(transactions, suggestions)
-            ]
-            logger.debug("Added suggested accounts.")
-        return transactions
+    def apply_suggestion(self, entry, suggestions):
+        return add_suggested_accounts_to_transaction(entry, suggestions)
