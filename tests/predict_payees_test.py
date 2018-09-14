@@ -4,7 +4,7 @@ from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
 from smart_importer.entries import METADATA_KEY_SUGGESTED_PAYEES
-from smart_importer.predict_payees import PredictPayees
+from smart_importer import PredictPayees
 
 
 TEST_DATA, _, __ = parser.parse_string("""

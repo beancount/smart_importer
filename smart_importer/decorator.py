@@ -2,6 +2,7 @@
 
 import inspect
 import logging
+import operator
 from functools import wraps
 from typing import List, Union
 
@@ -169,6 +170,43 @@ class SmartImporterDecorator(ImporterDecorator):
         return merge_non_transaction_entries(imported_entries,
                                              enhanced_transactions)
 
-    def process_transactions(self, transactions):
-        """Process the imported transactions."""
+    def apply_prediction(self, entry, prediction):
+        """Apply a single prediction to an entry."""
         raise NotImplementedError
+
+    def apply_suggestion(self, entry, suggestions):
+        """Add a list of suggestions to an entry."""
+        raise NotImplementedError
+
+    def process_transactions(
+            self, transactions: List[Transaction]) -> List[Transaction]:
+        """Process all imported transactions."""
+
+        if self.predict:
+            predictions = self.pipeline.predict(transactions)
+            transactions = [
+                self.apply_prediction(entry, payee)
+                for entry, payee in zip(transactions, predictions)
+            ]
+            logger.debug("Added predictions to transactions.")
+
+        if self.suggest:
+            # Get values from the SVC decision function
+            decision_values = self.pipeline.decision_function(transactions)
+
+            # Add a human-readable class label to each value, and sort by
+            # value:
+            suggestions = [[
+                label for _, label in sorted(
+                    list(zip(distance_values, self.pipeline.classes_)),
+                    key=operator.itemgetter(0),
+                    reverse=True)
+            ] for distance_values in decision_values]
+
+            # Add the suggestions to each transaction:
+            transactions = [
+                self.apply_suggestion(entry, suggestion_list)
+                for entry, suggestion_list in zip(transactions, suggestions)
+            ]
+            logger.debug("Added suggestions to transactions.")
+        return transactions
