@@ -1,7 +1,7 @@
 """Decorator for Beancount importers that predicts postings."""
 
 import logging
-from typing import List, Union
+from typing import List
 
 from beancount.core.data import Transaction
 
@@ -32,7 +32,6 @@ class PredictPostings(SmartImporterDecorator):
 
     def __init__(
             self,
-            training_data: Union[List[Transaction], str] = None,
             account: str = None,
             predict: bool = True,
             suggest: bool = False,
@@ -40,7 +39,6 @@ class PredictPostings(SmartImporterDecorator):
         super().__init__()
 
         self.account = account
-        self.training_data = training_data
         self.predict = predict
         self.suggest = suggest
 

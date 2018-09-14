@@ -9,7 +9,6 @@ from sklearn.svm import SVC
 
 from beancount.core.data import Transaction, ALL_DIRECTIVES, filter_txns
 
-from smart_importer.machinelearning_helpers import load_training_data
 from smart_importer.entries import merge_non_transaction_entries
 from smart_importer.pipelines import PIPELINES
 from smart_importer.decorator import ImporterDecorator
@@ -38,10 +37,17 @@ class SmartImporterDecorator(ImporterDecorator):
 
     def load_training_data(self, existing_entries):
         """Load training data, i.e., a list of Beancount entries."""
-        self.training_data = load_training_data(
-            self.training_data,
-            known_account=self.account,
-            existing_entries=existing_entries)
+        training_data = existing_entries or []
+        training_data = list(filter_txns(training_data))
+        if self.account:
+            training_data = [
+                txn for txn in training_data
+                if any([pos.account == self.account for pos in txn.postings])
+            ]
+            logger.debug(
+                f"After filtering for account {self.account}, "
+                f"the training data consists of {len(training_data)} entries.")
+        self.training_data = training_data
 
     @property
     def targets(self):

@@ -4,7 +4,6 @@ import os
 
 from beancount.parser import parser
 
-from smart_importer.machinelearning_helpers import load_training_data
 from smart_importer.pipelines import AttrGetter
 
 
@@ -25,19 +24,6 @@ TEST_DATA, _, __ = parser.parse_string("""
           Expenses:Food:Coffee
         """)
 TEST_TRANSACTION = TEST_DATA[0]
-
-
-def test_load_training_data():
-    test_data = load_training_data(
-        training_data=os.path.join(
-            os.path.dirname(__file__), 'sample_training.beancount'))
-    assert len(list(test_data)) == 1
-
-
-def test_load_training_data_use_existing():
-    actual = load_training_data(
-        training_data=None, existing_entries=TEST_DATA)
-    assert actual == TEST_DATA
 
 
 def test_get_payee():
