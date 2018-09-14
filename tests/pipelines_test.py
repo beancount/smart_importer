@@ -6,7 +6,6 @@ from beancount.parser import parser
 
 from smart_importer.pipelines import AttrGetter
 
-
 TEST_DATA, _, __ = parser.parse_string("""
         2016-01-06 * "Farmer Fresh" "Buying groceries"
           Assets:US:BofA:Checking  -10.00 USD

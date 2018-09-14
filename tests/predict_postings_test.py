@@ -110,8 +110,7 @@ class PredictPostingsTest(unittest.TestCase):
             transaction.narration for transaction in Testdata.test_data
         ]
         extracted_narrations = [
-            transaction.narration
-            for transaction in self.imported_transactions
+            transaction.narration for transaction in self.imported_transactions
         ]
         self.assertEqual(extracted_narrations, correct_narrations)
 

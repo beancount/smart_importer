@@ -6,7 +6,6 @@ from beancount.parser import parser
 from smart_importer.entries import METADATA_KEY_SUGGESTED_PAYEES
 from smart_importer import PredictPayees
 
-
 TEST_DATA, _, __ = parser.parse_string("""
 2017-01-06 * "Farmer Fresh" "Buying groceries"
   Assets:US:BofA:Checking  -2.50 USD
@@ -26,7 +25,6 @@ TEST_DATA, _, __ = parser.parse_string("""
 2017-01-10 * "Gimme Coffee" "Coffee"
   Assets:US:BofA:Checking  -5.00 USD
 """)
-
 
 TRAINING_DATA, _, __ = parser.parse_string("""
 2016-01-06 * "Farmer Fresh" "Buying groceries"
@@ -79,25 +77,26 @@ class BasicTestImporter(ImporterProtocol):
     def file_account(self, file):
         return "Assets:US:BofA:Checking"
 
+
 @PredictPayees(suggest=True)
 class DecoratedTestImporter(BasicTestImporter):
     pass
 
+
 IMPORTER = DecoratedTestImporter()
+
 
 def test_unchanged_narrations():
     """
     Verifies that the decorator leaves the narration intact
     """
-    correct_narrations = [
-        transaction.narration for transaction in TEST_DATA
-    ]
+    correct_narrations = [transaction.narration for transaction in TEST_DATA]
     extracted_narrations = [
-        transaction.narration
-        for transaction in IMPORTER.extract("dummy-data",
-                                            existing_entries=TRAINING_DATA)
+        transaction.narration for transaction in IMPORTER.extract(
+            "dummy-data", existing_entries=TRAINING_DATA)
     ]
     assert extracted_narrations == correct_narrations
+
 
 def test_unchanged_first_posting():
     """
@@ -107,27 +106,28 @@ def test_unchanged_first_posting():
         transaction.postings[0] for transaction in TEST_DATA
     ]
     extracted_first_postings = [
-        transaction.postings[0]
-        for transaction in IMPORTER.extract("dummy-data",
-                                            existing_entries=TRAINING_DATA)
+        transaction.postings[0] for transaction in IMPORTER.extract(
+            "dummy-data", existing_entries=TRAINING_DATA)
     ]
     assert extracted_first_postings == correct_first_postings
+
 
 def test_predicted_payees():
     """
     Verifies that the decorator adds predicted postings.
     """
-    transactions = IMPORTER.extract("dummy-data",
-                                    existing_entries=TRAINING_DATA)
+    transactions = IMPORTER.extract(
+        "dummy-data", existing_entries=TRAINING_DATA)
     predicted_payees = [transaction.payee for transaction in transactions]
     assert predicted_payees == CORRECT_PREDICTIONS
+
 
 def test_added_suggestions():
     """
     Verifies that the decorator adds suggestions about accounts
     that are likely to be involved in the transaction.
     """
-    transactions = IMPORTER.extract("dummy-data",
-                                    existing_entries=TRAINING_DATA)
+    transactions = IMPORTER.extract(
+        "dummy-data", existing_entries=TRAINING_DATA)
     for transaction in transactions:
         assert transaction.meta[METADATA_KEY_SUGGESTED_PAYEES]
