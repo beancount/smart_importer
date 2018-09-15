@@ -1,7 +1,6 @@
 """Helpers to work with Beancount entry objects."""
 
 import json
-from typing import List
 
 from beancount.core.data import Transaction, Posting
 
@@ -17,43 +16,17 @@ def add_posting_to_transaction(transaction: Transaction,
     return transaction
 
 
-def add_payee_to_transaction(transaction: Transaction,
-                             payee: str,
-                             overwrite=False) -> Transaction:
-    """Sets a transactions's payee."""
-    if payee and (not transaction.payee or overwrite):
-        transaction = transaction._replace(payee=payee)
-    return transaction
+def set_entry_attribute(entry, attribute, value, overwrite=False):
+    """Set an entry attribute."""
+    if value and (not getattr(entry, attribute) or overwrite):
+        entry = entry._replace(**{attribute: value})
+    return entry
 
 
-METADATA_KEY_SUGGESTED_ACCOUNTS = '__suggested_accounts__'
-METADATA_KEY_SUGGESTED_PAYEES = '__suggested_payees__'
-
-
-def add_suggested_accounts_to_transaction(
-        transaction: Transaction, suggestions: List[str]) -> Transaction:
-    """Adds suggested related accounts to a transaction."""
-    return _add_suggestions_to_transaction(
-        transaction, suggestions, key=METADATA_KEY_SUGGESTED_ACCOUNTS)
-
-
-def add_suggested_payees_to_transaction(transaction: Transaction,
-                                        suggestions: List[str]) -> Transaction:
-    """Adds suggested payees to a transaction."""
-    return _add_suggestions_to_transaction(
-        transaction, suggestions, key=METADATA_KEY_SUGGESTED_PAYEES)
-
-
-def _add_suggestions_to_transaction(transaction: Transaction,
-                                    suggestions: List[str],
-                                    key='__suggestions__'):
-    """
-    Adds a list of suggestions to a transaction under transaction.meta[key].
-    """
-    meta = transaction.meta
-    meta[key] = json.dumps(suggestions)
-    transaction = transaction._replace(meta=meta)
-    return transaction
+def add_suggestions_to_entry(entry, suggestions, key):
+    """Adds a list of suggestions to an entry under entry.meta[key]."""
+    entry.meta[key] = json.dumps(suggestions)
+    return entry
 
 
 def merge_non_transaction_entries(imported_entries, enhanced_transactions):

@@ -3,7 +3,6 @@
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
-from smart_importer.entries import METADATA_KEY_SUGGESTED_PAYEES
 from smart_importer import PredictPayees, PredictPostings
 
 TEST_DATA, _, __ = parser.parse_string("""
@@ -149,7 +148,7 @@ def test_payee_suggestions():
     transactions = PAYEE_IMPORTER.extract(
         "dummy-data", existing_entries=TRAINING_DATA)
     for transaction in transactions:
-        assert transaction.meta[METADATA_KEY_SUGGESTED_PAYEES]
+        assert transaction.meta['__suggested_payees__']
 
 
 def test_account_predictions():

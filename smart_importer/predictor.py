@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class SmartImporterDecorator(ImporterDecorator):
     weights = {}
+    attribute = None
 
     def __init__(self, predict=True, suggest=False):
         super().__init__()
@@ -60,7 +61,12 @@ class SmartImporterDecorator(ImporterDecorator):
         Returns:
             A list training targets (of the same length as the training data).
         """
-        raise NotImplementedError
+        if not self.attribute:
+            raise NotImplementedError
+        return [
+            getattr(entry, self.attribute) or ''
+            for entry in self.training_data
+        ]
 
     def prepare_training_data(self):
         """Modify the training data if necessary."""
