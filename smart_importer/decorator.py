@@ -75,4 +75,4 @@ class ImporterDecorator():
 
     def main(self, imported_entries, existing_entries):
         """Modify imported entries."""
-        pass
+        raise NotImplementedError

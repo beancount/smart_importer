@@ -4,7 +4,7 @@ from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
 from smart_importer.entries import METADATA_KEY_SUGGESTED_PAYEES
-from smart_importer import PredictPayees
+from smart_importer import PredictPayees, PredictPostings
 
 TEST_DATA, _, __ = parser.parse_string("""
 2017-01-06 * "Farmer Fresh" "Buying groceries"
@@ -64,11 +64,16 @@ TRAINING_DATA, _, __ = parser.parse_string("""
   Expenses:Food:Groceries
 """)
 
-CORRECT_PREDICTIONS = [
+PAYEE_PREDICTIONS = [
     'Farmer Fresh', 'Farmer Fresh', 'Uncle Boons', 'Uncle Boons',
     'Farmer Fresh', 'Gimme Coffee'
 ]
 
+ACCOUNT_PREDICTIONS = [
+    'Expenses:Food:Groceries', 'Expenses:Food:Groceries',
+    'Expenses:Food:Restaurant', 'Expenses:Food:Restaurant',
+    'Expenses:Food:Groceries', 'Expenses:Food:Coffee'
+]
 
 class BasicTestImporter(ImporterProtocol):
     def extract(self, file, existing_entries=None):
@@ -79,11 +84,17 @@ class BasicTestImporter(ImporterProtocol):
 
 
 @PredictPayees(suggest=True)
-class DecoratedTestImporter(BasicTestImporter):
+class PayeeTestImporter(BasicTestImporter):
     pass
 
 
-IMPORTER = DecoratedTestImporter()
+@PredictPostings(suggest=True)
+class PostingTestImporter(BasicTestImporter):
+    pass
+
+
+PAYEE_IMPORTER = PayeeTestImporter()
+POSTING_IMPORTER = PostingTestImporter()
 
 
 def test_unchanged_narrations():
@@ -92,7 +103,7 @@ def test_unchanged_narrations():
     """
     correct_narrations = [transaction.narration for transaction in TEST_DATA]
     extracted_narrations = [
-        transaction.narration for transaction in IMPORTER.extract(
+        transaction.narration for transaction in PAYEE_IMPORTER.extract(
             "dummy-data", existing_entries=TRAINING_DATA)
     ]
     assert extracted_narrations == correct_narrations
@@ -106,28 +117,45 @@ def test_unchanged_first_posting():
         transaction.postings[0] for transaction in TEST_DATA
     ]
     extracted_first_postings = [
-        transaction.postings[0] for transaction in IMPORTER.extract(
+        transaction.postings[0] for transaction in PAYEE_IMPORTER.extract(
             "dummy-data", existing_entries=TRAINING_DATA)
     ]
     assert extracted_first_postings == correct_first_postings
 
 
-def test_predicted_payees():
+def test_payee_predictions():
     """
     Verifies that the decorator adds predicted postings.
     """
-    transactions = IMPORTER.extract(
+    transactions = PAYEE_IMPORTER.extract(
         "dummy-data", existing_entries=TRAINING_DATA)
     predicted_payees = [transaction.payee for transaction in transactions]
-    assert predicted_payees == CORRECT_PREDICTIONS
+    assert predicted_payees == PAYEE_PREDICTIONS
 
 
-def test_added_suggestions():
+def test_payee_suggestions():
     """
     Verifies that the decorator adds suggestions about accounts
-    that are likely to be involved in the transaction.
     """
-    transactions = IMPORTER.extract(
+    transactions = PAYEE_IMPORTER.extract(
         "dummy-data", existing_entries=TRAINING_DATA)
     for transaction in transactions:
         assert transaction.meta[METADATA_KEY_SUGGESTED_PAYEES]
+
+def test_account_predictions():
+    """
+    Verifies that the decorator adds predicted postings.
+    """
+    predicted_accounts = [
+        entry.postings[-1].account for entry in POSTING_IMPORTER.extract(
+            "dummy-data", existing_entries=TRAINING_DATA)
+    ]
+    assert predicted_accounts == ACCOUNT_PREDICTIONS
+
+def test_account_suggestions():
+    """
+    Verifies that the decorator adds suggestions.
+    """
+    for transaction in POSTING_IMPORTER.extract("dummy-data",
+                                                existing_entries=TRAINING_DATA):
+        assert transaction.meta['__suggested_accounts__']

@@ -37,12 +37,8 @@ class PredictPayees(SmartImporterDecorator):
 class PredictPostings(SmartImporterDecorator):
     """Predict one missing posting."""
 
-    def __init__(self, account=None, predict=True, suggest=False):
+    def __init__(self, predict=True, suggest=False):
         super().__init__(predict, suggest)
-
-        self.account = account
-        self.predict = predict
-        self.suggest = suggest
 
         self.weights = {
             'narration': 0.8,

@@ -33,7 +33,8 @@ class ArrayCaster(BaseEstimator, TransformerMixin, NoFitMixin):
 
 
 class Getter(TransformerMixin, NoFitMixin):
-    def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
+    def transform(self, data: Union[List[TxnPostingAccount],
+                                    List[Transaction]]):
         return [self._getter(d) for d in data]
 
     def _getter(self, txn):
