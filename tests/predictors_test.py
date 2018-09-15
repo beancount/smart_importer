@@ -1,4 +1,4 @@
-"""Tests for the `PredictPayees` decorator"""
+"""Tests for the `PredictPayees` and the `PredictPostings` decorator"""
 
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
@@ -75,6 +75,7 @@ ACCOUNT_PREDICTIONS = [
     'Expenses:Food:Groceries', 'Expenses:Food:Coffee'
 ]
 
+
 class BasicTestImporter(ImporterProtocol):
     def extract(self, file, existing_entries=None):
         return TEST_DATA
@@ -95,6 +96,14 @@ class PostingTestImporter(BasicTestImporter):
 
 PAYEE_IMPORTER = PayeeTestImporter()
 POSTING_IMPORTER = PostingTestImporter()
+
+
+def test_empty_training_data():
+    """
+    Verifies that the decorator leaves the narration intact
+    """
+    assert POSTING_IMPORTER.extract("dummy-data") == TEST_DATA
+    assert PAYEE_IMPORTER.extract("dummy-data") == TEST_DATA
 
 
 def test_unchanged_narrations():
@@ -142,6 +151,7 @@ def test_payee_suggestions():
     for transaction in transactions:
         assert transaction.meta[METADATA_KEY_SUGGESTED_PAYEES]
 
+
 def test_account_predictions():
     """
     Verifies that the decorator adds predicted postings.
@@ -151,6 +161,7 @@ def test_account_predictions():
             "dummy-data", existing_entries=TRAINING_DATA)
     ]
     assert predicted_accounts == ACCOUNT_PREDICTIONS
+
 
 def test_account_suggestions():
     """
