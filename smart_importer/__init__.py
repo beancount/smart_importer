@@ -15,12 +15,11 @@ from smart_importer.predictor import SmartImporterDecorator
 class PredictPayees(SmartImporterDecorator):
     """Suggest and predict payees."""
 
+    weights = {'narration': 0.8, 'payee': 0.5, 'date.day': 0.1}
+
     def __init__(self, predict=True, overwrite=False, suggest=False):
         super().__init__(predict, suggest)
-
         self.overwrite = overwrite
-
-        self.weights = {'narration': 0.8, 'payee': 0.5, 'date.day': 0.1}
 
     @property
     def targets(self):
@@ -37,14 +36,12 @@ class PredictPayees(SmartImporterDecorator):
 class PredictPostings(SmartImporterDecorator):
     """Predict one missing posting."""
 
-    def __init__(self, predict=True, suggest=False):
-        super().__init__(predict, suggest)
-
-        self.weights = {
-            'narration': 0.8,
-            'first_posting_account': 0.8,
-            'date.day': 0.1,
-        }
+    weights = {
+        'narration': 0.8,
+        'payee': 0.5,
+        'first_posting_account': 0.8,
+        'date.day': 0.1,
+    }
 
     def prepare_training_data(self):
         """
@@ -55,12 +52,6 @@ class PredictPostings(SmartImporterDecorator):
             for pRef in t.postings for p in t.postings
             if p.account != pRef.account
         ]
-        distinct_payees = set(
-            map(lambda trx: trx.txn.payee, self.training_data or []))
-        if len(distinct_payees) > 1:
-            self.weights['payee'] = 0.5
-        elif 'payee' in self.weights:
-            del self.weights['payee']
 
     @property
     def targets(self):

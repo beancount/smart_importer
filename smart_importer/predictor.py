@@ -17,11 +17,12 @@ logger = logging.getLogger(__name__)
 
 
 class SmartImporterDecorator(ImporterDecorator):
-    def __init__(self, predict, suggest):
+    weights = {}
+
+    def __init__(self, predict=True, suggest=False):
         super().__init__()
         self.training_data = None
         self.pipeline = None
-        self.weights = {}
 
         self.predict = predict
         self.suggest = suggest
@@ -82,13 +83,9 @@ class SmartImporterDecorator(ImporterDecorator):
         """Train the machine learning pipeline."""
 
         if not self.training_data:
-            raise ValueError("Cannot train the machine learning model "
-                             "because the training data is empty.")
-        elif len(self.training_data) < 2:
-            raise ValueError(
-                "Cannot train the machine learning model "
-                "because the training data consists of less than two elements."
-            )
+            logger.error("Cannot train the machine learning model "
+                         "because the training data is empty.")
+            return
 
         self.pipeline.fit(self.training_data, self.targets)
         logger.debug("Trained the machine learning model.")
@@ -118,6 +115,9 @@ class SmartImporterDecorator(ImporterDecorator):
     def process_transactions(
             self, transactions: List[Transaction]) -> List[Transaction]:
         """Process all imported transactions."""
+
+        if not self.training_data:
+            return transactions
 
         if self.predict:
             predictions = self.pipeline.predict(transactions)

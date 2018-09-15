@@ -62,18 +62,35 @@ class GetReferencePostingAccount(Getter):
         return txn.postings[0].account
 
 
+class StringVectorizer(CountVectorizer):
+    def __init__(self):
+        super().__init__(ngram_range=(1, 3))
+
+    def fit_transform(self, data, y=None):
+        try:
+            return super().fit_transform(data, y)
+        except ValueError:
+            return numpy.zeros(shape=(len(data), 0))
+
+    def transform(self, data):
+        try:
+            return super().transform(data)
+        except ValueError:
+            return numpy.zeros(shape=(len(data), 0))
+
+
 PIPELINES = {
     'narration': make_pipeline(
         AttrGetter('narration', ''),
-        CountVectorizer(ngram_range=(1, 3)),
+        StringVectorizer(),
     ),
     'payee': make_pipeline(
         AttrGetter('payee', ''),
-        CountVectorizer(ngram_range=(1, 3)),
+        StringVectorizer(),
     ),
     'first_posting_account': make_pipeline(
         GetReferencePostingAccount(),
-        CountVectorizer(ngram_range=(1, 3)),
+        StringVectorizer(),
     ),
     'date.day': make_pipeline(
         AttrGetter('date.day'),
