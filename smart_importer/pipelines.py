@@ -25,18 +25,15 @@ class NoFitMixin:
 
 
 class ArrayCaster(BaseEstimator, TransformerMixin, NoFitMixin):
-    """
-    Helper class for casting data into array shape.
-    """
+    """Helper class for casting data into array shape."""
 
     @staticmethod
     def transform(data):
-        return numpy.transpose(numpy.matrix(data))
+        return numpy.array(data, ndmin=2).T
 
 
 class Getter(TransformerMixin, NoFitMixin):
-    def transform(self,
-                  data: Union[List[TxnPostingAccount], List[Transaction]]):
+    def transform(self, data: Union[List[TxnPostingAccount], List[Transaction]]):
         return [self._getter(d) for d in data]
 
     def _getter(self, txn):
@@ -67,15 +64,15 @@ class GetReferencePostingAccount(Getter):
 PIPELINES = {
     'narration': make_pipeline(
         AttrGetter('narration', ''),
-        CountVectorizer(ngram_range=(1, 3))
+        CountVectorizer(ngram_range=(1, 3)),
     ),
     'payee': make_pipeline(
         AttrGetter('payee', ''),
-        CountVectorizer(ngram_range=(1, 3))
+        CountVectorizer(ngram_range=(1, 3)),
     ),
     'first_posting_account': make_pipeline(
         GetReferencePostingAccount(),
-        CountVectorizer(ngram_range=(1, 3))
+        CountVectorizer(ngram_range=(1, 3)),
     ),
     'date.day': make_pipeline(
         AttrGetter('date.day'),
