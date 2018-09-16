@@ -85,21 +85,22 @@ class StringVectorizer(CountVectorizer):
             return numpy.zeros(shape=(len(raw_documents), 0))
 
 
-PIPELINES = {
-    'narration': make_pipeline(
-        AttrGetter('narration', ''),
-        StringVectorizer(),
-    ),
-    'payee': make_pipeline(
-        AttrGetter('payee', ''),
-        StringVectorizer(),
-    ),
-    'first_posting_account': make_pipeline(
-        GetReferencePostingAccount(),
-        StringVectorizer(),
-    ),
-    'date.day': make_pipeline(
-        AttrGetter('date.day'),
-        ArrayCaster(),
-    ),
-}
+def get_pipeline(attribute):
+    """Make a pipeline for a given entry attribute."""
+
+    if attribute in ['narration', 'payee']:
+        return make_pipeline(
+            AttrGetter(attribute, ''),
+            StringVectorizer(),
+        )
+    if attribute == 'first_posting_account':
+        return make_pipeline(
+            GetReferencePostingAccount(),
+            StringVectorizer(),
+        )
+    if attribute == 'date.day':
+        return make_pipeline(
+            AttrGetter('date.day'),
+            ArrayCaster(),
+        )
+    raise ValueError

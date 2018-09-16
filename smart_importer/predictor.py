@@ -10,7 +10,7 @@ from sklearn.svm import SVC
 from beancount.core.data import Transaction, ALL_DIRECTIVES, filter_txns
 
 from smart_importer.entries import merge_non_transaction_entries
-from smart_importer.pipelines import PIPELINES
+from smart_importer.pipelines import get_pipeline
 from smart_importer.decorator import ImporterDecorator
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -77,8 +77,9 @@ class SmartImporterDecorator(ImporterDecorator):
     def define_pipeline(self):
         """Defines the machine learning pipeline based on given weights."""
 
-        transformers = [(attribute, PIPELINES[attribute])
-                        for attribute in self.weights]
+        transformers = []
+        for attribute in self.weights:
+            transformers.append((attribute, get_pipeline(attribute)))
 
         self.pipeline = make_pipeline(
             FeatureUnion(
@@ -141,17 +142,22 @@ class SmartImporterDecorator(ImporterDecorator):
 
             # Add a human-readable class label to each value, and sort by
             # value:
-            suggestions = [[
-                label for _, label in sorted(
-                    list(zip(distance_values, self.pipeline.classes_)),
-                    key=operator.itemgetter(0),
-                    reverse=True)
-            ] for distance_values in decision_values]
+            try:
+                suggestions = [[
+                    label for _, label in sorted(
+                        list(zip(distance_values, self.pipeline.classes_)),
+                        key=operator.itemgetter(0),
+                        reverse=True)
+                ] for distance_values in decision_values]
+            except TypeError:
+                suggestions = None
 
             # Add the suggestions to each transaction:
-            transactions = [
-                self.apply_suggestion(entry, suggestion_list)
-                for entry, suggestion_list in zip(transactions, suggestions)
-            ]
+            if suggestions:
+                transactions = [
+                    self.apply_suggestion(entry, suggestion_list)
+                    for entry, suggestion_list in zip(transactions,
+                                                      suggestions)
+                ]
             logger.debug("Added suggestions to transactions.")
         return transactions
