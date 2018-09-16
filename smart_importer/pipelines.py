@@ -29,12 +29,16 @@ class ArrayCaster(BaseEstimator, TransformerMixin, NoFitMixin):
 
     @staticmethod
     def transform(data):
+        """Turn list into numpy array of the necessary shape."""
         return numpy.array(data, ndmin=2).T
 
 
 class Getter(TransformerMixin, NoFitMixin):
+    """Get an entry attribute."""
+
     def transform(self, data: Union[List[TxnPostingAccount],
                                     List[Transaction]]):
+        """Return list of entry attributes."""
         return [self._getter(d) for d in data]
 
     def _getter(self, txn):
@@ -63,20 +67,22 @@ class GetReferencePostingAccount(Getter):
 
 
 class StringVectorizer(CountVectorizer):
+    """Subclass of CountVectorizer that handles empty data."""
+
     def __init__(self):
         super().__init__(ngram_range=(1, 3))
 
-    def fit_transform(self, data, y=None):
+    def fit_transform(self, raw_documents, y=None):
         try:
-            return super().fit_transform(data, y)
+            return super().fit_transform(raw_documents, y)
         except ValueError:
-            return numpy.zeros(shape=(len(data), 0))
+            return numpy.zeros(shape=(len(raw_documents), 0))
 
-    def transform(self, data):
+    def transform(self, raw_documents):
         try:
-            return super().transform(data)
+            return super().transform(raw_documents)
         except ValueError:
-            return numpy.zeros(shape=(len(data), 0))
+            return numpy.zeros(shape=(len(raw_documents), 0))
 
 
 PIPELINES = {

@@ -3,10 +3,7 @@
 import io
 import os
 import unittest
-from typing import List, Union
 
-from beancount.core.data import ALL_DIRECTIVES
-from beancount.ingest.cache import _FileMemo
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser, printer
 
@@ -36,16 +33,14 @@ class PredictPostingsTest(unittest.TestCase):
 
         @PredictPostings(suggest=True)
         class DummyImporter(ImporterProtocol):
-            def extract(self, file: _FileMemo,
-                        existing_entries: List[Union[ALL_DIRECTIVES]]
-                        ) -> List[Union[ALL_DIRECTIVES]]:
+            def extract(self, file, existing_entries=None):
                 return extracted_data
 
         importer = DummyImporter()
-        actualTrxs = importer.extract(
+        imported_transactions = importer.extract(
             "dummy-data", existing_entries=training_data)
         with io.StringIO() as buffer:
-            printer.print_entries(actualTrxs, file=buffer)
+            printer.print_entries(imported_transactions, file=buffer)
             actual = buffer.getvalue()
 
         expected_file_name = self.generate_file_name(testset, 'expected')
@@ -57,7 +52,8 @@ class PredictPostingsTest(unittest.TestCase):
             with open(expected_file_name, 'w') as expected_file:
                 expected_file.write(actual)
 
-    def generate_file_name(self, testset, kind):
+    @staticmethod
+    def generate_file_name(testset, kind):
         return os.path.join(
             os.path.dirname(__file__), 'data',
             testset + '-' + kind + '.beancount')

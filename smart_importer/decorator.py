@@ -4,7 +4,7 @@ import inspect
 import logging
 from functools import wraps
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class ImporterDecorator():

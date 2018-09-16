@@ -13,10 +13,12 @@ from smart_importer.entries import merge_non_transaction_entries
 from smart_importer.pipelines import PIPELINES
 from smart_importer.decorator import ImporterDecorator
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class SmartImporterDecorator(ImporterDecorator):
+    """Base class for machine learning importer helpers."""
+
     weights = {}
     attribute = None
 
