@@ -1,17 +1,15 @@
 smart_importer
 ==============
 
-A smart importer for
-`Beancount <http://furius.ca/beancount/>`__ and
-`Fava <https://github.com/beancount/fava>`__, currently in development
-as a suggestion for `#579 Import: Intelligent suggestions for account
-names <https://github.com/beancount/fava/issues/579>`__
+Decorators for augmenting
+`Beancount <http://furius.ca/beancount/>`__ importers
+with machine learning functionality.
 
 
 Status
 ------
 
-First working protoype, development status: alpha
+Working protoype, development status: alpha
 
 .. image:: https://travis-ci.org/beancount/smart_importer.svg?branch=master
     :target: https://travis-ci.org/beancount/smart_importer
@@ -89,11 +87,8 @@ The smart importer is added to the ``CONFIG`` array in the same way as any other
 Documentation
 -------------
 
-This section explains in detail
-the relevant concepts and artifacts
-needed for enhancing Beancount importers
-with machine learning
-using `smart_importer` decorators.
+This section explains in detail the relevant concepts and artifacts
+needed for enhancing Beancount importers with machine learning.
 
 
 
@@ -111,12 +106,12 @@ The following figure provides an overview of the import process and its componen
 
 
 1. The user executes ``bean-extract -f existing_transactions.beancount`` in order to import downloaded bank statements into Beancount.
-   Note: Instead of invoking the importer directly, a user may work with a GUI such as `Fava <https://github.com/beancount/fava>`__.
+   Note: Instead of invoking the importer through the commandline, a user may work with a GUI such as `Fava <https://github.com/beancount/fava>`__.
 2. The user specifies an import configuration file for ``bean-extract``. This file can be named, for example, ``example.import``. It is a regular python file that defines a list of importers to be used by beancount.ingest.
 3. ``beancount.ingest`` invokes a matching importer.
 4. The importer reads the downloaded bank statement, typically a CSV file, and extracts Beancount transactions from it.
    Note: Beancount importers are described in the `beancount ingest <http://furius.ca/beancount/doc/ingest>`__ documentation.
-5. Smart importers extend the functionlity of regular Beancount importers. They read existing Beancount entries and use them to train a machine learning model.
+5. Smart importers extend the functionality of regular Beancount importers. They read existing Beancount entries and use them to train a machine learning model.
 6. The smart importer uses the trained machine learning model to enhance the extracted transactions with predictions and suggestions.
 7. The resulting transactions are returned to the user.
 
@@ -124,12 +119,7 @@ The following figure provides an overview of the import process and its componen
 Beancount Importers
 ~~~~~~~~~~~~~~~~~~~~
 
-This documentation assumes you know how to create Beancount importers.
-Relevant documentation can be found under `beancount ingest <http://furius.ca/beancount/doc/ingest>`__.
-Using beancount.ingest, users can write their own importers
-and use them to convert downloaded bank statements into lists of Beancount entries.
-
-For example, let's assume you have created an importer for "MyBank" called ``MyBankImporter``:
+Let's assume you have created an importer for "MyBank" called ``MyBankImporter``:
 
 .. code:: python
 
@@ -137,6 +127,12 @@ For example, let's assume you have created an importer for "MyBank" called ``MyB
         """My existing importer"""
         # the actual importer logic would be here...
         pass
+
+Note:
+This documentation assumes you already know how to create Beancount importers.
+Relevant documentation can be found under `beancount ingest <http://furius.ca/beancount/doc/ingest>`__.
+Using beancount.ingest, users can write their own importers
+and use them to convert downloaded bank statements into lists of Beancount entries.
 
 
 Applying `smart_importer` Decorators
@@ -161,7 +157,7 @@ For example, to convert an existing ``MyBankImporter`` into a smart importer:
         # [...] importer logic
 
 In the above example, ``MyBankImporter`` has been decorated with
-``PredictPostings`` and ``PredictPayees`` and thus employs machine learnign to
+``PredictPostings`` and ``PredictPayees`` and thus employs machine learning to
 predict missing payees and second postings.
 
 Note that the decorators can be applied to either an importer class, as shown
