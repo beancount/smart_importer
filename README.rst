@@ -175,9 +175,6 @@ transactions in order to be effective. Training data can be specified by
 calling bean-extract with an argument that references existing Beancount
 transactions, e.g., ``bean-extract -f existing_transactions.beancount``.
 
-See `Specifying Training Data <docs/Specifying_Training_Data.rst>`__
-for additional options how training data can be provided to the decorators.
-
 
 Using Smart Importers
 ~~~~~~~~~~~~~~~~~~~~~
