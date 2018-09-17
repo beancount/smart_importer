@@ -17,7 +17,7 @@ from smart_importer.decorator import ImporterDecorator
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-class SmartImporterDecorator(ImporterDecorator):
+class EntryPredictor(ImporterDecorator):
     """Base class for machine learning importer helpers.
 
     Args:
@@ -35,22 +35,29 @@ class SmartImporterDecorator(ImporterDecorator):
         super().__init__()
         self.training_data = None
         self.pipeline = None
+        self.is_fitted = False
 
         self.predict = predict
         self.suggest = suggest
         self.overwrite = overwrite
 
     def main(self, imported_entries, existing_entries):
-        """Predict and suggest attributes for imported transactions."""
-        try:
-            self.load_training_data(existing_entries)
-            self.prepare_training_data()
-            self.define_pipeline()
-            self.train_pipeline()
-            return self.process_entries(imported_entries)
-        except (ValueError, AssertionError) as exception:
-            logger.error(exception)
-            return imported_entries
+        """Predict and suggest attributes for imported transactions.
+
+        Args:
+            imported_entries: The list of imported entries.
+            existing_entries: The list of existing entries as passed to the
+                importer - will be used as training data.
+
+        Returns:
+            A list of entries, modified by this predictor.
+        """
+
+        self.load_training_data(existing_entries)
+        self.prepare_training_data()
+        self.define_pipeline()
+        self.train_pipeline()
+        return self.process_entries(imported_entries)
 
     def load_training_data(self, existing_entries):
         """Load training data, i.e., a list of Beancount entries."""
@@ -101,30 +108,43 @@ class SmartImporterDecorator(ImporterDecorator):
     def train_pipeline(self):
         """Train the machine learning pipeline."""
 
-        if not self.training_data:
-            logger.error("Cannot train the machine learning model "
-                         "because the training data is empty.")
-            return
+        targets = self.targets
+        self.is_fitted = False
 
-        self.pipeline.fit(self.training_data, self.targets)
-        logger.debug("Trained the machine learning model.")
+        if not self.training_data:
+            logger.warning("Cannot train the machine learning model "
+                           "because the training data is empty.")
+        elif len(set(targets)) < 2:
+            logger.warning("Cannot train the machine learning model "
+                           "because there is only one target.")
+        else:
+            self.pipeline.fit(self.training_data, targets)
+            self.is_fitted = True
+            logger.debug("Trained the machine learning model.")
 
     def process_entries(self, imported_entries) -> List[Union[ALL_DIRECTIVES]]:
         """Process imported entries.
 
         Transactions might be modified, all other entries are left as is.
 
-        :return: Returns the list of entries to be imported.
+        Returns:
+            The list of entries to be imported.
         """
-        imported_transactions: List[Transaction]
-        imported_transactions = list(filter_txns(imported_entries))
         enhanced_transactions = self.process_transactions(
-            list(imported_transactions))
+            list(filter_txns(imported_entries)))
         return merge_non_transaction_entries(imported_entries,
                                              enhanced_transactions)
 
     def apply_prediction(self, entry, prediction):
-        """Apply a single prediction to an entry."""
+        """Apply a single prediction to an entry.
+
+        Args:
+            entry: A Beancount entry.
+            prediction: The prediction for an attribute.
+
+        Returns:
+            The entry with the prediction applied.
+        """
         if not self.attribute:
             raise NotImplementedError
         return set_entry_attribute(
@@ -141,16 +161,16 @@ class SmartImporterDecorator(ImporterDecorator):
 
     def process_transactions(
             self, transactions: List[Transaction]) -> List[Transaction]:
-        """Process all imported transactions."""
+        """Process a list of transactions."""
 
-        if not self.training_data:
+        if not self.is_fitted:
             return transactions
 
         if self.predict:
             predictions = self.pipeline.predict(transactions)
             transactions = [
-                self.apply_prediction(entry, payee)
-                for entry, payee in zip(transactions, predictions)
+                self.apply_prediction(entry, prediction)
+                for entry, prediction in zip(transactions, predictions)
             ]
             logger.debug("Added predictions to transactions.")
 
@@ -177,5 +197,5 @@ class SmartImporterDecorator(ImporterDecorator):
                     for entry, suggestion_list in zip(transactions,
                                                       suggestions)
                 ]
-            logger.debug("Added suggestions to transactions.")
+                logger.debug("Added suggestions to transactions.")
         return transactions
