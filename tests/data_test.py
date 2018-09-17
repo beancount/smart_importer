@@ -10,7 +10,7 @@ from beancount.core.compare import stable_hash_namedtuple
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
-from smart_importer import PredictAccounts
+from smart_importer import PredictPostings
 
 
 def _hash(entry):
@@ -36,7 +36,7 @@ def _load_testset(testset):
 def test_testset(testset):
     imported, training_data, expected = _load_testset(testset)  # pylint: disable=unbalanced-tuple-unpacking
 
-    @PredictAccounts()
+    @PredictPostings()
     class DummyImporter(ImporterProtocol):
         def extract(self, file, existing_entries=None):
             return imported

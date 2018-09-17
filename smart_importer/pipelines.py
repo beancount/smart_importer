@@ -1,19 +1,14 @@
 """Machine learning pipelines for data extraction."""
 
-from typing import List, Union, NamedTuple
+from typing import List
 import operator
 
-from beancount.core.data import Transaction, Posting
+from beancount.core.data import Transaction
 
 import numpy
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import make_pipeline
-
-
-TxnPostingAccount = NamedTuple('TxnPostingAccount',
-                               [('txn', Transaction), ('posting', Posting),
-                                ('account', str)])
 
 
 class NoFitMixin:
@@ -36,8 +31,7 @@ class ArrayCaster(BaseEstimator, TransformerMixin, NoFitMixin):
 class Getter(TransformerMixin, NoFitMixin):
     """Get an entry attribute."""
 
-    def transform(self, data: Union[List[TxnPostingAccount],
-                                    List[Transaction]]):
+    def transform(self, data: List[Transaction]):
         """Return list of entry attributes."""
         return [self._getter(d) for d in data]
 
@@ -52,18 +46,7 @@ class AttrGetter(Getter):
         self._txn_getter = operator.attrgetter(attr)
 
     def _getter(self, txn):
-        if isinstance(txn, TxnPostingAccount):
-            txn = txn.txn
         return self._txn_getter(txn) or self.default
-
-
-class GetReferencePostingAccount(Getter):
-    """Account of the first posting or of TxnPostingAccount."""
-
-    def _getter(self, txn):
-        if isinstance(txn, TxnPostingAccount):
-            return txn.account
-        return txn.postings[0].account
 
 
 class StringVectorizer(CountVectorizer):
@@ -91,11 +74,6 @@ def get_pipeline(attribute):
     if attribute in ['narration', 'payee']:
         return make_pipeline(
             AttrGetter(attribute, ''),
-            StringVectorizer(),
-        )
-    if attribute == 'first_posting_account':
-        return make_pipeline(
-            GetReferencePostingAccount(),
             StringVectorizer(),
         )
     if attribute == 'date.day':
