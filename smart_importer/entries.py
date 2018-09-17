@@ -16,6 +16,25 @@ def add_posting_to_transaction(transaction: Transaction,
     return transaction
 
 
+def update_postings(transaction, accounts):
+    """Update the list of postings of a transaction to match the accounts."""
+
+    if len(transaction.postings) != 1:
+        return transaction
+
+    new_postings = [
+        Posting(account, None, None, None, None, None)
+        for account in accounts
+    ]
+    for posting in transaction.postings:
+        if posting.account in accounts:
+            new_postings[accounts.index(posting.account)] = posting
+        else:
+            new_postings.append(posting)
+
+    return transaction._replace(postings=new_postings)
+
+
 def set_entry_attribute(entry, attribute, value, overwrite=False):
     """Set an entry attribute."""
     if value and (not getattr(entry, attribute) or overwrite):

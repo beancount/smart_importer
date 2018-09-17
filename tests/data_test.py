@@ -36,7 +36,7 @@ def _load_testset(testset):
 def test_testset(testset):
     imported, training_data, expected = _load_testset(testset)  # pylint: disable=unbalanced-tuple-unpacking
 
-    @PredictPostings(suggest=True)
+    @PredictPostings()
     class DummyImporter(ImporterProtocol):
         def extract(self, file, existing_entries=None):
             return imported

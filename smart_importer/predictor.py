@@ -10,6 +10,7 @@ from sklearn.svm import SVC
 from beancount.core.data import Transaction, ALL_DIRECTIVES, filter_txns
 
 from smart_importer.entries import merge_non_transaction_entries
+from smart_importer.entries import set_entry_attribute
 from smart_importer.pipelines import get_pipeline
 from smart_importer.decorator import ImporterDecorator
 
@@ -17,18 +18,27 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class SmartImporterDecorator(ImporterDecorator):
-    """Base class for machine learning importer helpers."""
+    """Base class for machine learning importer helpers.
+
+    Args:
+        predict: Whether to add predictions to the entries.
+        suggest: Whether to add a list of suggestions as metadata to the
+            entries.
+        overwrite: When an attribute is predicted but already exists on an
+            entry, overwrite the existing one.
+    """
 
     weights = {}
     attribute = None
 
-    def __init__(self, predict=True, suggest=False):
+    def __init__(self, predict=True, suggest=False, overwrite=False):
         super().__init__()
         self.training_data = None
         self.pipeline = None
 
         self.predict = predict
         self.suggest = suggest
+        self.overwrite = overwrite
 
     def main(self, imported_entries, existing_entries):
         """Predict and suggest attributes for imported transactions."""
@@ -115,11 +125,19 @@ class SmartImporterDecorator(ImporterDecorator):
 
     def apply_prediction(self, entry, prediction):
         """Apply a single prediction to an entry."""
-        raise NotImplementedError
+        if not self.attribute:
+            raise NotImplementedError
+        return set_entry_attribute(
+            entry, self.attribute, prediction, overwrite=self.overwrite)
 
     def apply_suggestion(self, entry, suggestions):
         """Add a list of suggestions to an entry."""
-        raise NotImplementedError
+        if not self.attribute:
+            raise NotImplementedError
+        if suggestions:
+            key = '__suggested_{}s__'.format(self.attribute)
+            entry.meta[key] = suggestions
+        return entry
 
     def process_transactions(
             self, transactions: List[Transaction]) -> List[Transaction]:
