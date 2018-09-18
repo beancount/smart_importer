@@ -1,7 +1,7 @@
 smart_importer
 ==============
 
-Decorators for augmenting
+Augment
 `Beancount <http://furius.ca/beancount/>`__ importers
 with machine learning functionality.
 
