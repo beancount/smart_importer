@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from beancount.ingest.cache import _FileMemo
 from beancount.parser import printer
 
-from smart_importer.examples.importer_using_predict_postings.importer import Importer
+from examples.importer_using_predict_postings.importer import Importer
 
 LOG_LEVEL = logging.DEBUG
 logging.basicConfig(level=LOG_LEVEL)

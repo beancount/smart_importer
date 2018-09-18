@@ -8,7 +8,7 @@ from beancount.ingest import importer
 from beancount.ingest.importers import regexp
 from dateutil.parser import parse
 
-from smart_importer.predict_postings import PredictPostings
+from smart_importer import PredictPostings
 
 
 @PredictPostings()

@@ -3,8 +3,8 @@
 
 import logging
 
-from smart_importer.examples.importer_using_predict_postings.importer import Importer as ImporterUsingPredictPostings
-from smart_importer.predict_postings import PredictPostings
+from examples.importer_using_predict_postings.importer import Importer as ImporterUsingPredictPostings
+from smart_importer import PredictPostings
 
 logger = logging.getLogger(__name__)
 
