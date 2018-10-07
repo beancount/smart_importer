@@ -7,6 +7,7 @@ __license__ = "MIT"
 from smart_importer.entries import add_suggestions_to_entry
 from smart_importer.entries import update_postings
 from smart_importer.predictor import EntryPredictor
+from smart_importer.detector import DuplicateDetector
 
 
 class PredictPayees(EntryPredictor):
