@@ -35,7 +35,12 @@ class DuplicateDetector(ImporterDecorator):
             A list of entries, modified by this detector.
         """
 
-        duplicate_pairs = similar.find_similar_entries(imported_entries, existing_entries, self.comparator, self.window_days)
+        duplicate_pairs = similar.find_similar_entries(
+            imported_entries,
+            existing_entries,
+            self.comparator,
+            self.window_days
+        )
         # Add a metadata marker to the extracted entries for duplicates.
         duplicate_set = set(id(entry) for entry, _ in duplicate_pairs)
         mod_entries = []
