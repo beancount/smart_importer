@@ -12,12 +12,12 @@ from beancount.core.data import Transaction, ALL_DIRECTIVES, filter_txns
 from smart_importer.entries import merge_non_transaction_entries
 from smart_importer.entries import set_entry_attribute
 from smart_importer.pipelines import get_pipeline
-from smart_importer.decorator import ImporterDecorator
+from smart_importer.hooks import ImporterHook
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-class EntryPredictor(ImporterDecorator):
+class EntryPredictor(ImporterHook):
     """Base class for machine learning importer helpers.
 
     Args:
@@ -36,12 +36,13 @@ class EntryPredictor(ImporterDecorator):
         self.training_data = None
         self.pipeline = None
         self.is_fitted = False
+        self.account = None
 
         self.predict = predict
         self.suggest = suggest
         self.overwrite = overwrite
 
-    def main(self, imported_entries, existing_entries):
+    def __call__(self, importer, file, imported_entries, existing_entries):
         """Predict and suggest attributes for imported transactions.
 
         Args:
@@ -53,6 +54,7 @@ class EntryPredictor(ImporterDecorator):
             A list of entries, modified by this predictor.
         """
 
+        self.account = importer.file_account(file)
         self.load_training_data(existing_entries)
         self.prepare_training_data()
         self.define_pipeline()
