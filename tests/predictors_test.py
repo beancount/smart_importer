@@ -4,6 +4,7 @@ from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
 from smart_importer import PredictPayees, PredictPostings
+from smart_importer.hooks import apply_hooks
 
 TEST_DATA, _, __ = parser.parse_string("""
 2017-01-06 * "Farmer Fresh" "Buying groceries"
@@ -83,18 +84,8 @@ class BasicTestImporter(ImporterProtocol):
         return "Assets:US:BofA:Checking"
 
 
-@PredictPayees(suggest=True)
-class PayeeTestImporter(BasicTestImporter):
-    pass
-
-
-@PredictPostings(suggest=True)
-class PostingTestImporter(BasicTestImporter):
-    pass
-
-
-PAYEE_IMPORTER = PayeeTestImporter()
-POSTING_IMPORTER = PostingTestImporter()
+PAYEE_IMPORTER = apply_hooks(BasicTestImporter(), [PredictPayees(suggest=True)])
+POSTING_IMPORTER = apply_hooks(BasicTestImporter(), [PredictPostings(suggest=True)])
 
 
 def test_empty_training_data():
