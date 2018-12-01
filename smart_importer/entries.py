@@ -5,17 +5,6 @@ import json
 from beancount.core.data import Transaction, Posting
 
 
-def add_posting_to_transaction(transaction: Transaction,
-                               account: str) -> Transaction:
-    """Adds an empty posting with the given account to a transaction."""
-
-    if len(transaction.postings) != 1:
-        return transaction
-
-    transaction.postings.append(Posting(account, None, None, None, None, None))
-    return transaction
-
-
 def update_postings(transaction, accounts):
     """Update the list of postings of a transaction to match the accounts."""
 
