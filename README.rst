@@ -27,24 +27,22 @@ and must therefore be installed from source:
     pip install --editable smart_importer
 
 
-
 Quick Start
 -----------
 
-Apply ``@PredictPostings()`` and/or ``@PredictPayees()`` as decorators to a Beancount importer
-in order to benefit from smart predictions and suggestions provided by machine learning.
-To get started quickly, you can script all of it right in your import config file.
+This package provides import hooks that can modify the imported entries. When
+running the importer, the existing entries will be used as training data for a
+machine learning model, which will then predict entry attributes.
 
-The following example shows how to add the ``@PredictPostings`` decorator to a CSV importer:
+The following example shows how to add the ``PredictPostings`` decorator to a
+an existing CSV importer:
 
 .. code:: python
-
-    # the beancount import config file:
 
     from beancount.ingest.importers import csv
     from beancount.ingest.importers.csv import Col
 
-    from smart_importer import PredictPostings
+    from smart_importer import apply_hooks, PredictPostings
 
 
     class MyBankImporter(csv.Importer):
@@ -65,23 +63,9 @@ The following example shows how to add the ``@PredictPostings`` decorator to a C
             )
 
 
-    @PredictPostings()
-    class SmartMyBankImporter(MyBankImporter):
-        '''Smart Version of the MyBankImporter'''
-        pass
-
-
     CONFIG = [
-        SmartMyBankImporter(account='Assets:MyBank:MyAccount')
+        apply_hooks(MyBankImporter(account='Assets:MyBank:MyAccount'), [PredictPostings()])
     ]
-
-
-
-In the above example, the ``PredictPostings`` decorator is applied to a Beancount importer.
-The resulting smart importer enhances imported transactions using machine learning.
-The smart importer is added to the ``CONFIG`` array in the same way as any other Beancount importer.
-
-
 
 
 Documentation
@@ -189,78 +173,6 @@ I.e., you can add them to your Beancount importer configuration file, like this:
    ]
 
 
-
-Unit Testing your Importers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Smart importers are difficult to unit-test because their output depends on dynamic machine learning behavior.
-To make test automation easy, write unit tests for conventional (undecorated) importers,
-but use decorated versions of these importers in your import configuration:
-
-
-.. code:: python
-
-    import os
-
-    import nose
-    from beancount.ingest import regression
-    from beancount.ingest.importers import csv
-    from beancount.ingest.importers.csv import Col
-
-    from smart_importer import PredictPostings
-
-
-    # define a conventional (i.e., undecorated) importer:
-    class MyBankImporter(csv.Importer):
-        '''
-        Importer CSV file downloaded from MyBank.
-        Note: This undecorated class can be regression-tested with
-        beancount.ingest.regression.compare_sample_files
-        '''
-
-        def __init__(self, *, account):
-            super().__init__(
-                {Col.DATE: 'Date',
-                 Col.PAYEE: 'Transaction Details',
-                 Col.AMOUNT_DEBIT: 'Funds Out',
-                 Col.AMOUNT_CREDIT: 'Funds In'},
-                account,
-                'CAD',
-                [
-                    'Filename: .*MyBank.*\.csv',
-                    'Contents:\n.*Date, Transaction Details, Funds Out, Funds In'
-                ]
-            )
-
-
-    # automated regression tests for the undecorated importer:
-    def test():
-        importer = MyBankImporter()
-        yield from regression.compare_sample_files(
-            importer,
-            directory=os.path.abspath(os.path.join(
-                os.path.dirname(__file__), 'testdata'))
-        )
-
-
-    # execute regression tests if this is run as main python file:
-    if __name__ == "__main__":
-        nose.main()
-
-
-    # define a smart version of the importer:
-    @PredictPostings(training_data='myfile.beancount')
-    class SmartMyBankImporter(MyBankImporter):
-        '''Smart version of MyBankImporter'''
-        pass
-
-
-    # the import configuration:
-    CONFIG = [
-        SmartMyBankImporter(account='Assets:MyBank:MyAccount')
-    ]
-
-
 Usage with Fava
 ~~~~~~~~~~~~~~~
 
@@ -269,7 +181,6 @@ This means you can use smart importers together with Fava in the exact same way
 as you would do with a conventional importer.
 See `Fava's help on importers <https://github.com/beancount/fava/blob/master/fava/help/import.md>`__
 for more information.
-
 
 
 Development
@@ -288,7 +199,6 @@ Simply run (requires tox):
     make test
 
 
-
 Configuring Logging
 ~~~~~~~~~~~~~~~~~~~
 
@@ -299,5 +209,4 @@ The decorators' log level can be changed as follows:
 .. code:: python
 
     import logging
-
     logging.getLogger('smart_importer').setLevel(logging.DEBUG)
