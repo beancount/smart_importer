@@ -4,12 +4,12 @@ import logging
 
 from beancount.ingest import similar
 
-from smart_importer.decorator import ImporterDecorator
+from smart_importer.hooks import ImporterHook
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-class DuplicateDetector(ImporterDecorator):
+class DuplicateDetector(ImporterHook):
     """Class for duplicate detector importer helpers.
 
     Args:
@@ -23,7 +23,7 @@ class DuplicateDetector(ImporterDecorator):
         self.comparator = comparator
         self.window_days = window_days
 
-    def main(self, imported_entries, existing_entries):
+    def __call__(self, importer, file, imported_entries, existing_entries):
         """Add duplicate metadata for imported transactions.
 
         Args:
