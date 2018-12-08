@@ -91,7 +91,6 @@ class EntryPredictor(ImporterHook):
 
     def prepare_training_data(self):
         """Modify the training data if necessary."""
-        pass
 
     def define_pipeline(self):
         """Defines the machine learning pipeline based on given weights."""
