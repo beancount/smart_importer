@@ -75,30 +75,6 @@ This section explains in detail the relevant concepts and artifacts
 needed for enhancing Beancount importers with machine learning.
 
 
-System Overview
-~~~~~~~~~~~~~~~
-
-The following figure provides an overview of the import process and its components.
-
-
-.. figure:: docs/system-overview.png
-   :scale: 50 %
-   :alt: system overview
-
-   System overview showing the process how smart importers are used to predict and suggest values in the transactions to be imported.
-
-
-1. The user executes ``bean-extract -f existing_transactions.beancount`` in order to import downloaded bank statements into Beancount.
-   Note: Instead of invoking the importer through the commandline, a user may work with a GUI such as `Fava <https://github.com/beancount/fava>`__.
-2. The user specifies an import configuration file for ``bean-extract``. This file can be named, for example, ``example.import``. It is a regular python file that defines a list of importers to be used by beancount.ingest.
-3. ``beancount.ingest`` invokes a matching importer.
-4. The importer reads the downloaded bank statement, typically a CSV file, and extracts Beancount transactions from it.
-   Note: Beancount importers are described in the `beancount ingest <http://furius.ca/beancount/doc/ingest>`__ documentation.
-5. Smart importers extend the functionality of regular Beancount importers. They read existing Beancount entries and use them to train a machine learning model.
-6. The smart importer uses the trained machine learning model to enhance the extracted transactions with predictions and suggestions.
-7. The resulting transactions are returned to the user.
-
-
 Beancount Importers
 ~~~~~~~~~~~~~~~~~~~~
 
