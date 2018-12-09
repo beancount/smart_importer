@@ -112,10 +112,10 @@ For example, to convert an existing ``MyBankImporter`` into a smart importer:
     from smart_importer import apply_hooks, PredictPayees, PredictPostings
 
     my_bank_importer =  MyBankImporter('whatever', 'config', 'is', 'needed')
-    apply_hooks(my_bank_importer, [PredictPostings(), PredictPayees()])
+    smart_my_bank_importer = apply_hooks(my_bank_importer, [PredictPostings(), PredictPayees()])
 
     CONFIG = [
-        my_bank_importer,
+        smart_my_bank_importer,
     ]
 
 Note that the importer hooks need to be applied to an importer instance, as
