@@ -34,7 +34,7 @@ This package provides import hooks that can modify the imported entries. When
 running the importer, the existing entries will be used as training data for a
 machine learning model, which will then predict entry attributes.
 
-The following example shows how to add the ``PredictPostings`` decorator to a
+The following example shows how to apply the ``PredictPostings`` hook to
 an existing CSV importer:
 
 .. code:: python
@@ -162,8 +162,8 @@ Simply run (requires tox):
 Configuring Logging
 ~~~~~~~~~~~~~~~~~~~
 
-Python's `logging` module is used by the smart_importer decorators.
-The decorators' log level can be changed as follows:
+Python's `logging` module is used by the smart_importer module.
+The according log level can be changed as follows:
 
 
 .. code:: python
