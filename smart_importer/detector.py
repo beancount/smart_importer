@@ -1,4 +1,4 @@
-"""Duplicate detector importer decorators."""
+"""Duplicate detector hook."""
 
 import logging
 

@@ -93,6 +93,9 @@ Relevant documentation can be found under `beancount ingest
 <http://furius.ca/beancount/doc/ingest>`__.  Using beancount.ingest, users can
 write their own importers and use them to convert downloaded bank statements
 into lists of Beancount entries.
+An example is provided as part of beancount's source code under
+`beancount/ingest/office
+<https://github.com/beancount/beancount/tree/master/examples/ingest/office>`__.
 
 
 Applying `smart_importer` hooks
@@ -103,6 +106,7 @@ of the following hooks:
 
 * ``PredictPostings`` - predict the list of postings.
 * ``PredictPayees``- predict the payee of the transaction.
+* ``DuplicateDetector`` - detect duplicates
 
 For example, to convert an existing ``MyBankImporter`` into a smart importer:
 
