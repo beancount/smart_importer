@@ -4,15 +4,14 @@ import logging
 import operator
 from typing import List, Union
 
+from beancount.core.data import Transaction, ALL_DIRECTIVES, filter_txns
 from sklearn.pipeline import make_pipeline, FeatureUnion
 from sklearn.svm import SVC
 
-from beancount.core.data import Transaction, ALL_DIRECTIVES, filter_txns
-
 from smart_importer.entries import merge_non_transaction_entries
 from smart_importer.entries import set_entry_attribute
-from smart_importer.pipelines import get_pipeline
 from smart_importer.hooks import ImporterHook
+from smart_importer.pipelines import AttrGetter, StringVectorizer, ArrayCaster
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -97,7 +96,8 @@ class EntryPredictor(ImporterHook):
 
         transformers = []
         for attribute in self.weights:
-            transformers.append((attribute, get_pipeline(attribute)))
+            transformers.append(
+                (attribute, self.get_attribute_pipeline(attribute)))
 
         self.pipeline = make_pipeline(
             FeatureUnion(
@@ -105,6 +105,21 @@ class EntryPredictor(ImporterHook):
                 transformer_weights=self.weights),
             SVC(kernel='linear'),
         )
+
+    def get_attribute_pipeline(self, attribute):
+        """Make a pipeline that retrieves a given entry attribute."""
+
+        if attribute in ['narration', 'payee']:
+            return make_pipeline(
+                AttrGetter(attribute, ''),
+                StringVectorizer(),
+            )
+        if attribute.startswith('date.'):
+            return make_pipeline(
+                AttrGetter(attribute, ''),
+                ArrayCaster(),
+            )
+        raise ValueError
 
     def train_pipeline(self):
         """Train the machine learning pipeline."""

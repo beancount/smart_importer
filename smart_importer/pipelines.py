@@ -1,14 +1,12 @@
 """Machine learning pipelines for data extraction."""
 
-from typing import List
 import operator
-
-from beancount.core.data import Transaction
+from typing import List
 
 import numpy
+from beancount.core.data import Transaction
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.pipeline import make_pipeline
 
 
 class NoFitMixin:
@@ -41,6 +39,7 @@ class Getter(TransformerMixin, NoFitMixin):
 
 class AttrGetter(Getter):
     """Get a transaction attribute."""
+
     def __init__(self, attr, default=None):
         self.default = default
         self._txn_getter = operator.attrgetter(attr)
@@ -66,19 +65,3 @@ class StringVectorizer(CountVectorizer):
             return super().transform(raw_documents)
         except ValueError:
             return numpy.zeros(shape=(len(raw_documents), 0))
-
-
-def get_pipeline(attribute):
-    """Make a pipeline for a given entry attribute."""
-
-    if attribute in ['narration', 'payee']:
-        return make_pipeline(
-            AttrGetter(attribute, ''),
-            StringVectorizer(),
-        )
-    if attribute == 'date.day':
-        return make_pipeline(
-            AttrGetter('date.day'),
-            ArrayCaster(),
-        )
-    raise ValueError
