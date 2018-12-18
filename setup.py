@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
 
+"""Package definition file."""
+
 import ast
 from os import path
 import re
 from setuptools import find_packages, setup
 
 # read version from python module:
-with open(path.join(path.dirname(__file__), 'smart_importer', '__init__.py'), 'rb') as f:
-    file_contents = f.read().decode('utf-8')
-    VERSION = str(ast.literal_eval(re.search(r'__version__\s+=\s+(.*)', file_contents).group(1)))
-    COPYRIGHT = str(ast.literal_eval(re.search(r'__copyright__\s+=\s+(.*)', file_contents).group(1)))
-    LICENSE = str(ast.literal_eval(re.search(r'__license__\s+=\s+(.*)', file_contents).group(1)))
-
-
-# read version from python module:
-
+with open(path.join(path.dirname(__file__), 'smart_importer', '__init__.py'),
+          'rb') as f:
+    CONTENTS = f.read().decode('utf-8')
+    VERSION = str(ast.literal_eval(
+        re.search(r'__version__\s+=\s+(.*)', CONTENTS).group(1)))
+    COPYRIGHT = str(ast.literal_eval(
+        re.search(r'__copyright__\s+=\s+(.*)', CONTENTS).group(1)))
+    LICENSE = str(ast.literal_eval(
+        re.search(r'__license__\s+=\s+(.*)', CONTENTS).group(1)))
 
 # read readme.rst:
 with open(path.join(path.dirname(__file__), 'README.rst')) as readme:
     LONG_DESCRIPTION = readme.read()
-
 
 setup(
     name='smart_importer',
@@ -29,11 +30,12 @@ setup(
     url='https://github.com/johannesjh/smart_importer',
     author='Johannes Harms',
     license=LICENSE,
-    keywords='fava beancount accounting import csv machinelearning scikit-learn sklearn',
+    keywords='fava beancount accounting import csv '
+             'machinelearning scikit-learn sklearn',
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
     install_requires=[
-        'beancount>=2.0b15',
+        'beancount>=2.0.0',
         'scikit-learn>=0.19',
         'numpy>= 1.8.2',
         'scipy>=0.13.3'
