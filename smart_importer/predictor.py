@@ -67,12 +67,16 @@ class EntryPredictor(ImporterHook):
         training_data = list(filter_txns(training_data))
         if self.account:
             training_data = [
-                txn for txn in training_data
+                txn
+                for txn in training_data
                 if any([pos.account == self.account for pos in txn.postings])
             ]
             logger.debug(
-                f"After filtering for account {self.account}, "
-                f"the training data consists of {len(training_data)} entries.")
+                "After filtering for account %s, "
+                "the training data consists of %s entries.",
+                self.account,
+                len(training_data),
+            )
         self.training_data = training_data
 
     @property
@@ -85,7 +89,7 @@ class EntryPredictor(ImporterHook):
         if not self.attribute:
             raise NotImplementedError
         return [
-            getattr(entry, self.attribute) or ''
+            getattr(entry, self.attribute) or ""
             for entry in self.training_data
         ]
 
@@ -101,9 +105,9 @@ class EntryPredictor(ImporterHook):
 
         self.pipeline = make_pipeline(
             FeatureUnion(
-                transformer_list=transformers,
-                transformer_weights=self.weights),
-            SVC(kernel='linear'),
+                transformer_list=transformers, transformer_weights=self.weights
+            ),
+            SVC(kernel="linear"),
         )
 
     def train_pipeline(self):
@@ -113,11 +117,15 @@ class EntryPredictor(ImporterHook):
         self.is_fitted = False
 
         if not self.training_data:
-            logger.warning("Cannot train the machine learning model "
-                           "because the training data is empty.")
+            logger.warning(
+                "Cannot train the machine learning model "
+                "because the training data is empty."
+            )
         elif len(set(targets)) < 2:
-            logger.warning("Cannot train the machine learning model "
-                           "because there is only one target.")
+            logger.warning(
+                "Cannot train the machine learning model "
+                "because there is only one target."
+            )
         else:
             self.pipeline.fit(self.training_data, targets)
             self.is_fitted = True
@@ -132,9 +140,11 @@ class EntryPredictor(ImporterHook):
             The list of entries to be imported.
         """
         enhanced_transactions = self.process_transactions(
-            list(filter_txns(imported_entries)))
-        return merge_non_transaction_entries(imported_entries,
-                                             enhanced_transactions)
+            list(filter_txns(imported_entries))
+        )
+        return merge_non_transaction_entries(
+            imported_entries, enhanced_transactions
+        )
 
     def apply_prediction(self, entry, prediction):
         """Apply a single prediction to an entry.
@@ -149,19 +159,21 @@ class EntryPredictor(ImporterHook):
         if not self.attribute:
             raise NotImplementedError
         return set_entry_attribute(
-            entry, self.attribute, prediction, overwrite=self.overwrite)
+            entry, self.attribute, prediction, overwrite=self.overwrite
+        )
 
     def apply_suggestion(self, entry, suggestions):
         """Add a list of suggestions to an entry."""
         if not self.attribute:
             raise NotImplementedError
         if suggestions:
-            key = '__suggested_{}s__'.format(self.attribute)
+            key = "__suggested_{}s__".format(self.attribute)
             entry.meta[key] = suggestions
         return entry
 
     def process_transactions(
-            self, transactions: List[Transaction]) -> List[Transaction]:
+        self, transactions: List[Transaction]
+    ) -> List[Transaction]:
         """Process a list of transactions."""
 
         if not self.is_fitted:
@@ -182,12 +194,17 @@ class EntryPredictor(ImporterHook):
             # Add a human-readable class label to each value, and sort by
             # value:
             try:
-                suggestions = [[
-                    label for _, label in sorted(
-                        list(zip(distance_values, self.pipeline.classes_)),
-                        key=operator.itemgetter(0),
-                        reverse=True)
-                ] for distance_values in decision_values]
+                suggestions = [
+                    [
+                        label
+                        for _, label in sorted(
+                            list(zip(distance_values, self.pipeline.classes_)),
+                            key=operator.itemgetter(0),
+                            reverse=True,
+                        )
+                    ]
+                    for distance_values in decision_values
+                ]
             except TypeError:
                 suggestions = None
 
@@ -195,8 +212,9 @@ class EntryPredictor(ImporterHook):
             if suggestions:
                 transactions = [
                     self.apply_suggestion(entry, suggestion_list)
-                    for entry, suggestion_list in zip(transactions,
-                                                      suggestions)
+                    for entry, suggestion_list in zip(
+                        transactions, suggestions
+                    )
                 ]
                 logger.debug("Added suggestions to transactions.")
         return transactions

@@ -1,6 +1,8 @@
+all:
+
 .PHONY: test
 test:
-	tox -e py3
+	tox -e py
 
 .PHONY: lint
 lint:
