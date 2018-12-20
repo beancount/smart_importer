@@ -2,6 +2,7 @@
 
 import logging
 import operator
+import threading
 from typing import List, Union
 
 from sklearn.pipeline import make_pipeline, FeatureUnion
@@ -27,6 +28,7 @@ class EntryPredictor(ImporterHook):
         overwrite: When an attribute is predicted but already exists on an
             entry, overwrite the existing one.
     """
+    # pylint: disable=too-many-instance-attributes
 
     weights = {}
     attribute = None
@@ -36,6 +38,7 @@ class EntryPredictor(ImporterHook):
         self.training_data = None
         self.pipeline = None
         self.is_fitted = False
+        self.lock = threading.Lock()
         self.account = None
 
         self.predict = predict
@@ -56,28 +59,31 @@ class EntryPredictor(ImporterHook):
 
         self.account = importer.file_account(file)
         self.load_training_data(existing_entries)
-        self.prepare_training_data()
-        self.define_pipeline()
-        self.train_pipeline()
-        return self.process_entries(imported_entries)
+        with self.lock:
+            self.define_pipeline()
+            self.train_pipeline()
+            return self.process_entries(imported_entries)
 
     def load_training_data(self, existing_entries):
         """Load training data, i.e., a list of Beancount entries."""
         training_data = existing_entries or []
         training_data = list(filter_txns(training_data))
-        if self.account:
-            training_data = [
-                txn
-                for txn in training_data
-                if any([pos.account == self.account for pos in txn.postings])
-            ]
-            logger.debug(
-                "After filtering for account %s, "
-                "the training data consists of %s entries.",
-                self.account,
-                len(training_data),
-            )
+        length_all = len(training_data)
+        training_data = [
+            txn for txn in training_data if self.training_data_filter(txn)
+        ]
+        logger.debug(
+            "Filtered training data to %s of %s entries.",
+            len(training_data),
+            length_all,
+        )
         self.training_data = training_data
+
+    def training_data_filter(self, txn):
+        """Filter function for the training data."""
+        if self.account:
+            return any([pos.account == self.account for pos in txn.postings])
+        return True
 
     @property
     def targets(self):
@@ -92,9 +98,6 @@ class EntryPredictor(ImporterHook):
             getattr(entry, self.attribute) or ""
             for entry in self.training_data
         ]
-
-    def prepare_training_data(self):
-        """Modify the training data if necessary."""
 
     def define_pipeline(self):
         """Defines the machine learning pipeline based on given weights."""
