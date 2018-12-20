@@ -12,8 +12,7 @@ def update_postings(transaction, accounts):
         return transaction
 
     new_postings = [
-        Posting(account, None, None, None, None, None)
-        for account in accounts
+        Posting(account, None, None, None, None, None) for account in accounts
     ]
     for posting in transaction.postings:
         if posting.account in accounts:

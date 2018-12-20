@@ -41,6 +41,7 @@ class Getter(TransformerMixin, NoFitMixin):
 
 class AttrGetter(Getter):
     """Get a transaction attribute."""
+
     def __init__(self, attr, default=None):
         self.default = default
         self._txn_getter = operator.attrgetter(attr)
@@ -71,14 +72,8 @@ class StringVectorizer(CountVectorizer):
 def get_pipeline(attribute):
     """Make a pipeline for a given entry attribute."""
 
-    if attribute in ['narration', 'payee']:
-        return make_pipeline(
-            AttrGetter(attribute, ''),
-            StringVectorizer(),
-        )
-    if attribute == 'date.day':
-        return make_pipeline(
-            AttrGetter('date.day'),
-            ArrayCaster(),
-        )
+    if attribute in ["narration", "payee"]:
+        return make_pipeline(AttrGetter(attribute, ""), StringVectorizer())
+    if attribute == "date.day":
+        return make_pipeline(AttrGetter("date.day"), ArrayCaster())
     raise ValueError

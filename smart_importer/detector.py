@@ -39,7 +39,7 @@ class DuplicateDetector(ImporterHook):
             imported_entries,
             existing_entries,
             self.comparator,
-            self.window_days
+            self.window_days,
         )
         # Add a metadata marker to the extracted entries for duplicates.
         duplicate_set = set(id(entry) for entry, _ in duplicate_pairs)
@@ -47,7 +47,7 @@ class DuplicateDetector(ImporterHook):
         for entry in imported_entries:
             if id(entry) in duplicate_set:
                 marked_meta = entry.meta.copy()
-                marked_meta['__duplicate__'] = True
+                marked_meta["__duplicate__"] = True
                 entry = entry._replace(meta=marked_meta)
             mod_entries.append(entry)
 
