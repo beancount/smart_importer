@@ -72,8 +72,8 @@ class StringVectorizer(CountVectorizer):
 def get_pipeline(attribute):
     """Make a pipeline for a given entry attribute."""
 
-    if attribute in ["narration", "payee"]:
-        return make_pipeline(AttrGetter(attribute, ""), StringVectorizer())
-    if attribute == "date.day":
-        return make_pipeline(AttrGetter("date.day"), ArrayCaster())
-    raise ValueError
+    if attribute.startswith("date."):
+        return make_pipeline(AttrGetter(attribute), ArrayCaster())
+
+    # Treat all other attributes as strings.
+    return make_pipeline(AttrGetter(attribute, ""), StringVectorizer())
