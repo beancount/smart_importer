@@ -25,6 +25,9 @@ TEST_DATA, _, __ = parser.parse_string(
 
 2017-01-10 * "Gimme Coffee" "Coffee"
   Assets:US:BofA:Checking  -5.00 USD
+
+2017-01-12 * "Uncle Boons" ""
+  Assets:US:BofA:Checking  -27.00 USD
 """
 )
 
@@ -75,6 +78,7 @@ PAYEE_PREDICTIONS = [
     "Uncle Boons",
     "Farmer Fresh",
     "Gimme Coffee",
+    "Uncle Boons"
 ]
 
 ACCOUNT_PREDICTIONS = [
@@ -84,6 +88,7 @@ ACCOUNT_PREDICTIONS = [
     "Expenses:Food:Restaurant",
     "Expenses:Food:Groceries",
     "Expenses:Food:Coffee",
+    "Expenses:Food:Groceries"
 ]
 
 
