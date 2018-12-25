@@ -1,58 +1,9 @@
 #!/usr/bin/env python3
+"""Setup script for smart_importer.
 
-"""Package definition file."""
+The configuration is in setup.cfg.
+"""
 
-import ast
-from os import path
-import re
-from setuptools import find_packages, setup
+from setuptools import setup
 
-# read version from python module:
-with open(path.join(path.dirname(__file__), 'smart_importer', '__init__.py'),
-          'rb') as f:
-    CONTENTS = f.read().decode('utf-8')
-    VERSION = str(ast.literal_eval(
-        re.search(r'__version__\s+=\s+(.*)', CONTENTS).group(1)))
-    COPYRIGHT = str(ast.literal_eval(
-        re.search(r'__copyright__\s+=\s+(.*)', CONTENTS).group(1)))
-    LICENSE = str(ast.literal_eval(
-        re.search(r'__license__\s+=\s+(.*)', CONTENTS).group(1)))
-
-# read readme.rst:
-with open(path.join(path.dirname(__file__), 'README.rst')) as readme:
-    LONG_DESCRIPTION = readme.read()
-
-setup(
-    name='smart_importer',
-    version=VERSION,
-    description='Smart importer for Beancount and Fava.',
-    long_description=LONG_DESCRIPTION,
-    url='https://github.com/johannesjh/smart_importer',
-    author='Johannes Harms',
-    license=LICENSE,
-    keywords='fava beancount accounting import csv '
-             'machinelearning scikit-learn sklearn',
-    packages=find_packages(exclude=['tests']),
-    include_package_data=True,
-    install_requires=[
-        'beancount>=2.0.0',
-        'scikit-learn>=0.19',
-        'numpy>= 1.8.2',
-        'scipy>=0.13.3'
-    ],
-    zip_safe=False,
-    classifiers=[
-        'Development Status :: 1 - Planning',
-        'Environment :: Web Environment',
-        'Environment :: Console',
-        'Intended Audience :: Education',
-        'Intended Audience :: End Users/Desktop',
-        'Intended Audience :: Financial and Insurance Industry',
-        'Intended Audience :: Information Technology',
-        'License :: OSI Approved :: MIT License',
-        'Natural Language :: English',
-        'Programming Language :: Python',
-        'Topic :: Office/Business :: Financial :: Accounting',
-        'Topic :: Office/Business :: Financial :: Investment',
-    ],
-)
+setup()

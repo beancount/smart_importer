@@ -1,9 +1,5 @@
 """Smart importer for Beancount and Fava."""
 
-__version__ = "0.0.1"
-__copyright__ = "Copyright (C) 2018 Johannes Harms"
-__license__ = "MIT"
-
 from smart_importer.entries import add_suggestions_to_entry
 from smart_importer.entries import update_postings
 from smart_importer.predictor import EntryPredictor
