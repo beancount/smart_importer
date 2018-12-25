@@ -9,7 +9,7 @@ with machine learning functionality.
 Status
 ------
 
-Working protoype, development status: alpha
+Working protoype, development status: beta
 
 .. image:: https://travis-ci.org/beancount/smart_importer.svg?branch=master
     :target: https://travis-ci.org/beancount/smart_importer
@@ -18,13 +18,11 @@ Working protoype, development status: alpha
 Installation
 ------------
 
-The ``smart_importer`` package has not yet been published on PyPI
-and must therefore be installed from source:
+The ``smart_importer`` can be installed from PyPI:
 
 .. code:: bash
 
-    git clone https://github.com/beancount/smart_importer.git
-    pip install --editable smart_importer
+    pip install smart_importer
 
 
 Quick Start
