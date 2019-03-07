@@ -54,10 +54,9 @@ an existing CSV importer:
                  Col.AMOUNT_CREDIT: 'Funds In'},
                 account,
                 'EUR',
-                [
-                    'Filename: .*MyBank.*\.csv',
-                    'Contents:\n.*Date, Transaction Details, Funds Out, Funds In'
-                ]
+                (
+                    'Date, Transaction Details, Funds Out, Funds In'
+                )
             )
 
 
