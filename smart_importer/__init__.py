@@ -29,6 +29,11 @@ class PredictPostings(EntryPredictor):
         return update_postings(entry, prediction.split(" "))
 
     def apply_suggestion(self, entry, suggestions):
+        accounts = dict()
+        for accounts_string in suggestions:
+            for account in accounts_string.split(" "):
+                accounts[account] = None
+
         return add_suggestions_to_entry(
-            entry, suggestions, key="__suggested_accounts__"
+            entry, list(accounts.keys()), key="__suggested_accounts__"
         )
