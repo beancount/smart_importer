@@ -28,6 +28,7 @@ class EntryPredictor(ImporterHook):
         overwrite: When an attribute is predicted but already exists on an
             entry, overwrite the existing one.
     """
+
     # pylint: disable=too-many-instance-attributes
 
     weights = {}

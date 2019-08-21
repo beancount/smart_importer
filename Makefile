@@ -6,6 +6,7 @@ test:
 
 .PHONY: lint
 lint:
+	tox -e format
 	tox -e lint
 
 .PHONY: install

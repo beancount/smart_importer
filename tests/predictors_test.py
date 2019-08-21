@@ -78,7 +78,7 @@ PAYEE_PREDICTIONS = [
     "Uncle Boons",
     "Farmer Fresh",
     "Gimme Coffee",
-    "Uncle Boons"
+    "Uncle Boons",
 ]
 
 ACCOUNT_PREDICTIONS = [
@@ -88,7 +88,7 @@ ACCOUNT_PREDICTIONS = [
     "Expenses:Food:Restaurant",
     "Expenses:Food:Groceries",
     "Expenses:Food:Coffee",
-    "Expenses:Food:Groceries"
+    "Expenses:Food:Groceries",
 ]
 
 
