@@ -1,0 +1,10 @@
+image: archlinux
+packages:
+  - python
+  - python-tox
+sources:
+  - https://github.com/beancount/smart_importer
+tasks:
+  - test: |
+      make -C smart_importer lint
+      make -C smart_importer test
