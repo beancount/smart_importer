@@ -1,0 +1,3 @@
+feature: feature/*
+bugfix: bugfix/*
+chore: chore/*

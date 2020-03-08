@@ -1,0 +1,47 @@
+name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+on:
+  push:
+  release:
+    types: [published]
+jobs:
+  build-and-publish:
+    name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+    - name: Install Dependencies
+      run: |
+        pip install tox
+        pip install pep517
+    - name: Tox
+      run: >-
+        tox
+    - name: Build a binary wheel and a source tarball
+      run: >-
+        python -m
+        pep517.build
+        --source
+        --binary
+        --out-dir dist/
+        .
+    - name: Publish distribution 📦 to Test PyPI
+      if: startsWith(github.event.ref, 'refs/heads/master')
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.test_pypi_password }}
+        TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
+      run: >-
+        pip install twine && twine upload dist/*
+    - name: Publish distribution 📦 to PyPI
+      if: startsWith(github.event.ref, 'refs/tags')
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.pypi_password }}
+        TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
+      run: >-
+        pip install twine && twine upload dist/*
