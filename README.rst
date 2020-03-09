@@ -11,9 +11,6 @@ Status
 
 Working protoype, development status: beta
 
-.. image:: https://travis-ci.org/beancount/smart_importer.svg?branch=master
-    :target: https://travis-ci.org/beancount/smart_importer
-
 
 Installation
 ------------
