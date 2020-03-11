@@ -1,0 +1,44 @@
+name: Run tests and build distribution
+on:
+  push:
+  release:
+    types: [published]
+jobs:
+  build-and-publish:
+    name: Run tests and build distribution
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.6
+    - name: Install Dependencies
+      run: |
+        pip install tox wheel setuptools
+    - name: Run lint
+      run: >-
+        tox -e lint
+    - name: Run tests
+      run: >-
+        tox -e py
+    - name: Build distribution
+      run: >-
+        make dist
+    - name: Publish distribution 📦 to Test PyPI (on master)
+      if: startsWith(github.event.ref, 'refs/heads/master')
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.TESTPYPI_TOKEN }}
+        TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
+      run: >-
+        pip install twine && twine upload dist/*
+    - name: Publish distribution 📦 to PyPI (on tags)
+      if: startsWith(github.event.ref, 'refs/tags')
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
+      run: >-
+        pip install twine && twine upload dist/*
