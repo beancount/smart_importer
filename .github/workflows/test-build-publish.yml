@@ -26,14 +26,6 @@ jobs:
     - name: Build distribution
       run: >-
         make dist
-    - name: Publish distribution 📦 to Test PyPI (on master)
-      if: startsWith(github.event.ref, 'refs/heads/master')
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.TESTPYPI_TOKEN }}
-        TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
-      run: >-
-        pip install twine && twine upload dist/*
     - name: Publish distribution 📦 to PyPI (on tags)
       if: startsWith(github.event.ref, 'refs/tags')
       env:
