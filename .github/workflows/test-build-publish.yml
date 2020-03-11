@@ -16,22 +16,16 @@ jobs:
         python-version: 3.8
     - name: Install Dependencies
       run: |
-        pip install tox
-        pip install pep517
+        pip install tox wheel setuptools
     - name: Run lint
       run: >-
         tox -e lint
     - name: Run tests
       run: >-
         tox -e py
-    - name: Build a binary wheel and a source tarball
+    - name: Build distribution
       run: >-
-        python -m
-        pep517.build
-        --source
-        --binary
-        --out-dir dist/
-        .
+        make dist
     - name: Publish distribution 📦 to Test PyPI (on master)
       if: startsWith(github.event.ref, 'refs/heads/master')
       env:
