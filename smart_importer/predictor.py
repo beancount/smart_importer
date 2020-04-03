@@ -184,12 +184,16 @@ class EntryPredictor(ImporterHook):
             return transactions
 
         if self.predict:
-            predictions = self.pipeline.predict(transactions)
-            transactions = [
-                self.apply_prediction(entry, prediction)
-                for entry, prediction in zip(transactions, predictions)
-            ]
-            logger.debug("Added predictions to transactions.")
+            if len(transactions) > 0: # if zero, sklearn throws error
+                predictions = self.pipeline.predict(transactions)
+                transactions = [
+                    self.apply_prediction(entry, prediction)
+                    for entry, prediction in zip(transactions, predictions)
+                ]
+                logger.debug("Added predictions to transactions.")
+            else:
+                transactions=[]
+                print('**** no transactions in file')
 
         if self.suggest:
             # Get values from the SVC decision function
