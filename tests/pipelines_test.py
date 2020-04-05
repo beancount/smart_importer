@@ -43,5 +43,17 @@ def test_get_narration():
     ]
 
 
+def test_get_metadata():
+    txn = TEST_DATA[0]
+    txn.meta["attr"] = "value"
+    assert AttrGetter("meta.attr").transform([txn]) == ["value"]
+    assert AttrGetter("meta.attr", "default").transform(TEST_DATA) == [
+        "value",
+        "default",
+        "default",
+        "default",
+    ]
+
+
 def test_get_day_of_month():
     assert AttrGetter("date.day").transform(TEST_DATA) == [6, 7, 7, 8]

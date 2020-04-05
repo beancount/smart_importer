@@ -43,7 +43,15 @@ class AttrGetter(Getter):
 
     def __init__(self, attr, default=None):
         self.default = default
-        self._txn_getter = operator.attrgetter(attr)
+        if attr.startswith("meta."):
+            meta_attr = attr[5:]
+
+            def getter(txn):
+                return txn.meta.get(meta_attr)
+
+            self._txn_getter = getter
+        else:
+            self._txn_getter = operator.attrgetter(attr)
 
     def _getter(self, txn):
         return self._txn_getter(txn) or self.default
