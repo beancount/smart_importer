@@ -1,4 +1,5 @@
 """Tests for the Machine Learning Helpers."""
+# pylint: disable=missing-docstring
 from beancount.parser import parser
 
 from smart_importer.pipelines import AttrGetter

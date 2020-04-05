@@ -1,4 +1,5 @@
 """Tests for the `PredictPostings` decorator"""
+# pylint: disable=missing-docstring
 import os
 import pprint
 import re

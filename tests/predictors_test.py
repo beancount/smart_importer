@@ -1,4 +1,5 @@
 """Tests for the `PredictPayees` and the `PredictPostings` decorator"""
+# pylint: disable=missing-docstring
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
@@ -94,11 +95,12 @@ ACCOUNT_PREDICTIONS = [
 
 class BasicTestImporter(ImporterProtocol):
     def extract(self, file, existing_entries=None):
-        if file == 'dummy-data':
+        if file == "dummy-data":
             return TEST_DATA
-        if file == 'empty':
+        if file == "empty":
             return []
         assert False
+        return []
 
     def file_account(self, file):
         return "Assets:US:BofA:Checking"
