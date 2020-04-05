@@ -94,7 +94,11 @@ ACCOUNT_PREDICTIONS = [
 
 class BasicTestImporter(ImporterProtocol):
     def extract(self, file, existing_entries=None):
-        return TEST_DATA
+        if file == 'dummy-data':
+            return TEST_DATA
+        if file == 'empty':
+            return []
+        assert False
 
     def file_account(self, file):
         return "Assets:US:BofA:Checking"
@@ -110,10 +114,20 @@ POSTING_IMPORTER = apply_hooks(
 
 def test_empty_training_data():
     """
-    Verifies that the decorator leaves the narration intact
+    Verifies that the decorator leaves the narration intact.
     """
     assert POSTING_IMPORTER.extract("dummy-data") == TEST_DATA
     assert PAYEE_IMPORTER.extract("dummy-data") == TEST_DATA
+
+
+def test_no_transactions():
+    """
+    Should not crash when passed empty list of transactions.
+    """
+    POSTING_IMPORTER.extract("empty")
+    PAYEE_IMPORTER.extract("empty")
+    POSTING_IMPORTER.extract("empty", existing_entries=TRAINING_DATA)
+    PAYEE_IMPORTER.extract("empty", existing_entries=TRAINING_DATA)
 
 
 def test_unchanged_narrations():

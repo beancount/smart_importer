@@ -184,7 +184,7 @@ class EntryPredictor(ImporterHook):
     ) -> List[Transaction]:
         """Process a list of transactions."""
 
-        if not self.is_fitted:
+        if not self.is_fitted or not transactions:
             return transactions
 
         if self.predict:
