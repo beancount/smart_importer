@@ -1,16 +1,15 @@
 """Tests for the `PredictPostings` decorator"""
-
 import os
 import pprint
 import re
 
 import pytest
-
 from beancount.core.compare import stable_hash_namedtuple
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
-from smart_importer import PredictPostings, apply_hooks
+from smart_importer import apply_hooks
+from smart_importer import PredictPostings
 
 
 def _hash(entry):

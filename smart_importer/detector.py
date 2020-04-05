@@ -1,5 +1,4 @@
 """Duplicate detector hook."""
-
 import logging
 
 from beancount.ingest import similar

@@ -1,19 +1,23 @@
 """Machine learning importer decorators."""
-
 import logging
 import operator
 import threading
-from typing import List, Union
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
 
-from sklearn.pipeline import make_pipeline, FeatureUnion
+from beancount.core.data import ALL_DIRECTIVES
+from beancount.core.data import filter_txns
+from beancount.core.data import Transaction
+from sklearn.pipeline import FeatureUnion
+from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
-
-from beancount.core.data import Transaction, ALL_DIRECTIVES, filter_txns
 
 from smart_importer.entries import merge_non_transaction_entries
 from smart_importer.entries import set_entry_attribute
-from smart_importer.pipelines import get_pipeline
 from smart_importer.hooks import ImporterHook
+from smart_importer.pipelines import get_pipeline
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -31,7 +35,7 @@ class EntryPredictor(ImporterHook):
 
     # pylint: disable=too-many-instance-attributes
 
-    weights = {}
+    weights: Dict[str, int] = {}
     attribute = None
 
     def __init__(self, predict=True, suggest=False, overwrite=False):
@@ -166,7 +170,7 @@ class EntryPredictor(ImporterHook):
             entry, self.attribute, prediction, overwrite=self.overwrite
         )
 
-    def apply_suggestion(self, entry, suggestions):
+    def apply_suggestion(self, entry, suggestions: List[str]):
         """Add a list of suggestions to an entry."""
         if not self.attribute:
             raise NotImplementedError
@@ -197,6 +201,7 @@ class EntryPredictor(ImporterHook):
 
             # Add a human-readable class label to each value, and sort by
             # value:
+            suggestions: Optional[List[List[str]]]
             try:
                 suggestions = [
                     [

@@ -1,9 +1,9 @@
 """Tests for the `PredictPayees` and the `PredictPostings` decorator"""
-
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
-from smart_importer import PredictPayees, PredictPostings
+from smart_importer import PredictPayees
+from smart_importer import PredictPostings
 from smart_importer.hooks import apply_hooks
 
 TEST_DATA, _, __ = parser.parse_string(
