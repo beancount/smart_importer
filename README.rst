@@ -137,7 +137,7 @@ Usage with Fava
 Smart importers play nice with `Fava <https://github.com/beancount/fava>`__.
 This means you can use smart importers together with Fava in the exact same way
 as you would do with a conventional importer. See `Fava's help on importers
-<https://github.com/beancount/fava/blob/master/fava/help/import.md>`__ for more
+<https://beancount.github.io/fava/api/beancount.ingest.html#module-beancount.ingest.importer>`__ for more
 information.
 
 
