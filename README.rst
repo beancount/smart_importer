@@ -91,7 +91,7 @@ An example is provided as part of beancount's source code under
 `beancount/ingest/office
 <https://github.com/beancount/beancount/tree/master/examples/ingest/office>`__.
 
-smart_importer only works by appending onto incomplete single-legged postings (i.e. It will not work by modifying postings with accounts like "Expenses:TODO"). The `extract` method in the importer should follow the [latest interface](https://github.com/beancount/beancount/blob/master/beancount/ingest/importer.py#L61) and include an `existing_entries` argument. 
+smart_importer only works by appending onto incomplete single-legged postings (i.e. It will not work by modifying postings with accounts like "Expenses:TODO"). The `extract` method in the importer should follow the `latest interface <https://github.com/beancount/beancount/blob/master/beancount/ingest/importer.py#L61>`__ and include an `existing_entries` argument. 
 
 Applying `smart_importer` hooks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
