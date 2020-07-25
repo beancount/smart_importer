@@ -84,7 +84,7 @@ Let's assume you have created an importer for "MyBank" called
 Note:
 This documentation assumes you already know how to create Beancount importers.
 Relevant documentation can be found under `beancount ingest
-<https://beancount.github.io/docs/17_importing_external_data.html>`__.  Using beancount.ingest, users can
+<https://beancount.github.io/docs/importing_external_data.html>`__.  Using beancount.ingest, users can
 write their own importers and use them to convert downloaded bank statements
 into lists of Beancount entries.
 An example is provided as part of beancount's source code under
