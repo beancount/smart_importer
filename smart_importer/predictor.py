@@ -9,7 +9,8 @@ from typing import Union
 
 from beancount.core.data import ALL_DIRECTIVES
 from beancount.core.data import filter_txns
-from beancount.core.data import Transaction
+from beancount.core.data import sorted as beancount_sorted
+from beancount.core.data import Transaction, Open, Close
 from sklearn.pipeline import FeatureUnion
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
@@ -41,6 +42,7 @@ class EntryPredictor(ImporterHook):
     def __init__(self, predict=True, suggest=False, overwrite=False):
         super().__init__()
         self.training_data = None
+        self.open_accounts = {}
         self.pipeline = None
         self.is_fitted = False
         self.lock = threading.Lock()
@@ -69,9 +71,24 @@ class EntryPredictor(ImporterHook):
             self.train_pipeline()
             return self.process_entries(imported_entries)
 
+    def load_open_accounts(self, existing_entries):
+        """Return map of accounts which have been opened but not closed."""
+        account_map = {}
+        if not existing_entries:
+            return
+
+        for entry in beancount_sorted(existing_entries):
+            if isinstance(entry, Open):
+                account_map[entry.account] = entry
+            elif isinstance(entry, Close):
+                account_map.pop(entry.account)
+
+        self.open_accounts = account_map
+
     def load_training_data(self, existing_entries):
         """Load training data, i.e., a list of Beancount entries."""
         training_data = existing_entries or []
+        self.load_open_accounts(existing_entries)
         training_data = list(filter_txns(training_data))
         length_all = len(training_data)
         training_data = [
@@ -86,9 +103,13 @@ class EntryPredictor(ImporterHook):
 
     def training_data_filter(self, txn):
         """Filter function for the training data."""
-        if self.account:
-            return any([pos.account == self.account for pos in txn.postings])
-        return True
+        found_import_account = False
+        for pos in txn.postings:
+            if pos.account not in self.open_accounts:
+                return False
+            if self.account == pos.account:
+                found_import_account = True
+        return found_import_account or not self.account
 
     @property
     def targets(self):

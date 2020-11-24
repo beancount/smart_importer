@@ -6,6 +6,10 @@ from smart_importer.pipelines import AttrGetter
 
 TEST_DATA, _, __ = parser.parse_string(
     """
+2016-01-01 open Assets:US:BofA:Checking USD
+2016-01-01 open Expenses:Food:Groceries USD
+2016-01-01 open Expenses:Food:Coffee USD
+
 2016-01-06 * "Farmer Fresh" "Buying groceries"
   Assets:US:BofA:Checking  -10.00 USD
 
@@ -22,11 +26,12 @@ TEST_DATA, _, __ = parser.parse_string(
   Expenses:Food:Coffee
 """
 )
-TEST_TRANSACTION = TEST_DATA[0]
+TEST_TRANSACTIONS = TEST_DATA[3:]
+TEST_TRANSACTION = TEST_TRANSACTIONS[0]
 
 
 def test_get_payee():
-    assert AttrGetter("payee").transform(TEST_DATA) == [
+    assert AttrGetter("payee").transform(TEST_TRANSACTIONS) == [
         "Farmer Fresh",
         "Starbucks",
         "Farmer Fresh",
@@ -35,7 +40,7 @@ def test_get_payee():
 
 
 def test_get_narration():
-    assert AttrGetter("narration").transform(TEST_DATA) == [
+    assert AttrGetter("narration").transform(TEST_TRANSACTIONS) == [
         "Buying groceries",
         "Coffee",
         "Groceries",
@@ -44,10 +49,10 @@ def test_get_narration():
 
 
 def test_get_metadata():
-    txn = TEST_DATA[0]
+    txn = TEST_TRANSACTION
     txn.meta["attr"] = "value"
     assert AttrGetter("meta.attr").transform([txn]) == ["value"]
-    assert AttrGetter("meta.attr", "default").transform(TEST_DATA) == [
+    assert AttrGetter("meta.attr", "default").transform(TEST_TRANSACTIONS) == [
         "value",
         "default",
         "default",
@@ -56,4 +61,4 @@ def test_get_metadata():
 
 
 def test_get_day_of_month():
-    assert AttrGetter("date.day").transform(TEST_DATA) == [6, 7, 7, 8]
+    assert AttrGetter("date.day").transform(TEST_TRANSACTIONS) == [6, 7, 7, 8]
