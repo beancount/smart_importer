@@ -1,7 +1,9 @@
 smart_importer
 ==============
 
-Augment
+https://github.com/beancount/smart_importer
+
+Augments
 `Beancount <http://furius.ca/beancount/>`__ importers
 with machine learning functionality.
 
