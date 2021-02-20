@@ -1,10 +1,10 @@
 Changelog
 =========
 
-Unreleased
-----------
+v0.3 (2021-02-20)
+-----------------
 
-Removes suggestions, as well as minor fixes.
+Removes the "suggestions" feature, fixes ci publishing to pypi.
 
 * Removes suggestions. WARNING! - this can break existing configurations that use `suggest=True`.
 * Fixes CI: splits the test and publish ci jobs, to avoid redundant attempts at publishing the package.
