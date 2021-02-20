@@ -1,4 +1,4 @@
-name: Run tests and build distribution
+name: ci
 on:
   push:
   release:
