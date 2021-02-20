@@ -77,10 +77,12 @@ class EntryPredictor(ImporterHook):
         if not existing_entries:
             return
 
-        for entry in beancount_sorted(existing_entries):
-            if isinstance(entry, Open):  # pylint: disable=W1116
+        for entry in beancount_sorted(
+            existing_entries
+        ):  # pylint: disable=isinstance-second-argument-not-valid-type
+            if isinstance(entry, Open):
                 account_map[entry.account] = entry
-            elif isinstance(entry, Close):  # pylint: disable=W1116
+            elif isinstance(entry, Close):
                 account_map.pop(entry.account)
 
         self.open_accounts = account_map
