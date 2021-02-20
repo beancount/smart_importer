@@ -1,8 +1,10 @@
 image: archlinux
 packages:
   - python
-  - python-tox
   - python-distlib
+  - python-pip
+  - python-setuptools
+  - python-tox
 sources:
   - https://github.com/beancount/smart_importer
 tasks:
