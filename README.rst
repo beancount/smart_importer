@@ -83,15 +83,20 @@ Let's assume you have created an importer for "MyBank" called
 
 Note:
 This documentation assumes you already know how to create Beancount importers.
-Relevant documentation can be found under `beancount ingest
-<https://beancount.github.io/docs/importing_external_data.html>`__.  Using beancount.ingest, users can
+Relevant documentation can be found in the `beancount import documentation
+<https://beancount.github.io/docs/importing_external_data.html>`__.
+With the functionality of beancount.ingest, users can
 write their own importers and use them to convert downloaded bank statements
 into lists of Beancount entries.
-An example is provided as part of beancount's source code under
-`beancount/ingest/office
-<https://github.com/beancount/beancount/tree/master/examples/ingest/office>`__.
+An example is provided as part of beancount v2's source code under
+`examples/ingest/office
+<https://github.com/beancount/beancount/tree/v2/examples/ingest/office>`__.
 
-smart_importer only works by appending onto incomplete single-legged postings (i.e. It will not work by modifying postings with accounts like "Expenses:TODO"). The `extract` method in the importer should follow the `latest interface <https://github.com/beancount/beancount/blob/master/beancount/ingest/importer.py#L61>`__ and include an `existing_entries` argument. 
+smart_importer only works by appending onto incomplete single-legged postings
+(i.e. It will not work by modifying postings with accounts like "Expenses:TODO").
+The `extract` method in the importer should follow the
+`latest interface <https://github.com/beancount/beancount/blob/v2/beancount/ingest/importer.py#L61>`__
+and include an `existing_entries` argument.
 
 Applying `smart_importer` hooks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -138,7 +143,7 @@ Usage with Fava
 Smart importers play nice with `Fava <https://github.com/beancount/fava>`__.
 This means you can use smart importers together with Fava in the exact same way
 as you would do with a conventional importer. See `Fava's help on importers
-<https://beancount.github.io/fava/api/beancount.ingest.html#module-beancount.ingest.importer>`__ for more
+<https://github.com/beancount/fava/blob/master/src/fava/help/import.md>`__ for more
 information.
 
 
