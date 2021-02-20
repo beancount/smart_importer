@@ -41,7 +41,7 @@ def merge_non_transaction_entries(imported_entries, enhanced_transactions):
     enhanced_entries = []
     enhanced_transactions_iter = iter(enhanced_transactions)
     for entry in imported_entries:
-        if isinstance(entry, Transaction):
+        if isinstance(entry, Transaction):  # pylint: disable=W1116
             enhanced_entries.append(next(enhanced_transactions_iter))
         else:
             enhanced_entries.append(entry)
