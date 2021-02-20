@@ -1,4 +1,6 @@
 """Machine learning importer decorators."""
+# pylint: disable=unsubscriptable-object
+
 import logging
 import operator
 import threading
