@@ -1,4 +1,6 @@
 """Machine learning importer decorators."""
+# pylint: disable=unsubscriptable-object
+
 import logging
 import operator
 import threading
@@ -78,6 +80,7 @@ class EntryPredictor(ImporterHook):
             return
 
         for entry in beancount_sorted(existing_entries):
+            # pylint: disable=isinstance-second-argument-not-valid-type
             if isinstance(entry, Open):
                 account_map[entry.account] = entry
             elif isinstance(entry, Close):
