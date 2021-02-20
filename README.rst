@@ -4,6 +4,7 @@ smart_importer
 https://github.com/beancount/smart_importer
 
 .. image:: https://github.com/beancount/smart_importer/actions/workflows/ci.yml/badge.svg?branch=master
+   :target: https://github.com/beancount/smart_importer/actions?query=branch%3Amaster
 
 Augments
 `Beancount <http://furius.ca/beancount/>`__ importers

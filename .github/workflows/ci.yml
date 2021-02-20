@@ -1,10 +1,8 @@
 name: ci
 on:
   push:
-  release:
-    types: [published]
 jobs:
-  build-and-publish:
+  test:
     name: Run tests and build distribution
     runs-on: ubuntu-latest
     strategy:
@@ -26,11 +24,25 @@ jobs:
     - name: Run tests
       run: >-
         tox -e py
+  build-and-publish:
+    name: Build and optionally publish a distribution
+    runs-on: ubuntu-latest
+    needs: test  # the test job must have been successful
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.9
+    - name: Install Dependencies
+      run: |
+        pip install wheel setuptools
     - name: Build distribution
       run: >-
         make dist
-    - name: Publish distribution 📦 to PyPI (on tags)
-      if: startsWith(github.event.ref, 'refs/tags')
+    - name: Publish distribution package to PyPI (on tags starting with v)
+      if: startsWith(github.event.ref, 'refs/tags/v')
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
