@@ -2,17 +2,15 @@
 # pylint: disable=unsubscriptable-object
 
 import logging
-import operator
 import threading
 from typing import Dict
 from typing import List
-from typing import Optional
 from typing import Union
 
 from beancount.core.data import ALL_DIRECTIVES
+from beancount.core.data import Transaction, Open, Close
 from beancount.core.data import filter_txns
 from beancount.core.data import sorted as beancount_sorted
-from beancount.core.data import Transaction, Open, Close
 from sklearn.pipeline import FeatureUnion
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
@@ -30,8 +28,6 @@ class EntryPredictor(ImporterHook):
 
     Args:
         predict: Whether to add predictions to the entries.
-        suggest: Whether to add a list of suggestions as metadata to the
-            entries.
         overwrite: When an attribute is predicted but already exists on an
             entry, overwrite the existing one.
     """
@@ -41,7 +37,7 @@ class EntryPredictor(ImporterHook):
     weights: Dict[str, int] = {}
     attribute = None
 
-    def __init__(self, predict=True, suggest=False, overwrite=False):
+    def __init__(self, predict=True, overwrite=False):
         super().__init__()
         self.training_data = None
         self.open_accounts = {}
@@ -51,11 +47,10 @@ class EntryPredictor(ImporterHook):
         self.account = None
 
         self.predict = predict
-        self.suggest = suggest
         self.overwrite = overwrite
 
     def __call__(self, importer, file, imported_entries, existing_entries):
-        """Predict and suggest attributes for imported transactions.
+        """Predict attributes for imported transactions.
 
         Args:
             imported_entries: The list of imported entries.
@@ -194,15 +189,6 @@ class EntryPredictor(ImporterHook):
             entry, self.attribute, prediction, overwrite=self.overwrite
         )
 
-    def apply_suggestion(self, entry, suggestions: List[str]):
-        """Add a list of suggestions to an entry."""
-        if not self.attribute:
-            raise NotImplementedError
-        if suggestions:
-            key = "__suggested_{}s__".format(self.attribute)
-            entry.meta[key] = suggestions
-        return entry
-
     def process_transactions(
         self, transactions: List[Transaction]
     ) -> List[Transaction]:
@@ -219,35 +205,4 @@ class EntryPredictor(ImporterHook):
             ]
             logger.debug("Added predictions to transactions.")
 
-        if self.suggest:
-            # Get values from the SVC decision function
-            decision_values = self.pipeline.decision_function(transactions)
-
-            # Add a human-readable class label to each value, and sort by
-            # value:
-            suggestions: Optional[List[List[str]]]
-            try:
-                suggestions = [
-                    [
-                        label
-                        for _, label in sorted(
-                            list(zip(distance_values, self.pipeline.classes_)),
-                            key=operator.itemgetter(0),
-                            reverse=True,
-                        )
-                    ]
-                    for distance_values in decision_values
-                ]
-            except TypeError:
-                suggestions = None
-
-            # Add the suggestions to each transaction:
-            if suggestions:
-                transactions = [
-                    self.apply_suggestion(entry, suggestion_list)
-                    for entry, suggestion_list in zip(
-                        transactions, suggestions
-                    )
-                ]
-                logger.debug("Added suggestions to transactions.")
         return transactions
