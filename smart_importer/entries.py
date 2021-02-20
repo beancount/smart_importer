@@ -1,5 +1,4 @@
 """Helpers to work with Beancount entry objects."""
-import json
 
 from beancount.core.data import Posting
 from beancount.core.data import Transaction
@@ -27,12 +26,6 @@ def set_entry_attribute(entry, attribute, value, overwrite=False):
     """Set an entry attribute."""
     if value and (not getattr(entry, attribute) or overwrite):
         entry = entry._replace(**{attribute: value})
-    return entry
-
-
-def add_suggestions_to_entry(entry, suggestions, key):
-    """Adds a list of suggestions to an entry under entry.meta[key]."""
-    entry.meta[key] = json.dumps(suggestions)
     return entry
 
 

@@ -132,12 +132,8 @@ class BasicTestImporter(ImporterProtocol):
         return "Assets:US:BofA:Checking"
 
 
-PAYEE_IMPORTER = apply_hooks(
-    BasicTestImporter(), [PredictPayees(suggest=True)]
-)
-POSTING_IMPORTER = apply_hooks(
-    BasicTestImporter(), [PredictPostings(suggest=True)]
-)
+PAYEE_IMPORTER = apply_hooks(BasicTestImporter(), [PredictPayees()])
+POSTING_IMPORTER = apply_hooks(BasicTestImporter(), [PredictPostings()])
 
 
 def test_empty_training_data():
@@ -199,17 +195,6 @@ def test_payee_predictions():
     assert predicted_payees == PAYEE_PREDICTIONS
 
 
-def test_payee_suggestions():
-    """
-    Verifies that the decorator adds suggestions about accounts
-    """
-    transactions = PAYEE_IMPORTER.extract(
-        "dummy-data", existing_entries=TRAINING_DATA
-    )
-    for transaction in transactions:
-        assert transaction.meta["__suggested_payees__"]
-
-
 def test_account_predictions():
     """
     Verifies that the decorator adds predicted postings.
@@ -221,13 +206,3 @@ def test_account_predictions():
         )
     ]
     assert predicted_accounts == ACCOUNT_PREDICTIONS
-
-
-def test_account_suggestions():
-    """
-    Verifies that the decorator adds suggestions.
-    """
-    for transaction in POSTING_IMPORTER.extract(
-        "dummy-data", existing_entries=TRAINING_DATA
-    ):
-        assert transaction.meta["__suggested_accounts__"]

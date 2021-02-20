@@ -1,6 +1,29 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+Removes suggestions, as well as minor fixes.
+
+* Removes suggestions. WARNING! - this can break existing configurations that use `suggest=True`.
+* Fixes CI: splits the test and publish ci jobs, to avoid redundant attempts at publishing the package.
+
+
+v0.2 (2021-02-20)
+-----------------
+
+Various improvements and fixes.
+
+* Better predictions: Do not predict closed accounts
+* Improved stability: do not fail if no transactions are imported
+* Better support for custom machine learning pipelines: allows dot access to txn metadata
+* Improved CI: added github and sourcehut ci, removed travis
+* Improved CI: pushing a tag will automatically publish the package on pypi
+* Improved CI: tests with multiple python versions using github ci's build matrix
+* Improved documentation: many improvements in the README file
+
+
 v0.1 (2018-12-25)
 -----------------
 
