@@ -1,6 +1,7 @@
 image: archlinux
 packages:
   - python
+  - python-setuptools
   - python-tox
   - python-distlib
 sources:
