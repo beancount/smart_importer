@@ -25,7 +25,7 @@ jobs:
       run: >-
         tox -e py
   build-and-publish:
-    name: Build and publish a distribution
+    name: Build and optionally publish a distribution
     runs-on: ubuntu-latest
     needs: test  # the test job must have been successful
     steps:
@@ -41,7 +41,7 @@ jobs:
     - name: Build distribution
       run: >-
         make dist
-    - name: Publish distribution 📦 to PyPI (on tags starting with v)
+    - name: Publish distribution package to PyPI (on tags starting with v)
       if: startsWith(github.event.ref, 'refs/tags/v')
       env:
         TWINE_USERNAME: __token__
