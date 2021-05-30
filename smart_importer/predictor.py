@@ -92,11 +92,23 @@ class EntryPredictor(ImporterHook):
         training_data = [
             txn for txn in training_data if self.training_data_filter(txn)
         ]
-        logger.debug(
-            "Filtered training data to %s of %s entries.",
-            len(training_data),
-            length_all,
-        )
+        if not training_data:
+            if length_all > 0:
+                logger.warning(
+                    "Cannot train the machine learning model"
+                    "None of the training data matches the accounts"
+                )
+            else:
+                logger.warning(
+                    "Cannot train the machine learning model"
+                    "No training data found"
+                )
+        else:
+            logger.debug(
+                "Filtered training data to %s of %s entries.",
+                len(training_data),
+                length_all,
+            )
         self.training_data = training_data
 
     def training_data_filter(self, txn):
@@ -143,12 +155,7 @@ class EntryPredictor(ImporterHook):
         targets = self.targets
         self.is_fitted = False
 
-        if not self.training_data:
-            logger.warning(
-                "Cannot train the machine learning model "
-                "because the training data is empty."
-            )
-        elif len(set(targets)) < 2:
+        if len(set(targets)) < 2:
             logger.warning(
                 "Cannot train the machine learning model "
                 "because there is only one target."
