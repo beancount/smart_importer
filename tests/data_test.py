@@ -9,8 +9,7 @@ from beancount.core.compare import stable_hash_namedtuple
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
-from smart_importer import apply_hooks
-from smart_importer import PredictPostings
+from smart_importer import PredictPostings, apply_hooks
 
 
 def _hash(entry):
@@ -21,7 +20,7 @@ def _load_testset(testset):
     path = os.path.join(
         os.path.dirname(__file__), "data", testset + ".beancount"
     )
-    with open(path, "r") as test_file:
+    with open(path, "r", encoding="utf-8") as test_file:
         _, *sections = re.split(r"# [A-Z]+\n", test_file.read())
     parsed_sections = []
     for section in sections:

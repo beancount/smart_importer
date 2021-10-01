@@ -27,5 +27,5 @@
 
 # EXPECTED
 2016-01-06 * "Foo"
-  Expenses:Food:Europe           
+  Expenses:Food:Europe
   Assets:US:EUR         -2.50 USD

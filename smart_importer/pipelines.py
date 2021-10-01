@@ -4,8 +4,7 @@ from typing import List
 
 import numpy
 from beancount.core.data import Transaction
-from sklearn.base import BaseEstimator
-from sklearn.base import TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import make_pipeline
 

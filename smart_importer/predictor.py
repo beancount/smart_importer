@@ -3,20 +3,23 @@
 
 import logging
 import threading
-from typing import Dict
-from typing import List
-from typing import Union
+from typing import Dict, List, Optional, Union
 
-from beancount.core.data import ALL_DIRECTIVES
-from beancount.core.data import Transaction, Open, Close
-from beancount.core.data import filter_txns
+from beancount.core.data import (
+    ALL_DIRECTIVES,
+    Close,
+    Open,
+    Transaction,
+    filter_txns,
+)
 from beancount.core.data import sorted as beancount_sorted
-from sklearn.pipeline import FeatureUnion
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.svm import SVC
 
-from smart_importer.entries import merge_non_transaction_entries
-from smart_importer.entries import set_entry_attribute
+from smart_importer.entries import (
+    merge_non_transaction_entries,
+    set_entry_attribute,
+)
 from smart_importer.hooks import ImporterHook
 from smart_importer.pipelines import get_pipeline
 
@@ -34,8 +37,8 @@ class EntryPredictor(ImporterHook):
 
     # pylint: disable=too-many-instance-attributes
 
-    weights: Dict[str, int] = {}
-    attribute = None
+    weights: Dict[str, float] = {}
+    attribute: Optional[str] = None
 
     def __init__(self, predict=True, overwrite=False):
         super().__init__()
