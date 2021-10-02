@@ -32,7 +32,7 @@ def _load_testset(testset):
 
 
 @pytest.mark.parametrize(
-    "testset", ["simple", "single-account", "multiaccounts"]
+    "testset", ["simple", "single-account", "multiaccounts", "minimal"]
 )
 def test_testset(testset):
     # pylint: disable=unbalanced-tuple-unpacking
