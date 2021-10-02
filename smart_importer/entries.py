@@ -1,7 +1,6 @@
 """Helpers to work with Beancount entry objects."""
 
-from beancount.core.data import Posting
-from beancount.core.data import Transaction
+from beancount.core.data import Posting, Transaction
 
 
 def update_postings(transaction, accounts):
