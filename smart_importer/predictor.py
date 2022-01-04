@@ -15,6 +15,7 @@ from beancount.core.data import (
 from beancount.core.data import sorted as beancount_sorted
 from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.svm import SVC
+import jieba  # chinese word segmentation
 
 from smart_importer.entries import (
     merge_non_transaction_entries,
@@ -40,7 +41,13 @@ class EntryPredictor(ImporterHook):
     weights: Dict[str, float] = {}
     attribute: Optional[str] = None
 
-    def __init__(self, predict=True, overwrite=False):
+    def __init__(
+        self,
+        predict=True,
+        overwrite=False,
+        chinese_participle_support=False,
+        chinese_dict=None,
+    ):
         super().__init__()
         self.training_data = None
         self.open_accounts = {}
@@ -51,6 +58,15 @@ class EntryPredictor(ImporterHook):
 
         self.predict = predict
         self.overwrite = overwrite
+        self.chinese_participle_support = chinese_participle_support
+
+        if self.chinese_participle_support:
+            jieba.initialize()
+            if chinese_dict:
+                jieba.load_userdict(chinese_dict)
+            self.process_chinese = (
+                lambda string: " ".join(jieba.cut(string)) if string else None
+            )
 
     def __call__(self, importer, file, imported_entries, existing_entries):
         """Predict attributes for imported transactions.
@@ -63,6 +79,10 @@ class EntryPredictor(ImporterHook):
         Returns:
             A list of entries, modified by this predictor.
         """
+        if self.chinese_participle_support:
+            logging.debug("Chinese word segmentation support enabled.")
+            existing_entries = self.process_chinese_entries(existing_entries)
+            imported_entries = self.process_chinese_entries(imported_entries)
 
         self.account = importer.file_account(file)
         self.load_training_data(existing_entries)
@@ -85,6 +105,27 @@ class EntryPredictor(ImporterHook):
                 account_map.pop(entry.account)
 
         self.open_accounts = account_map
+
+    def process_chinese_entries(self, entries):
+        """Return transtion with chinese word segmentation."""
+        return list(
+            map(
+                # pylint: disable=not-callable
+                lambda entry: Transaction(
+                    entry.meta,
+                    entry.date,
+                    entry.flag,
+                    self.process_chinese(entry.payee),
+                    self.process_chinese(entry.narration),
+                    entry.tags,
+                    entry.links,
+                    entry.postings,
+                )
+                # pylint: disable=isinstance-second-argument-not-valid-type
+                if isinstance(entry, Transaction) else entry,
+                entries,
+            )
+        )
 
     def load_training_data(self, existing_entries):
         """Load training data, i.e., a list of Beancount entries."""
