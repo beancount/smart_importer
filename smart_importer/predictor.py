@@ -158,11 +158,14 @@ class EntryPredictor(ImporterHook):
         targets = self.targets
         self.is_fitted = False
 
-        if len(set(targets)) < 2:
+        if len(set(targets)) == 0:
             logger.warning(
                 "Cannot train the machine learning model "
-                "because there is only one target."
+                "because there are no targets."
             )
+        elif len(set(targets)) == 1:
+            self.is_fitted = True
+            logger.debug("Only one target possible.")
         else:
             self.pipeline.fit(self.training_data, targets)
             self.is_fitted = True
@@ -208,11 +211,17 @@ class EntryPredictor(ImporterHook):
             return transactions
 
         if self.predict:
-            predictions = self.pipeline.predict(transactions)
-            transactions = [
-                self.apply_prediction(entry, prediction)
-                for entry, prediction in zip(transactions, predictions)
-            ]
+            if len(set(self.targets)) == 1:
+                transactions = [
+                    self.apply_prediction(entry, self.targets[0])
+                    for entry in transactions
+                ]
+            else:
+                predictions = self.pipeline.predict(transactions)
+                transactions = [
+                    self.apply_prediction(entry, prediction)
+                    for entry, prediction in zip(transactions, predictions)
+                ]
             logger.debug("Added predictions to transactions.")
 
         return transactions
