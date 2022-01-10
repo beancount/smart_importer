@@ -40,7 +40,7 @@ class EntryPredictor(ImporterHook):
     weights: Dict[str, float] = {}
     attribute: Optional[str] = None
 
-    def __init__(self, predict=True, overwrite=False):
+    def __init__(self, predict=True, overwrite=False, string_tokenizer=None):
         super().__init__()
         self.training_data = None
         self.open_accounts = {}
@@ -51,6 +51,7 @@ class EntryPredictor(ImporterHook):
 
         self.predict = predict
         self.overwrite = overwrite
+        self.string_tokenizer = string_tokenizer
 
     def __call__(self, importer, file, imported_entries, existing_entries):
         """Predict attributes for imported transactions.
@@ -143,7 +144,9 @@ class EntryPredictor(ImporterHook):
 
         transformers = []
         for attribute in self.weights:
-            transformers.append((attribute, get_pipeline(attribute)))
+            transformers.append(
+                (attribute, get_pipeline(attribute, self.string_tokenizer))
+            )
 
         self.pipeline = make_pipeline(
             FeatureUnion(

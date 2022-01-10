@@ -59,8 +59,8 @@ class AttrGetter(Getter):
 class StringVectorizer(CountVectorizer):
     """Subclass of CountVectorizer that handles empty data."""
 
-    def __init__(self):
-        super().__init__(ngram_range=(1, 3))
+    def __init__(self, tokenizer=None):
+        super().__init__(ngram_range=(1, 3), tokenizer=tokenizer)
 
     def fit_transform(self, raw_documents, y=None):
         try:
@@ -75,11 +75,13 @@ class StringVectorizer(CountVectorizer):
             return numpy.zeros(shape=(len(raw_documents), 0))
 
 
-def get_pipeline(attribute):
+def get_pipeline(attribute, tokenizer):
     """Make a pipeline for a given entry attribute."""
 
     if attribute.startswith("date."):
         return make_pipeline(AttrGetter(attribute), ArrayCaster())
 
     # Treat all other attributes as strings.
-    return make_pipeline(AttrGetter(attribute, ""), StringVectorizer())
+    return make_pipeline(
+        AttrGetter(attribute, ""), StringVectorizer(tokenizer)
+    )
