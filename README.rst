@@ -179,3 +179,23 @@ The according log level can be changed as follows:
 
     import logging
     logging.getLogger('smart_importer').setLevel(logging.DEBUG)
+
+
+Using Tokenizer
+~~~~~~~~~~~~~~~~~~
+
+Tokenizer can let smart_importer support more languages. eg. Chinese.
+
+If you looking for Chinese tokenizer, you can follow this case.
+
+.. code:: bash
+    pip install jieba
+
+.. code:: python
+    from smart_importer import PredictPostings
+    import jieba
+
+    jieba.initialize()
+    tokenizer = lambda s: list(jieba.cut(s))
+
+    predictor = PredictPostings(string_tokenizer=tokenizer)
