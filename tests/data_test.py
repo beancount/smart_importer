@@ -44,7 +44,6 @@ def _load_testset(testset):
         ("simple", None),
         ("single-account", None),
         ("multiaccounts", None),
-        ("minimal", None),
         ("chinese", chinese_string_tokenizer),
     ],
 )
