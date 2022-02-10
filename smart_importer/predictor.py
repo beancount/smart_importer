@@ -3,7 +3,7 @@
 
 import logging
 import threading
-from typing import Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from beancount.core.data import (
     ALL_DIRECTIVES,
@@ -33,6 +33,9 @@ class EntryPredictor(ImporterHook):
         predict: Whether to add predictions to the entries.
         overwrite: When an attribute is predicted but already exists on an
             entry, overwrite the existing one.
+        string_tokenizer: Tokenizer can let smart_importer support more
+            languages. This parameter should be an callable function with
+            string parameter and the returning should be a list.
     """
 
     # pylint: disable=too-many-instance-attributes
@@ -40,7 +43,12 @@ class EntryPredictor(ImporterHook):
     weights: Dict[str, float] = {}
     attribute: Optional[str] = None
 
-    def __init__(self, predict=True, overwrite=False):
+    def __init__(
+        self,
+        predict=True,
+        overwrite=False,
+        string_tokenizer: Callable[[str], List] = None,
+    ):
         super().__init__()
         self.training_data = None
         self.open_accounts = {}
@@ -51,6 +59,7 @@ class EntryPredictor(ImporterHook):
 
         self.predict = predict
         self.overwrite = overwrite
+        self.string_tokenizer = string_tokenizer
 
     def __call__(self, importer, file, imported_entries, existing_entries):
         """Predict attributes for imported transactions.
@@ -143,7 +152,9 @@ class EntryPredictor(ImporterHook):
 
         transformers = []
         for attribute in self.weights:
-            transformers.append((attribute, get_pipeline(attribute)))
+            transformers.append(
+                (attribute, get_pipeline(attribute, self.string_tokenizer))
+            )
 
         self.pipeline = make_pipeline(
             FeatureUnion(

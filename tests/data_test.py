@@ -4,12 +4,19 @@ import os
 import pprint
 import re
 
+import jieba
 import pytest
 from beancount.core.compare import stable_hash_namedtuple
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
 from smart_importer import PredictPostings, apply_hooks
+
+jieba.initialize()
+
+
+def chinese_string_tokenizer(pre_tokenizer_string):
+    return list(jieba.cut(pre_tokenizer_string))
 
 
 def _hash(entry):
@@ -32,9 +39,15 @@ def _load_testset(testset):
 
 
 @pytest.mark.parametrize(
-    "testset", ["simple", "single-account", "multiaccounts"]
+    "testset, string_tokenizer",
+    [
+        ("simple", None),
+        ("single-account", None),
+        ("multiaccounts", None),
+        ("chinese", chinese_string_tokenizer),
+    ],
 )
-def test_testset(testset):
+def test_testset(testset, string_tokenizer):
     # pylint: disable=unbalanced-tuple-unpacking
     imported, training_data, expected = _load_testset(testset)
 
@@ -43,7 +56,7 @@ def test_testset(testset):
             return imported
 
     importer = DummyImporter()
-    apply_hooks(importer, [PredictPostings()])
+    apply_hooks(importer, [PredictPostings(string_tokenizer=string_tokenizer)])
     imported_transactions = importer.extract(
         "dummy-data", existing_entries=training_data
     )

@@ -1,6 +1,9 @@
 # intellij project files
 .idea/
 
+# VSCode project fiels
+.vscode/
+
 # python caches
 __pycache__/
 
