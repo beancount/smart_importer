@@ -184,14 +184,21 @@ The according log level can be changed as follows:
 Using Tokenizer
 ~~~~~~~~~~~~~~~~~~
 
-Tokenizer can let smart_importer support more languages. eg. Chinese.
+Custom tokenizers can let smart_importer support more languages, eg. Chinese.
 
-If you looking for Chinese tokenizer, you can follow this case.
+If you looking for Chinese tokenizer, you can follow this example:
+
+First make sure that `jieba` is installed in your python environment:
 
 .. code:: bash
+
     pip install jieba
 
+
+In your importer code, you can then pass `jieba` to be used as tokenizer:
+
 .. code:: python
+
     from smart_importer import PredictPostings
     import jieba
 
