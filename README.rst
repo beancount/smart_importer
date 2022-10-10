@@ -3,8 +3,8 @@ smart_importer
 
 https://github.com/beancount/smart_importer
 
-.. image:: https://github.com/beancount/smart_importer/actions/workflows/ci.yml/badge.svg?branch=master
-   :target: https://github.com/beancount/smart_importer/actions?query=branch%3Amaster
+.. image:: https://github.com/beancount/smart_importer/actions/workflows/ci.yml/badge.svg?branch=main
+   :target: https://github.com/beancount/smart_importer/actions?query=branch%3Amain
 
 Augments
 `Beancount <http://furius.ca/beancount/>`__ importers
@@ -148,7 +148,7 @@ Usage with Fava
 Smart importers play nice with `Fava <https://github.com/beancount/fava>`__.
 This means you can use smart importers together with Fava in the exact same way
 as you would do with a conventional importer. See `Fava's help on importers
-<https://github.com/beancount/fava/blob/master/src/fava/help/import.md>`__ for more
+<https://github.com/beancount/fava/blob/main/src/fava/help/import.md>`__ for more
 information.
 
 
