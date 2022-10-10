@@ -1,9 +1,11 @@
 """Machine learning importer decorators."""
 # pylint: disable=unsubscriptable-object
 
+from __future__ import annotations
+
 import logging
 import threading
-from typing import Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Union
 
 from beancount.core.data import (
     ALL_DIRECTIVES,
@@ -22,6 +24,9 @@ from smart_importer.entries import (
 )
 from smart_importer.hooks import ImporterHook
 from smart_importer.pipelines import get_pipeline
+
+if TYPE_CHECKING:
+    from sklearn import Pipeline
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -51,8 +56,8 @@ class EntryPredictor(ImporterHook):
     ):
         super().__init__()
         self.training_data = None
-        self.open_accounts = {}
-        self.pipeline = None
+        self.open_accounts: dict[str, str] = {}
+        self.pipeline: Pipeline | None = None
         self.is_fitted = False
         self.lock = threading.Lock()
         self.account = None
@@ -214,8 +219,8 @@ class EntryPredictor(ImporterHook):
         )
 
     def process_transactions(
-        self, transactions: List[Transaction]
-    ) -> List[Transaction]:
+        self, transactions: list[Transaction]
+    ) -> list[Transaction]:
         """Process a list of transactions."""
 
         if not self.is_fitted or not transactions:
@@ -227,7 +232,7 @@ class EntryPredictor(ImporterHook):
                     self.apply_prediction(entry, self.targets[0])
                     for entry in transactions
                 ]
-            else:
+            elif self.pipeline:
                 predictions = self.pipeline.predict(transactions)
                 transactions = [
                     self.apply_prediction(entry, prediction)
