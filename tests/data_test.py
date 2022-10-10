@@ -27,7 +27,7 @@ def _load_testset(testset):
     path = os.path.join(
         os.path.dirname(__file__), "data", testset + ".beancount"
     )
-    with open(path, "r", encoding="utf-8") as test_file:
+    with open(path, encoding="utf-8") as test_file:
         _, *sections = re.split(r"# [A-Z]+\n", test_file.read())
     parsed_sections = []
     for section in sections:

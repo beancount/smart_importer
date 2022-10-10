@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Callable
 
 from beancount.core.data import (
     ALL_DIRECTIVES,
@@ -45,14 +45,14 @@ class EntryPredictor(ImporterHook):
 
     # pylint: disable=too-many-instance-attributes
 
-    weights: Dict[str, float] = {}
-    attribute: Optional[str] = None
+    weights: dict[str, float] = {}
+    attribute: str | None = None
 
     def __init__(
         self,
         predict=True,
         overwrite=False,
-        string_tokenizer: Callable[[str], List] = None,
+        string_tokenizer: Callable[[str], list] = None,
     ):
         super().__init__()
         self.training_data = None
@@ -187,7 +187,7 @@ class EntryPredictor(ImporterHook):
             self.is_fitted = True
             logger.debug("Trained the machine learning model.")
 
-    def process_entries(self, imported_entries) -> List[Union[ALL_DIRECTIVES]]:
+    def process_entries(self, imported_entries) -> list[ALL_DIRECTIVES]:
         """Process imported entries.
 
         Transactions might be modified, all other entries are left as is.

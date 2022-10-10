@@ -41,7 +41,7 @@ class DuplicateDetector(ImporterHook):
             self.window_days,
         )
         # Add a metadata marker to the extracted entries for duplicates.
-        duplicate_set = set(id(entry) for entry, _ in duplicate_pairs)
+        duplicate_set = {id(entry) for entry, _ in duplicate_pairs}
         mod_entries = []
         for entry in imported_entries:
             if id(entry) in duplicate_set:
