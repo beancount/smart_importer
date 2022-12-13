@@ -4,7 +4,6 @@ import os
 import pprint
 import re
 
-import jieba
 import pytest
 from beancount.core.compare import stable_hash_namedtuple
 from beancount.ingest.importer import ImporterProtocol
@@ -12,10 +11,10 @@ from beancount.parser import parser
 
 from smart_importer import PredictPostings, apply_hooks
 
-jieba.initialize()
-
 
 def chinese_string_tokenizer(pre_tokenizer_string):
+    jieba = pytest.importorskip("jieba")
+    jieba.initialize()
     return list(jieba.cut(pre_tokenizer_string))
 
 
