@@ -1,8 +1,13 @@
 """Tests for the Machine Learning Helpers."""
 # pylint: disable=missing-docstring
+import numpy as np
 from beancount.parser import parser
 
-from smart_importer.pipelines import AttrGetter
+from smart_importer.pipelines import (
+    AttrGetter,
+    NumericTxnAttribute,
+    txn_attr_getter,
+)
 
 TEST_DATA, _, __ = parser.parse_string(
     """
@@ -61,4 +66,9 @@ def test_get_metadata():
 
 
 def test_get_day_of_month():
-    assert AttrGetter("date.day").transform(TEST_TRANSACTIONS) == [6, 7, 7, 8]
+    get_day = txn_attr_getter("date.day")
+    assert list(map(get_day, TEST_TRANSACTIONS)) == [6, 7, 7, 8]
+
+    extract_day = NumericTxnAttribute("date.day")
+    transformed = extract_day.transform(TEST_TRANSACTIONS)
+    assert (transformed == np.array([[6], [7], [7], [8]])).all()

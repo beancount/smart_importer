@@ -155,11 +155,10 @@ class EntryPredictor(ImporterHook):
     def define_pipeline(self):
         """Defines the machine learning pipeline based on given weights."""
 
-        transformers = []
-        for attribute in self.weights:
-            transformers.append(
-                (attribute, get_pipeline(attribute, self.string_tokenizer))
-            )
+        transformers = [
+            (attribute, get_pipeline(attribute, self.string_tokenizer))
+            for attribute in self.weights
+        ]
 
         self.pipeline = make_pipeline(
             FeatureUnion(
