@@ -52,7 +52,7 @@ class EntryPredictor(ImporterHook):
         self,
         predict=True,
         overwrite=False,
-        string_tokenizer: Callable[[str], list] = None,
+        string_tokenizer: Callable[[str], list] | None = None,
     ):
         super().__init__()
         self.training_data = None
