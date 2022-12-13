@@ -88,8 +88,6 @@ class EntryPredictor(ImporterHook):
     def load_open_accounts(self, existing_entries):
         """Return map of accounts which have been opened but not closed."""
         account_map = {}
-        if not existing_entries:
-            return
 
         for entry in beancount_sorted(existing_entries):
             # pylint: disable=isinstance-second-argument-not-valid-type
@@ -102,15 +100,14 @@ class EntryPredictor(ImporterHook):
 
     def load_training_data(self, existing_entries):
         """Load training data, i.e., a list of Beancount entries."""
-        training_data = existing_entries or []
-        self.load_open_accounts(existing_entries)
-        training_data = list(filter_txns(training_data))
-        length_all = len(training_data)
-        training_data = [
-            txn for txn in training_data if self.training_data_filter(txn)
+        all_entries = existing_entries or []
+        self.load_open_accounts(all_entries)
+        all_transactions = list(filter_txns(all_entries))
+        self.training_data = [
+            txn for txn in all_transactions if self.training_data_filter(txn)
         ]
-        if not training_data:
-            if length_all > 0:
+        if not self.training_data:
+            if len(all_transactions) > 0:
                 logger.warning(
                     "Cannot train the machine learning model"
                     "None of the training data matches the accounts"
@@ -123,10 +120,9 @@ class EntryPredictor(ImporterHook):
         else:
             logger.debug(
                 "Filtered training data to %s of %s entries.",
-                len(training_data),
-                length_all,
+                len(self.training_data),
+                len(all_transactions),
             )
-        self.training_data = training_data
 
     def training_data_filter(self, txn):
         """Filter function for the training data."""
@@ -170,19 +166,19 @@ class EntryPredictor(ImporterHook):
     def train_pipeline(self):
         """Train the machine learning pipeline."""
 
-        targets = self.targets
         self.is_fitted = False
+        targets_count = len(set(self.targets))
 
-        if len(set(targets)) == 0:
+        if targets_count == 0:
             logger.warning(
                 "Cannot train the machine learning model "
                 "because there are no targets."
             )
-        elif len(set(targets)) == 1:
+        elif targets_count == 1:
             self.is_fitted = True
             logger.debug("Only one target possible.")
         else:
-            self.pipeline.fit(self.training_data, targets)
+            self.pipeline.fit(self.training_data, self.targets)
             self.is_fitted = True
             logger.debug("Trained the machine learning model.")
 
