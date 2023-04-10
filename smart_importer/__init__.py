@@ -19,7 +19,7 @@ class PredictPostings(EntryPredictor):
     @property
     def targets(self):
         return [
-            " ".join(posting.account for posting in txn.postings)
+            " ".join(sorted(posting.account for posting in txn.postings))
             for txn in self.training_data
         ]
 
