@@ -77,7 +77,7 @@ class EntryPredictor(ImporterHook):
         Returns:
             A list of entries, modified by this predictor.
         """
-
+        logging.debug("Running %s for file %s", self.__class__.__name__, file)
         self.account = importer.file_account(file)
         self.load_training_data(existing_entries)
         with self.lock:
@@ -119,8 +119,10 @@ class EntryPredictor(ImporterHook):
                 )
         else:
             logger.debug(
-                "Filtered training data to %s of %s entries.",
+                "Loaded training data with %d transactions for account %s, "
+                "filtered from %d total transactions",
                 len(self.training_data),
+                self.account,
                 len(all_transactions),
             )
 
@@ -227,12 +229,17 @@ class EntryPredictor(ImporterHook):
                     self.apply_prediction(entry, self.targets[0])
                     for entry in transactions
                 ]
+                logger.debug("Apply predictions without pipeline")
             elif self.pipeline:
                 predictions = self.pipeline.predict(transactions)
                 transactions = [
                     self.apply_prediction(entry, prediction)
                     for entry, prediction in zip(transactions, predictions)
                 ]
-            logger.debug("Added predictions to transactions.")
+                logger.debug("Apply predictions with pipeline")
+            logger.debug(
+                "Added predictions to %d transactions",
+                len(transactions),
+            )
 
         return transactions
