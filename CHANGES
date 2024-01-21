@@ -1,6 +1,23 @@
 Changelog
 =========
 
+v0.5 (2024-01-21)
+-----------------
+
+* Sort posting accounts in PredictPostings
+* Drop support of Python 3.7 which has reached EOL
+* CI: add tests for Python 3.11 and 3.12
+
+
+v0.4 (2022-12-16)
+-----------------
+
+* Allow specification of custom string tokenizer, e.g., for Chinese
+* Fix: Allow prediction if there is just a single target in training data
+* Documentation and logging improvements
+* Drop support of Python 3.6 which has reached EOL
+
+
 v0.3 (2021-02-20)
 -----------------
 
