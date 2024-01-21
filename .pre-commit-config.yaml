@@ -2,7 +2,7 @@ exclude: "^docs/conf.py"
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: trailing-whitespace
       - id: check-added-large-files
@@ -18,23 +18,23 @@ repos:
         args: ["--fix=auto"]
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.11.1
+    rev: 5.13.2
     hooks:
       - id: isort
 
   - repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 23.12.1
     hooks:
       - id: black
         language_version: python3
 
   - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
+    rev: 7.0.0
     hooks:
       - id: flake8
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
+    rev: v3.15.0
     hooks:
       - id: pyupgrade
         args: ["--py37-plus"]
@@ -46,7 +46,7 @@ repos:
         files: README.rst
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.991
+    rev: v1.8.0
     hooks:
       - id: mypy
         args: [--install-types, --non-interactive, --ignore-missing-imports]
