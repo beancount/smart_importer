@@ -5,7 +5,7 @@ from typing import List
 import copy
 import pytest
 
-from beancount.core.data import Directive
+from beancount.core.data import Directive, Transaction
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
 
@@ -55,22 +55,22 @@ existing_entries, _, _ = parser.parse_string(
 
 example_imported_data, _, _ = parser.parse_string(
     """
-; 0: existing entry before last balance
+; 0: old_dup - existing entry before last balance
 2016-01-07 * "Farmer Fresh" "Groceries"
   Assets:US:BofA:Checking                                     -10.20 USD
   Expenses:Food:Groceries
 
-; 1: new entry before last balance
+; 1: old_non_dup - new entry before last balance
 2016-01-08 * "Scammers" "Car warranty extension"
   Assets:US:BofA:Checking                                     -38.36 USD
   Expenses:Scams
 
-; 2: existing entry after last balance
+; 2: new_dup - existing entry after last balance
 2016-01-10 * "Uncle Boons" "Dinner with Mary"
   Assets:US:BofA:Checking                                     -35.00 USD
   Expenses:Food:Restaurant
 
-; 3: new entry
+; 3: new_non_dup - new entry, not seen before
 2016-01-11 * "Ye Old Diner" "Lunch with Hasan"
   Assets:US:BofA:Checking                                     -27.30 USD
   Expenses:Food:Restaurant
@@ -78,17 +78,15 @@ example_imported_data, _, _ = parser.parse_string(
 )
 
 
-def example_data_subset(
-    *indices: List[int], duplicates: None
-) -> List[Directive]:
-    duplicates = set(duplicates or [])
-    output = []
-    for i in indices:
-        entry = copy.deepcopy(example_imported_data[i])
-        if i in duplicates:
-            entry.meta["__duplicate__"] = True
-        output.append(entry)
-    return output
+def _marked_duplicate(entry: Transaction):
+    entry.meta["__duplicate__"] = True
+    return entry
+
+
+old_dup = _marked_duplicate(copy.deepcopy(example_imported_data[0]))
+old_non_dup = copy.deepcopy(example_imported_data[1])
+new_dup = _marked_duplicate(copy.deepcopy(example_imported_data[2]))
+new_non_dup = copy.deepcopy(example_imported_data[3])
 
 
 class FakeImporter(ImporterProtocol):
@@ -107,9 +105,12 @@ def test_importer_returns_all_data():
         FakeImporter(example_imported_data),
         [DuplicateDetector()],
     )
-    assert importer.extract("foo", existing_entries) == example_data_subset(
-        0, 1, 2, 3, duplicates=[0, 2]
-    )
+    assert importer.extract("foo", existing_entries) == [
+        old_dup,
+        old_non_dup,
+        new_dup,
+        new_non_dup,
+    ]
 
 
 def test_trimmer_removes_old_entries_keeps_nondups():
@@ -117,10 +118,11 @@ def test_trimmer_removes_old_entries_keeps_nondups():
         FakeImporter(example_imported_data),
         [DuplicateDetector(), OldEntryTrimmer(only_trim_duplicates=True)],
     )
-    # Here, we *do* keep 1 because it's not a duplicate, even though it's old.
-    assert importer.extract("foo", existing_entries) == example_data_subset(
-        1, 2, 3, duplicates=[0, 2]
-    )
+    assert importer.extract("foo", existing_entries) == [
+        old_non_dup,
+        new_dup,
+        new_non_dup,
+    ]
 
 
 def test_trimmer_removes_all_old_entries():
@@ -128,7 +130,4 @@ def test_trimmer_removes_all_old_entries():
         FakeImporter(example_imported_data),
         [DuplicateDetector(), OldEntryTrimmer(only_trim_duplicates=False)],
     )
-    # Here, we discard 1 even though it's a duplicate.
-    assert importer.extract("foo", existing_entries) == example_data_subset(
-        2, 3, duplicates=[0, 2]
-    )
+    assert importer.extract("foo", existing_entries) == [new_dup, new_non_dup]
