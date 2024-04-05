@@ -9,14 +9,10 @@ def update_postings(transaction, accounts):
     if len(transaction.postings) != 1:
         return transaction
 
-    new_postings = [
-        Posting(account, None, None, None, None, None) for account in accounts
+    new_postings = [transaction.postings[0]] + [
+        Posting(account, None, None, None, None, None)
+        for account in accounts if account != transaction.postings[0].account
     ]
-    for posting in transaction.postings:
-        if posting.account in accounts:
-            new_postings[accounts.index(posting.account)] = posting
-        else:
-            new_postings.append(posting)
 
     return transaction._replace(postings=new_postings)
 
