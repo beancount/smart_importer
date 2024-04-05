@@ -19,24 +19,18 @@ def update_postings(
     """Update the list of postings of a transaction to match the accounts.
 
     Expects the transaction to be updated to have exactly one posting,
-    otherwise it is returned unchanged. Adds empty postings for all the
-    accounts - if the account of the single existing posting is found
-    in the list of accounts, it is placed there at the first occurence,
-    otherwise it is appended at the end.
+    otherwise it is returned unchanged. The original posting is always
+    kept first, and empty postings are appended for all predicted
+    accounts (excluding the original posting's account).
     """
 
     if len(transaction.postings) != 1:
         return transaction
 
-    posting = transaction.postings[0]
-
-    new_postings = [
-        Posting(account, None, None, None, None, None) for account in accounts
+    new_postings = [transaction.postings[0]] + [
+        Posting(account, None, None, None, None, None)
+        for account in accounts if account != transaction.postings[0].account
     ]
-    if posting.account in accounts:
-        new_postings[accounts.index(posting.account)] = posting
-    else:
-        new_postings.append(posting)
 
     return transaction._replace(postings=new_postings)
 
