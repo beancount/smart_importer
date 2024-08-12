@@ -54,10 +54,12 @@ class EntryPredictor(ImporterHook):
         predict=True,
         overwrite=False,
         string_tokenizer: Callable[[str], list] | None = None,
+        denylist_accounts: list[str] = []
     ):
         super().__init__()
         self.training_data = None
         self.open_accounts: dict[str, str] = {}
+        self.denylist_accounts = denylist_accounts
         self.pipeline: Pipeline | None = None
         self.is_fitted = False
         self.lock = threading.Lock()
@@ -132,6 +134,8 @@ class EntryPredictor(ImporterHook):
         found_import_account = False
         for pos in txn.postings:
             if pos.account not in self.open_accounts:
+                return False
+            if pos.account in self.denylist_accounts:
                 return False
             if self.account == pos.account:
                 found_import_account = True
