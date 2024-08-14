@@ -1,4 +1,5 @@
 """Tests for the `PredictPayees` and the `PredictPostings` decorator"""
+
 # pylint: disable=missing-docstring
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
