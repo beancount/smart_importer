@@ -1,4 +1,5 @@
 """Smart importer for Beancount and Fava."""
+
 from smart_importer.entries import update_postings
 from smart_importer.hooks import apply_hooks  # noqa
 from smart_importer.predictor import EntryPredictor
