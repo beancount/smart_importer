@@ -32,6 +32,9 @@ TEST_DATA, _, __ = parser.parse_string(
 
 2017-01-13 * "Gas Quick"
   Assets:US:BofA:Checking  -17.45 USD
+
+2017-01-14 * "Axe Throwing with Joe"
+  Assets:US:BofA:Checking  -13.37 USD
 """
 )
 
@@ -43,6 +46,7 @@ TRAINING_DATA, _, __ = parser.parse_string(
 2016-01-01 open Expenses:Auto:Gas USD
 2016-01-01 open Expenses:Food:Groceries USD
 2016-01-01 open Expenses:Food:Restaurant USD
+2016-01-01 open Expenses:Denylisted USD
 
 2016-01-06 * "Farmer Fresh" "Buying groceries"
   Assets:US:BofA:Checking  -2.50 USD
@@ -93,6 +97,11 @@ TRAINING_DATA, _, __ = parser.parse_string(
 2016-01-12 * "Gas Quick"
   Assets:US:BofA:Checking  -24.09 USD
   Expenses:Auto:Gas
+
+2016-01-08 * "Axe Throwing with Joe"
+  Assets:US:BofA:Checking  -38.36 USD
+  Expenses:Denylisted
+
 """
 )
 
@@ -105,6 +114,7 @@ PAYEE_PREDICTIONS = [
     "Gimme Coffee",
     "Uncle Boons",
     None,
+    None,
 ]
 
 ACCOUNT_PREDICTIONS = [
@@ -116,7 +126,10 @@ ACCOUNT_PREDICTIONS = [
     "Expenses:Food:Coffee",
     "Expenses:Food:Groceries",
     "Expenses:Auto:Gas",
+    "Expenses:Food:Groceries",
 ]
+
+DENYLISTED_ACCOUNTS = ["Expenses:Denylisted"]
 
 
 class BasicTestImporter(ImporterProtocol):
@@ -133,7 +146,10 @@ class BasicTestImporter(ImporterProtocol):
 
 
 PAYEE_IMPORTER = apply_hooks(BasicTestImporter(), [PredictPayees()])
-POSTING_IMPORTER = apply_hooks(BasicTestImporter(), [PredictPostings()])
+POSTING_IMPORTER = apply_hooks(
+    BasicTestImporter(),
+    [PredictPostings(denylist_accounts=DENYLISTED_ACCOUNTS)],
+)
 
 
 def test_empty_training_data():
