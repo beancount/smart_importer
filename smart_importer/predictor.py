@@ -42,6 +42,8 @@ class EntryPredictor(ImporterHook):
         string_tokenizer: Tokenizer can let smart_importer support more
             languages. This parameter should be an callable function with
             string parameter and the returning should be a list.
+        denylist_accounts: Transations with any of these accounts will be
+            removed from the training data.
     """
 
     # pylint: disable=too-many-instance-attributes
@@ -59,7 +61,7 @@ class EntryPredictor(ImporterHook):
         super().__init__()
         self.training_data = None
         self.open_accounts: dict[str, str] = {}
-        self.denylist_accounts = denylist_accounts or []
+        self.denylist_accounts = set(denylist_accounts or [])
         self.pipeline: Pipeline | None = None
         self.is_fitted = False
         self.lock = threading.Lock()
