@@ -131,6 +131,7 @@ ACCOUNT_PREDICTIONS = [
 
 DENYLISTED_ACCOUNTS = ["Expenses:Denylisted"]
 
+
 class BasicTestImporter(ImporterProtocol):
     def extract(self, file, existing_entries=None):
         if file == "dummy-data":
@@ -145,7 +146,10 @@ class BasicTestImporter(ImporterProtocol):
 
 
 PAYEE_IMPORTER = apply_hooks(BasicTestImporter(), [PredictPayees()])
-POSTING_IMPORTER = apply_hooks(BasicTestImporter(), [PredictPostings(denylist_accounts=DENYLISTED_ACCOUNTS)])
+POSTING_IMPORTER = apply_hooks(
+    BasicTestImporter(),
+    [PredictPostings(denylist_accounts=DENYLISTED_ACCOUNTS)],
+)
 
 
 def test_empty_training_data():

@@ -54,12 +54,12 @@ class EntryPredictor(ImporterHook):
         predict=True,
         overwrite=False,
         string_tokenizer: Callable[[str], list] | None = None,
-        denylist_accounts: list[str] = []
+        denylist_accounts: list[str] | None = None,
     ):
         super().__init__()
         self.training_data = None
         self.open_accounts: dict[str, str] = {}
-        self.denylist_accounts = denylist_accounts
+        self.denylist_accounts = denylist_accounts or []
         self.pipeline: Pipeline | None = None
         self.is_fitted = False
         self.lock = threading.Lock()
