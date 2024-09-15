@@ -18,8 +18,11 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install Dependencies
       run: |
-        pip install tox wheel setuptools
+        pip install tox wheel setuptools pre-commit
     - name: Run lint
+      run: >-
+        pre-commit run -a
+    - name: Run pylint
       run: >-
         tox -e lint
     - name: Run tests

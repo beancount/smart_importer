@@ -6,7 +6,7 @@ test:
 
 .PHONY: lint
 lint:
-	tox -e format
+	pre-commit run -a
 	tox -e lint
 
 .PHONY: install
