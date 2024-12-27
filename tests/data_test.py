@@ -7,8 +7,8 @@ import re
 
 import pytest
 from beancount.core.compare import stable_hash_namedtuple
-from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
+from beangulp import Importer
 
 from smart_importer import PredictPostings, apply_hooks
 
@@ -51,14 +51,20 @@ def test_testset(testset, string_tokenizer):
     # pylint: disable=unbalanced-tuple-unpacking
     imported, training_data, expected = _load_testset(testset)
 
-    class DummyImporter(ImporterProtocol):
-        def extract(self, file, existing_entries=None):
+    class DummyImporter(Importer):
+        def extract(self, filepath, existing=None):
             return imported
+
+        def account(self, filepath):
+            return ""
+
+        def identify(self, filepath):
+            return True
 
     importer = DummyImporter()
     apply_hooks(importer, [PredictPostings(string_tokenizer=string_tokenizer)])
     imported_transactions = importer.extract(
-        "dummy-data", existing_entries=training_data
+        "dummy-data", existing=training_data
     )
 
     for txn1, txn2 in zip(imported_transactions, expected):

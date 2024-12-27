@@ -83,7 +83,7 @@ class EntryPredictor(ImporterHook):
             A list of entries, modified by this predictor.
         """
         logging.debug("Running %s for file %s", self.__class__.__name__, file)
-        self.account = importer.file_account(file)
+        self.account = importer.account(file)
         self.load_training_data(existing_entries)
         with self.lock:
             self.define_pipeline()

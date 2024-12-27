@@ -2,7 +2,7 @@
 
 import logging
 
-from beancount.ingest import similar
+from beangulp import similar
 
 from smart_importer.hooks import ImporterHook
 
@@ -23,12 +23,12 @@ class DuplicateDetector(ImporterHook):
         self.comparator = comparator
         self.window_days = window_days
 
-    def __call__(self, importer, file, imported_entries, existing_entries):
+    def __call__(self, importer, file, imported_entries, existing):
         """Add duplicate metadata for imported transactions.
 
         Args:
             imported_entries: The list of imported entries.
-            existing_entries: The list of existing entries as passed to the
+            existing: The list of existing entries as passed to the
                 importer.
 
         Returns:
@@ -37,7 +37,7 @@ class DuplicateDetector(ImporterHook):
 
         duplicate_pairs = similar.find_similar_entries(
             imported_entries,
-            existing_entries,
+            existing,
             self.comparator,
             self.window_days,
         )

@@ -1,8 +1,8 @@
 """Tests for the `PredictPayees` and the `PredictPostings` decorator"""
 
 # pylint: disable=missing-docstring
-from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import parser
+from beangulp import Importer
 
 from smart_importer import PredictPayees, PredictPostings
 from smart_importer.hooks import apply_hooks
@@ -132,17 +132,20 @@ ACCOUNT_PREDICTIONS = [
 DENYLISTED_ACCOUNTS = ["Expenses:Denylisted"]
 
 
-class BasicTestImporter(ImporterProtocol):
-    def extract(self, file, existing_entries=None):
-        if file == "dummy-data":
+class BasicTestImporter(Importer):
+    def extract(self, filepath, existing=None):
+        if filepath == "dummy-data":
             return TEST_DATA
-        if file == "empty":
+        if filepath == "empty":
             return []
         assert False
         return []
 
-    def file_account(self, file):
+    def account(self, filepath):
         return "Assets:US:BofA:Checking"
+
+    def identify(self, filepath):
+        return True
 
 
 PAYEE_IMPORTER = apply_hooks(BasicTestImporter(), [PredictPayees()])
@@ -166,8 +169,8 @@ def test_no_transactions():
     """
     POSTING_IMPORTER.extract("empty")
     PAYEE_IMPORTER.extract("empty")
-    POSTING_IMPORTER.extract("empty", existing_entries=TRAINING_DATA)
-    PAYEE_IMPORTER.extract("empty", existing_entries=TRAINING_DATA)
+    POSTING_IMPORTER.extract("empty", existing=TRAINING_DATA)
+    PAYEE_IMPORTER.extract("empty", existing=TRAINING_DATA)
 
 
 def test_unchanged_narrations():
@@ -178,7 +181,7 @@ def test_unchanged_narrations():
     extracted_narrations = [
         transaction.narration
         for transaction in PAYEE_IMPORTER.extract(
-            "dummy-data", existing_entries=TRAINING_DATA
+            "dummy-data", existing=TRAINING_DATA
         )
     ]
     assert extracted_narrations == correct_narrations
@@ -194,7 +197,7 @@ def test_unchanged_first_posting():
     extracted_first_postings = [
         transaction.postings[0]
         for transaction in PAYEE_IMPORTER.extract(
-            "dummy-data", existing_entries=TRAINING_DATA
+            "dummy-data", existing=TRAINING_DATA
         )
     ]
     assert extracted_first_postings == correct_first_postings
@@ -204,9 +207,7 @@ def test_payee_predictions():
     """
     Verifies that the decorator adds predicted postings.
     """
-    transactions = PAYEE_IMPORTER.extract(
-        "dummy-data", existing_entries=TRAINING_DATA
-    )
+    transactions = PAYEE_IMPORTER.extract("dummy-data", existing=TRAINING_DATA)
     predicted_payees = [transaction.payee for transaction in transactions]
     assert predicted_payees == PAYEE_PREDICTIONS
 
@@ -218,7 +219,7 @@ def test_account_predictions():
     predicted_accounts = [
         entry.postings[-1].account
         for entry in POSTING_IMPORTER.extract(
-            "dummy-data", existing_entries=TRAINING_DATA
+            "dummy-data", existing=TRAINING_DATA
         )
     ]
     assert predicted_accounts == ACCOUNT_PREDICTIONS
