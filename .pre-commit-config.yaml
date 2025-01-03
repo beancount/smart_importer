@@ -2,7 +2,7 @@ exclude: "^docs/conf.py"
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.6.0
+  rev: v5.0.0
   hooks:
   - id: trailing-whitespace
   - id: check-added-large-files
@@ -18,13 +18,13 @@ repos:
     args: ['--fix=auto']
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.6.5
+  rev: v0.8.5
   hooks:
     - id: ruff
     - id: ruff-format
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.11.2
+  rev: v1.14.1
   hooks:
   -   id: mypy
       args: [--install-types, --non-interactive, --ignore-missing-imports]
