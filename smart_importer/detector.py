@@ -7,12 +7,16 @@ from typing import Callable
 
 from beancount.core import data
 from beangulp import Importer, similar
+from typing_extensions import deprecated
 
 from smart_importer.hooks import ImporterHook
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
+@deprecated(
+    "Use or override the deduplicate method on beangulp.Importer directly."
+)
 class DuplicateDetector(ImporterHook):
     """Class for duplicate detector importer helpers.
 
