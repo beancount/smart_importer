@@ -1,6 +1,7 @@
 """Tests for the `PredictPayees` and the `PredictPostings` decorator"""
 
 # pylint: disable=missing-docstring
+from beancount.core import data
 from beancount.parser import parser
 from beangulp import Importer
 
@@ -133,7 +134,9 @@ DENYLISTED_ACCOUNTS = ["Expenses:Denylisted"]
 
 
 class BasicTestImporter(Importer):
-    def extract(self, filepath, existing=None):
+    def extract(
+        self, filepath: str, existing: data.Directives
+    ) -> data.Directives:
         if filepath == "dummy-data":
             return TEST_DATA
         if filepath == "empty":
@@ -141,10 +144,10 @@ class BasicTestImporter(Importer):
         assert False
         return []
 
-    def account(self, filepath):
+    def account(self, filepath: str) -> str:
         return "Assets:US:BofA:Checking"
 
-    def identify(self, filepath):
+    def identify(self, filepath: str) -> bool:
         return True
 
 
@@ -155,39 +158,38 @@ POSTING_IMPORTER = apply_hooks(
 )
 
 
-def test_empty_training_data():
+def test_empty_training_data() -> None:
     """
     Verifies that the decorator leaves the narration intact.
     """
-    assert POSTING_IMPORTER.extract("dummy-data") == TEST_DATA
-    assert PAYEE_IMPORTER.extract("dummy-data") == TEST_DATA
+    assert POSTING_IMPORTER.extract("dummy-data", []) == TEST_DATA
+    assert PAYEE_IMPORTER.extract("dummy-data", []) == TEST_DATA
 
 
-def test_no_transactions():
+def test_no_transactions() -> None:
     """
     Should not crash when passed empty list of transactions.
     """
-    POSTING_IMPORTER.extract("empty")
-    PAYEE_IMPORTER.extract("empty")
-    POSTING_IMPORTER.extract("empty", existing=TRAINING_DATA)
-    PAYEE_IMPORTER.extract("empty", existing=TRAINING_DATA)
+    POSTING_IMPORTER.extract("empty", [])
+    PAYEE_IMPORTER.extract("empty", [])
+    POSTING_IMPORTER.extract("empty", TRAINING_DATA)
+    PAYEE_IMPORTER.extract("empty", TRAINING_DATA)
 
 
-def test_unchanged_narrations():
+def test_unchanged_narrations() -> None:
     """
     Verifies that the decorator leaves the narration intact
     """
     correct_narrations = [transaction.narration for transaction in TEST_DATA]
     extracted_narrations = [
         transaction.narration
-        for transaction in PAYEE_IMPORTER.extract(
-            "dummy-data", existing=TRAINING_DATA
-        )
+        for transaction in PAYEE_IMPORTER.extract("dummy-data", TRAINING_DATA)
+        if isinstance(transaction, data.Transaction)
     ]
     assert extracted_narrations == correct_narrations
 
 
-def test_unchanged_first_posting():
+def test_unchanged_first_posting() -> None:
     """
     Verifies that the decorator leaves the first posting intact
     """
@@ -196,30 +198,32 @@ def test_unchanged_first_posting():
     ]
     extracted_first_postings = [
         transaction.postings[0]
-        for transaction in PAYEE_IMPORTER.extract(
-            "dummy-data", existing=TRAINING_DATA
-        )
+        for transaction in PAYEE_IMPORTER.extract("dummy-data", TRAINING_DATA)
+        if isinstance(transaction, data.Transaction)
     ]
     assert extracted_first_postings == correct_first_postings
 
 
-def test_payee_predictions():
+def test_payee_predictions() -> None:
     """
     Verifies that the decorator adds predicted postings.
     """
-    transactions = PAYEE_IMPORTER.extract("dummy-data", existing=TRAINING_DATA)
-    predicted_payees = [transaction.payee for transaction in transactions]
+    transactions = PAYEE_IMPORTER.extract("dummy-data", TRAINING_DATA)
+    predicted_payees = [
+        transaction.payee
+        for transaction in transactions
+        if isinstance(transaction, data.Transaction)
+    ]
     assert predicted_payees == PAYEE_PREDICTIONS
 
 
-def test_account_predictions():
+def test_account_predictions() -> None:
     """
     Verifies that the decorator adds predicted postings.
     """
     predicted_accounts = [
         entry.postings[-1].account
-        for entry in POSTING_IMPORTER.extract(
-            "dummy-data", existing=TRAINING_DATA
-        )
+        for entry in POSTING_IMPORTER.extract("dummy-data", TRAINING_DATA)
+        if isinstance(entry, data.Transaction)
     ]
     assert predicted_accounts == ACCOUNT_PREDICTIONS

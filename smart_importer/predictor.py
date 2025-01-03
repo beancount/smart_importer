@@ -6,10 +6,10 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
+from beancount.core import data
 from beancount.core.data import (
-    ALL_DIRECTIVES,
     Close,
     Open,
     Transaction,
@@ -27,6 +27,7 @@ from smart_importer.hooks import ImporterHook
 from smart_importer.pipelines import get_pipeline
 
 if TYPE_CHECKING:
+    from beangulp import Importer
     from sklearn import Pipeline
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -53,11 +54,11 @@ class EntryPredictor(ImporterHook):
 
     def __init__(
         self,
-        predict=True,
-        overwrite=False,
+        predict: bool = True,
+        overwrite: bool = False,
         string_tokenizer: Callable[[str], list] | None = None,
         denylist_accounts: list[str] | None = None,
-    ):
+    ) -> None:
         super().__init__()
         self.training_data = None
         self.open_accounts: dict[str, str] = {}
@@ -65,13 +66,19 @@ class EntryPredictor(ImporterHook):
         self.pipeline: Pipeline | None = None
         self.is_fitted = False
         self.lock = threading.Lock()
-        self.account = None
+        self.account: str | None = None
 
         self.predict = predict
         self.overwrite = overwrite
         self.string_tokenizer = string_tokenizer
 
-    def __call__(self, importer, file, imported_entries, existing_entries):
+    def __call__(
+        self,
+        importer: Importer,
+        file: str,
+        imported_entries: data.Directives,
+        existing_entries: data.Directives,
+    ) -> data.Directives:
         """Predict attributes for imported transactions.
 
         Args:
@@ -157,7 +164,7 @@ class EntryPredictor(ImporterHook):
             for entry in self.training_data
         ]
 
-    def define_pipeline(self):
+    def define_pipeline(self) -> None:
         """Defines the machine learning pipeline based on given weights."""
 
         transformers = [
@@ -172,7 +179,7 @@ class EntryPredictor(ImporterHook):
             SVC(kernel="linear"),
         )
 
-    def train_pipeline(self):
+    def train_pipeline(self) -> None:
         """Train the machine learning pipeline."""
 
         self.is_fitted = False
@@ -187,11 +194,14 @@ class EntryPredictor(ImporterHook):
             self.is_fitted = True
             logger.debug("Only one target possible.")
         else:
+            assert self.pipeline is not None
             self.pipeline.fit(self.training_data, self.targets)
             self.is_fitted = True
             logger.debug("Trained the machine learning model.")
 
-    def process_entries(self, imported_entries) -> list[ALL_DIRECTIVES]:
+    def process_entries(
+        self, imported_entries: data.Directives
+    ) -> data.Directives:
         """Process imported entries.
 
         Transactions might be modified, all other entries are left as is.
@@ -206,7 +216,9 @@ class EntryPredictor(ImporterHook):
             imported_entries, enhanced_transactions
         )
 
-    def apply_prediction(self, entry, prediction):
+    def apply_prediction(
+        self, entry: data.Transaction, prediction: Any
+    ) -> data.Transaction:
         """Apply a single prediction to an entry.
 
         Args:
