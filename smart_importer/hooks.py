@@ -70,6 +70,15 @@ def apply_hooks(
 
         return imported_entries
 
-    importer.extract = patched_extract_method
-    importer.deduplicate = lambda entries, existing: None
+    importer.extract = patched_extract_method  # type: ignore
+
+    # pylint: disable=import-outside-toplevel
+    from smart_importer.detector import DuplicateDetector
+
+    if any(isinstance(hook, DuplicateDetector) for hook in hooks):
+        logger.warning(
+            "Use of DuplicateDetector detected - this is deprecated, "
+            "please use the beangulp.Importer.deduplicate method directly."
+        )
+        importer.deduplicate = lambda entries, existing: None  # type: ignore
     return importer

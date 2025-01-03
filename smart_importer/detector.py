@@ -1,8 +1,12 @@
 """Duplicate detector hook."""
 
-import logging
+from __future__ import annotations
 
-from beangulp import similar
+import logging
+from typing import Callable
+
+from beancount.core import data
+from beangulp import Importer, similar
 
 from smart_importer.hooks import ImporterHook
 
@@ -18,12 +22,23 @@ class DuplicateDetector(ImporterHook):
         entries to classify against.
     """
 
-    def __init__(self, comparator=None, window_days=2):
+    def __init__(
+        self,
+        comparator: Callable[[data.Directive, data.Directive], bool]
+        | None = None,
+        window_days: int = 2,
+    ) -> None:
         super().__init__()
         self.comparator = comparator
         self.window_days = window_days
 
-    def __call__(self, importer, file, imported_entries, existing):
+    def __call__(
+        self,
+        importer: Importer,
+        file: str,
+        imported_entries: data.Directives,
+        existing: data.Directives,
+    ) -> data.Directives:
         """Add duplicate metadata for imported transactions.
 
         Args:
