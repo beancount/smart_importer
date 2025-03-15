@@ -146,7 +146,11 @@ class EntryPredictor(ImporterHook):
                 return False
             if pos.account in self.denylist_accounts:
                 return False
-            if self.account == pos.account:
+            if self.account == pos.account or (
+                self.account
+                and
+                pos.account.startswith(self.account + ":")
+            ):
                 found_import_account = True
         return found_import_account or not self.account
 
