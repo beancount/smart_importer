@@ -39,10 +39,10 @@ an existing CSV importer:
 
 .. code:: python
 
-    from beancount.ingest.importers import csv
-    from beancount.ingest.importers.csv import Col
+    from beangulp.importers import csv
+    from beangulp.importers.csv import Col
 
-    from smart_importer import apply_hooks, PredictPostings
+    from smart_importer import PredictPostings
 
 
     class MyBankImporter(csv.Importer):
@@ -63,7 +63,11 @@ an existing CSV importer:
 
 
     CONFIG = [
-        apply_hooks(MyBankImporter(account='Assets:MyBank:MyAccount'), [PredictPostings()])
+        MyBankImporter(account='Assets:MyBank:MyAccount'),
+    ]
+
+    HOOKS = [
+        PredictPostings().hook
     ]
 
 
@@ -82,53 +86,77 @@ Let's assume you have created an importer for "MyBank" called
 
 .. code:: python
 
-    class MyBankImporter(importer.ImporterProtocol):
+    class MyBankImporter(importer.Importer):
         """My existing importer"""
         # the actual importer logic would be here...
 
 Note:
-This documentation assumes you already know how to create Beancount importers.
+This documentation assumes you already know how to create Beancount/Beangulp importers.
 Relevant documentation can be found in the `beancount import documentation
 <https://beancount.github.io/docs/importing_external_data.html>`__.
-With the functionality of beancount.ingest, users can
+With the functionality of beangulp, users can
 write their own importers and use them to convert downloaded bank statements
 into lists of Beancount entries.
-An example is provided as part of beancount v2's source code under
-`examples/ingest/office
-<https://github.com/beancount/beancount/tree/v2/examples/ingest/office>`__.
+Examples are provided as part of beangulps source code under
+`examples/importers
+<https://github.com/beancount/beangulp/tree/master/examples/importers>`__.
 
 smart_importer only works by appending onto incomplete single-legged postings
 (i.e. It will not work by modifying postings with accounts like "Expenses:TODO").
 The `extract` method in the importer should follow the
-`latest interface <https://github.com/beancount/beancount/blob/v2/beancount/ingest/importer.py#L61>`__
+`latest interface <https://github.com/beancount/beangulp/blob/master/beangulp/importer.py>`__
 and include an `existing_entries` argument.
 
-Applying `smart_importer` hooks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using `smart_importer` as a beangulp hook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Any Beancount importer can be converted into a smart importer by applying one
-of the following hooks:
+Beangulp has the notation of hooks, for some detailed example see `beangulp hook example <https://github.com/beancount/beangulp/blob/ead8a2517d4f34c7ac7d48e4ef6d21a88be7363c/examples/import.py#L50>`.
+This can be used to apply smart importer to all importers.
 
 * ``PredictPostings`` - predict the list of postings.
 * ``PredictPayees``- predict the payee of the transaction.
-* ``DuplicateDetector`` - detect duplicates
 
 For example, to convert an existing ``MyBankImporter`` into a smart importer:
 
 .. code:: python
 
     from your_custom_importer import MyBankImporter
-    from smart_importer import apply_hooks, PredictPayees, PredictPostings
-
-    my_bank_importer =  MyBankImporter('whatever', 'config', 'is', 'needed')
-    apply_hooks(my_bank_importer, [PredictPostings(), PredictPayees()])
+    from smart_importer import PredictPayees, PredictPostings
 
     CONFIG = [
-        my_bank_importer,
+        MyBankImporter('whatever', 'config', 'is', 'needed'),
     ]
 
-Note that the importer hooks need to be applied to an importer instance, as
-shown above.
+    HOOKS = [
+        PredictPostings().hook,
+        PredictPayees().hook
+    ]
+
+Wrapping an importer to become a  `smart_importer`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Instead of using a beangulp hook, it's possible to wrap any importer to become a smart importer, this will modify only this importer.
+
+* ``PredictPostings`` - predict the list of postings.
+* ``PredictPayees``- predict the payee of the transaction.
+
+For example, to convert an existing ``MyBankImporter`` into a smart importer:
+
+.. code:: python
+
+    from your_custom_importer import MyBankImporter
+    from smart_importer import PredictPayees, PredictPostings
+
+    CONFIG = [
+        PredictPostings().wrap(
+            PredictPayees().wrap(
+                MyBankImporter('whatever', 'config', 'is', 'needed')
+            )
+        ),
+    ]
+
+    HOOKS = [
+    ]
 
 
 Specifying Training Data
@@ -137,7 +165,7 @@ Specifying Training Data
 The ``smart_importer`` hooks need training data, i.e. an existing list of
 transactions in order to be effective. Training data can be specified by
 calling bean-extract with an argument that references existing Beancount
-transactions, e.g., ``bean-extract -f existing_transactions.beancount``. When
+transactions, e.g., ``import.py extract -e existing_transactions.beancount``. When
 using the importer in Fava, the existing entries are used as training data
 automatically.
 
