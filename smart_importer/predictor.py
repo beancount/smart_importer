@@ -16,6 +16,7 @@ from beancount.core.data import (
     filter_txns,
 )
 from beancount.core.data import sorted as beancount_sorted
+from beangulp.importer import Importer
 from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.svm import SVC
 
@@ -23,17 +24,54 @@ from smart_importer.entries import (
     merge_non_transaction_entries,
     set_entry_attribute,
 )
-from smart_importer.hooks import ImporterHook
 from smart_importer.pipelines import get_pipeline
 
 if TYPE_CHECKING:
-    from beangulp import Importer
     from sklearn import Pipeline
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-class EntryPredictor(ImporterHook):
+class ImporterWrapper(Importer):
+    """Wrapper around an importer for enriching it with smart importer logic.
+
+    Args:
+        importer: The importer to wrap
+        predictor: The entry predictor
+    """
+
+    def __init__(self, importer: Importer, predictor: EntryPredictor):
+        self.importer = importer
+        self.predictor = predictor
+
+    def identify(self, filepath: str) -> bool:
+        return self.importer.identify(filepath)
+
+    def account(self, filepath):
+        return self.importer.account(filepath)
+
+    def date(self, filepath):
+        return self.importer.date(filepath)
+
+    def filename(self, filepath):
+        return self.importer.filename(filepath)
+
+    def deduplicate(self, entries, existing):
+        return self.importer.deduplicate(entries, existing)
+
+    def sort(self, entries, reverse=False):
+        return self.importer.sort(entries, reverse)
+
+    def extract(self, filepath, existing):
+        entries = self.importer.extract(filepath, existing)
+        account = self.importer.account(filepath)
+        modified_entries = self.predictor.hook(
+            [(filepath, entries, account, self.importer)], existing
+        )
+        return modified_entries[0][1]
+
+
+class EntryPredictor:
     """Base class for machine learning importer helpers.
 
     Args:
@@ -66,19 +104,25 @@ class EntryPredictor(ImporterHook):
         self.pipeline: Pipeline | None = None
         self.is_fitted = False
         self.lock = threading.Lock()
-        self.account: str | None = None
-
         self.predict = predict
         self.overwrite = overwrite
         self.string_tokenizer = string_tokenizer
 
-    def __call__(
+    def wrap(self, importer: Importer):
+        """Wrap an existing importer with smart importer logic.
+
+        Args:
+            importer: The importer to wrap.
+        """
+        return ImporterWrapper(importer, self)
+
+    def hook(
         self,
-        importer: Importer,
-        file: str,
-        imported_entries: data.Directives,
+        imported_entries: list[
+            tuple[str, data.Entries, data.Account, Importer]
+        ],
         existing_entries: data.Directives,
-    ) -> data.Directives:
+    ) -> list[tuple[str, data.Entries, data.Account, Importer]]:
         """Predict attributes for imported transactions.
 
         Args:
@@ -89,13 +133,21 @@ class EntryPredictor(ImporterHook):
         Returns:
             A list of entries, modified by this predictor.
         """
-        logging.debug("Running %s for file %s", self.__class__.__name__, file)
-        self.account = importer.account(file)
         self.load_training_data(existing_entries)
         with self.lock:
             self.define_pipeline()
             self.train_pipeline()
-            return self.process_entries(imported_entries)
+            result = []
+            for filename, entries, account, importer in imported_entries:
+                result.append(
+                    (
+                        filename,
+                        self.process_entries(entries),
+                        account,
+                        importer,
+                    )
+                )
+            return result
 
     def load_open_accounts(self, existing_entries):
         """Return map of accounts which have been opened but not closed."""
@@ -131,24 +183,20 @@ class EntryPredictor(ImporterHook):
                 )
         else:
             logger.debug(
-                "Loaded training data with %d transactions for account %s, "
+                "Loaded training data with %d transactions, "
                 "filtered from %d total transactions",
                 len(self.training_data),
-                self.account,
                 len(all_transactions),
             )
 
     def training_data_filter(self, txn):
         """Filter function for the training data."""
-        found_import_account = False
         for pos in txn.postings:
             if pos.account not in self.open_accounts:
                 return False
             if pos.account in self.denylist_accounts:
                 return False
-            if self.account == pos.account:
-                found_import_account = True
-        return found_import_account or not self.account
+        return True
 
     @property
     def targets(self):
@@ -238,10 +286,8 @@ class EntryPredictor(ImporterHook):
         self, transactions: list[Transaction]
     ) -> list[Transaction]:
         """Process a list of transactions."""
-
         if not self.is_fitted or not transactions:
             return transactions
-
         if self.predict:
             if len(set(self.targets)) == 1:
                 transactions = [

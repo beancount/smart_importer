@@ -12,9 +12,8 @@ import pytest
 from beancount.core import data
 from beancount.core.compare import stable_hash_namedtuple
 from beancount.parser import parser
-from beangulp import Importer
 
-from smart_importer import PredictPostings, apply_hooks
+from smart_importer import PredictPostings
 
 
 def chinese_string_tokenizer(pre_tokenizer_string: str) -> list[str]:
@@ -59,23 +58,11 @@ def test_testset(
     # pylint: disable=unbalanced-tuple-unpacking
     imported, training_data, expected = _load_testset(testset)
 
-    class DummyImporter(Importer):
-        def extract(
-            self, filepath: str, existing: data.Directives
-        ) -> data.Directives:
-            return imported
+    imported_transactions = PredictPostings(
+        string_tokenizer=string_tokenizer
+    ).hook([("file", imported, "account", "importer")], training_data)
 
-        def account(self, filepath: str) -> str:
-            return ""
-
-        def identify(self, filepath: str) -> bool:
-            return True
-
-    importer = DummyImporter()
-    apply_hooks(importer, [PredictPostings(string_tokenizer=string_tokenizer)])
-    imported_transactions = importer.extract("dummy-data", training_data)
-
-    for txn1, txn2 in zip(imported_transactions, expected):
+    for txn1, txn2 in zip(imported_transactions[0][1], expected):
         if _hash(txn1) != _hash(txn2):
             pprint.pprint(txn1)
             pprint.pprint(txn2)

@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v1.0 (2025-05-23)
+-----------------
+
+Drop legacy way to hook and either use a wrap() method to wrap an importer or depend on standard beangulp hook functionality.
+
+For migration, please see the new way to either hook it in as a beangulp hook or by using the wrap method.
+
+
+
 v0.6 (2025-01-06)
 -----------------
 
