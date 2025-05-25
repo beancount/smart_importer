@@ -44,6 +44,10 @@ class ImporterWrapper(Importer):
         self.importer = importer
         self.predictor = predictor
 
+    @property
+    def name(self) -> str:
+        return self.importer.name
+
     def identify(self, filepath: str) -> bool:
         return self.importer.identify(filepath)
 
