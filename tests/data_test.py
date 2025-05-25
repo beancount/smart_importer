@@ -44,23 +44,23 @@ def _load_testset(
 
 
 @pytest.mark.parametrize(
-    "testset, string_tokenizer",
+    "testset, account, string_tokenizer",
     [
-        ("simple", None),
-        ("single-account", None),
-        ("multiaccounts", None),
-        ("chinese", chinese_string_tokenizer),
+        ("simple", "Assets:US:BofA:Checking", None),
+        ("single-account", "Assets:US:BofA:Checking", None),
+        ("multiaccounts", "Assets:US:EUR", None),
+        ("chinese", "Assets:US:BofA:Checking", chinese_string_tokenizer),
     ],
 )
 def test_testset(
-    testset: str, string_tokenizer: Callable[[str], list[str]]
+    testset: str, account: str, string_tokenizer: Callable[[str], list[str]]
 ) -> None:
     # pylint: disable=unbalanced-tuple-unpacking
     imported, training_data, expected = _load_testset(testset)
 
     imported_transactions = PredictPostings(
         string_tokenizer=string_tokenizer
-    ).hook([("file", imported, "account", "importer")], training_data)
+    ).hook([("file", imported, account, "importer")], training_data)
 
     for txn1, txn2 in zip(imported_transactions[0][1], expected):
         if _hash(txn1) != _hash(txn2):

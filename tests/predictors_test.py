@@ -136,14 +136,14 @@ class DummyImporter(Importer):
         return True
 
     def account(self, filepath):
-        return "DummyAccount"
+        return "Assets:US:BofA:Checking"
 
     def extract(self, filepath, existing):
         return TEST_DATA
 
 
 def create_dummy_imports(data):
-    return [("file", data, "account", "importer")]
+    return [("file", data, "Assets:US:BofA:Checking", "importer")]
 
 
 def test_empty_training_data():
@@ -237,3 +237,26 @@ def test_account_predictions_wrap() -> None:
     print(entries)
     predicted_accounts = [entry.postings[-1].account for entry in entries]
     assert predicted_accounts == ACCOUNT_PREDICTIONS
+
+
+def test_account_predictions_multiple() -> None:
+    """
+    Verifies that it's possible to predict multiple importer results
+    """
+    import_results = [
+        ("file1", TEST_DATA, "Assets:US:BofA:Checking", "importer1"),
+        ("file1", TEST_DATA, "Assets:US:BofA:Checking", "importer2"),
+    ]
+    predicted_results = PredictPostings(
+        denylist_accounts=DENYLISTED_ACCOUNTS
+    ).hook(import_results, TRAINING_DATA)
+
+    assert len(predicted_results) == 2
+    predicted_accounts1 = [
+        entry.postings[-1].account for entry in predicted_results[0][1]
+    ]
+    predicted_accounts2 = [
+        entry.postings[-1].account for entry in predicted_results[1][1]
+    ]
+    assert predicted_accounts1 == ACCOUNT_PREDICTIONS
+    assert predicted_accounts2 == ACCOUNT_PREDICTIONS
