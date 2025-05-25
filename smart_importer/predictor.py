@@ -137,12 +137,16 @@ class EntryPredictor:
         Returns:
             A list of entries, modified by this predictor.
         """
-        self.load_training_data(existing_entries)
         with self.lock:
+            all_entries = existing_entries or []
+            self.load_open_accounts(all_entries)
+            all_transactions = list(filter_txns(existing_entries))
             self.define_pipeline()
-            self.train_pipeline()
+
             result = []
             for filename, entries, account, importer in imported_entries:
+                self.load_training_data(all_transactions, account)
+                self.train_pipeline()
                 result.append(
                     (
                         filename,
@@ -166,13 +170,12 @@ class EntryPredictor:
 
         self.open_accounts = account_map
 
-    def load_training_data(self, existing_entries):
+    def load_training_data(self, all_transactions, account):
         """Load training data, i.e., a list of Beancount entries."""
-        all_entries = existing_entries or []
-        self.load_open_accounts(all_entries)
-        all_transactions = list(filter_txns(all_entries))
         self.training_data = [
-            txn for txn in all_transactions if self.training_data_filter(txn)
+            txn
+            for txn in all_transactions
+            if self.training_data_filter(txn, account)
         ]
         if not self.training_data:
             if len(all_transactions) > 0:
@@ -193,14 +196,18 @@ class EntryPredictor:
                 len(all_transactions),
             )
 
-    def training_data_filter(self, txn):
+    def training_data_filter(self, txn, account):
         """Filter function for the training data."""
+        found_import_account = False
         for pos in txn.postings:
             if pos.account not in self.open_accounts:
                 return False
             if pos.account in self.denylist_accounts:
                 return False
-        return True
+            if not account or pos.account.startswith(account):
+                found_import_account = True
+
+        return found_import_account
 
     @property
     def targets(self):
