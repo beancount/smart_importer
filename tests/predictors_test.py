@@ -1,12 +1,21 @@
 """Tests for the `PredictPayees` and the `PredictPostings` decorator"""
 
-# pylint: disable=missing-docstring
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from beancount.core.data import Transaction
 from beancount.parser import parser
-from beangulp import Importer
+from beangulp.importer import Importer
 
 from smart_importer import PredictPayees, PredictPostings
 
-TEST_DATA, _, __ = parser.parse_string(
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from beancount.core.data import Directive
+
+TEST_DATA_RAW, _, __ = parser.parse_string(
     """
 2017-01-06 * "Farmer Fresh" "Buying groceries"
   Assets:US:BofA:Checking  -2.50 USD
@@ -36,6 +45,8 @@ TEST_DATA, _, __ = parser.parse_string(
   Assets:US:BofA:Checking  -13.37 USD
 """
 )
+TEST_DATA = [t for t in TEST_DATA_RAW if isinstance(t, Transaction)]
+
 
 TRAINING_DATA, _, __ = parser.parse_string(
     """
@@ -132,21 +143,28 @@ DENYLISTED_ACCOUNTS = ["Expenses:Denylisted"]
 
 
 class DummyImporter(Importer):
-    def identify(self, filepath):
+    """A dummy importer for the test cases."""
+
+    def identify(self, filepath: str) -> bool:
         return True
 
-    def account(self, filepath):
+    def account(self, filepath: str) -> str:
         return "Assets:US:BofA:Checking"
 
-    def extract(self, filepath, existing):
-        return TEST_DATA
+    def extract(
+        self, filepath: str, existing: list[Directive]
+    ) -> list[Directive]:
+        return list(TEST_DATA)
 
 
-def create_dummy_imports(data):
-    return [("file", data, "Assets:US:BofA:Checking", "importer")]
+def create_dummy_imports(
+    data: Sequence[Directive],
+) -> list[tuple[str, list[Directive], str, Importer]]:
+    """Create the argument list for a beangulp hook."""
+    return [("file", list(data), "Assets:US:BofA:Checking", DummyImporter())]
 
 
-def test_empty_training_data():
+def test_empty_training_data() -> None:
     """
     Verifies that the decorator leaves the narration intact.
     """
@@ -182,6 +200,7 @@ def test_unchanged_narrations() -> None:
         for transaction in PredictPayees().hook(
             create_dummy_imports(TEST_DATA), TRAINING_DATA
         )[0][1]
+        if isinstance(transaction, Transaction)
     ]
     assert extracted_narrations == correct_narrations
 
@@ -198,6 +217,7 @@ def test_unchanged_first_posting() -> None:
         for transaction in PredictPayees().hook(
             create_dummy_imports(TEST_DATA), TRAINING_DATA
         )[0][1]
+        if isinstance(transaction, Transaction)
     ]
     assert extracted_first_postings == correct_first_postings
 
@@ -209,7 +229,11 @@ def test_payee_predictions() -> None:
     transactions = PredictPayees().hook(
         create_dummy_imports(TEST_DATA), TRAINING_DATA
     )[0][1]
-    predicted_payees = [transaction.payee for transaction in transactions]
+    predicted_payees = [
+        transaction.payee
+        for transaction in transactions
+        if isinstance(transaction, Transaction)
+    ]
     assert predicted_payees == PAYEE_PREDICTIONS
 
 
@@ -222,6 +246,7 @@ def test_account_predictions() -> None:
         for entry in PredictPostings(
             denylist_accounts=DENYLISTED_ACCOUNTS
         ).hook(create_dummy_imports(TEST_DATA), TRAINING_DATA)[0][1]
+        if isinstance(entry, Transaction)
     ]
     assert predicted_accounts == ACCOUNT_PREDICTIONS
 
@@ -235,7 +260,11 @@ def test_account_predictions_wrap() -> None:
     ).wrap(DummyImporter())
     entries = wrapped_importer.extract("dummyFile", TRAINING_DATA)
     print(entries)
-    predicted_accounts = [entry.postings[-1].account for entry in entries]
+    predicted_accounts = [
+        entry.postings[-1].account
+        for entry in entries
+        if isinstance(entry, Transaction)
+    ]
     assert predicted_accounts == ACCOUNT_PREDICTIONS
 
 
@@ -243,20 +272,36 @@ def test_account_predictions_multiple() -> None:
     """
     Verifies that it's possible to predict multiple importer results
     """
-    import_results = [
-        ("file1", TEST_DATA, "Assets:US:BofA:Checking", "importer1"),
-        ("file1", TEST_DATA, "Assets:US:BofA:Checking", "importer2"),
-    ]
     predicted_results = PredictPostings(
         denylist_accounts=DENYLISTED_ACCOUNTS
-    ).hook(import_results, TRAINING_DATA)
+    ).hook(
+        [
+            (
+                "file1",
+                list(TEST_DATA),
+                "Assets:US:BofA:Checking",
+                DummyImporter(),
+            ),
+            (
+                "file1",
+                list(TEST_DATA),
+                "Assets:US:BofA:Checking",
+                DummyImporter(),
+            ),
+        ],
+        TRAINING_DATA,
+    )
 
     assert len(predicted_results) == 2
     predicted_accounts1 = [
-        entry.postings[-1].account for entry in predicted_results[0][1]
+        entry.postings[-1].account
+        for entry in predicted_results[0][1]
+        if isinstance(entry, Transaction)
     ]
     predicted_accounts2 = [
-        entry.postings[-1].account for entry in predicted_results[1][1]
+        entry.postings[-1].account
+        for entry in predicted_results[1][1]
+        if isinstance(entry, Transaction)
     ]
     assert predicted_accounts1 == ACCOUNT_PREDICTIONS
     assert predicted_accounts2 == ACCOUNT_PREDICTIONS

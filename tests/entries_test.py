@@ -1,8 +1,10 @@
 """Tests for the entry helpers."""
 
+# pylint: disable=missing-docstring
+
 from __future__ import annotations
 
-# pylint: disable=missing-docstring
+from beancount.core.data import Transaction
 from beancount.parser import parser
 
 from smart_importer.entries import update_postings
@@ -21,6 +23,7 @@ TEST_DATA, _errors, _options = parser.parse_string(
 
 def test_update_postings() -> None:
     txn0 = TEST_DATA[0]
+    assert isinstance(txn0, Transaction)
 
     def _update(accounts: list[str]) -> list[tuple[str, bool]]:
         """Update, get accounts and whether this is the original posting."""
@@ -47,4 +50,5 @@ def test_update_postings() -> None:
     ]
 
     txn1 = TEST_DATA[1]
+    assert isinstance(txn1, Transaction)
     assert update_postings(txn1, ["Assets:Other"]) == txn1

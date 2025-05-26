@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from beancount.core.data import Posting, Transaction
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from typing import Any
+
+    from beancount.core.data import Directive
 
 
 def update_postings(
@@ -33,14 +41,19 @@ def update_postings(
     return transaction._replace(postings=new_postings)
 
 
-def set_entry_attribute(entry, attribute, value, overwrite=False):
+def set_entry_attribute(
+    entry: Transaction, attribute: str, value: Any, overwrite: bool = False
+) -> Transaction:
     """Set an entry attribute."""
     if value and (not getattr(entry, attribute) or overwrite):
         entry = entry._replace(**{attribute: value})
     return entry
 
 
-def merge_non_transaction_entries(imported_entries, enhanced_transactions):
+def merge_non_transaction_entries(
+    imported_entries: Sequence[Directive],
+    enhanced_transactions: Sequence[Directive],
+) -> list[Directive]:
     """Merge modified transactions back into a list of entries."""
     enhanced_entries = []
     enhanced_transactions_iter = iter(enhanced_transactions)

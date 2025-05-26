@@ -1,19 +1,24 @@
 """Tests for the `PredictPostings` decorator"""
 
+# pylint: disable=missing-docstring
+
 from __future__ import annotations
 
-# pylint: disable=missing-docstring
 import os
 import pprint
 import re
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import pytest
-from beancount.core import data
 from beancount.core.compare import stable_hash_namedtuple
 from beancount.parser import parser
 
 from smart_importer import PredictPostings
+
+from .predictors_test import DummyImporter
+
+if TYPE_CHECKING:
+    from beancount.core import data
 
 
 def chinese_string_tokenizer(pre_tokenizer_string: str) -> list[str]:
@@ -40,7 +45,7 @@ def _load_testset(
         assert not errors
         parsed_sections.append(entries)
     assert len(parsed_sections) == 3
-    return tuple(parsed_sections)
+    return parsed_sections[0], parsed_sections[1], parsed_sections[2]
 
 
 @pytest.mark.parametrize(
@@ -60,7 +65,7 @@ def test_testset(
 
     imported_transactions = PredictPostings(
         string_tokenizer=string_tokenizer
-    ).hook([("file", imported, account, "importer")], training_data)
+    ).hook([("file", imported, account, DummyImporter())], training_data)
 
     for txn1, txn2 in zip(imported_transactions[0][1], expected):
         if _hash(txn1) != _hash(txn2):
