@@ -2,6 +2,7 @@
 
 # pylint: disable=missing-docstring
 import numpy as np
+from beancount.core.data import Transaction
 from beancount.parser import parser
 
 from smart_importer.pipelines import (
@@ -32,11 +33,11 @@ TEST_DATA, _, __ = parser.parse_string(
   Expenses:Food:Coffee
 """
 )
-TEST_TRANSACTIONS = TEST_DATA[3:]
+TEST_TRANSACTIONS = [t for t in TEST_DATA[3:] if isinstance(t, Transaction)]
 TEST_TRANSACTION = TEST_TRANSACTIONS[0]
 
 
-def test_get_payee():
+def test_get_payee() -> None:
     assert AttrGetter("payee").transform(TEST_TRANSACTIONS) == [
         "Farmer Fresh",
         "Starbucks",
@@ -45,7 +46,7 @@ def test_get_payee():
     ]
 
 
-def test_get_narration():
+def test_get_narration() -> None:
     assert AttrGetter("narration").transform(TEST_TRANSACTIONS) == [
         "Buying groceries",
         "Coffee",
@@ -54,7 +55,7 @@ def test_get_narration():
     ]
 
 
-def test_get_metadata():
+def test_get_metadata() -> None:
     txn = TEST_TRANSACTION
     txn.meta["attr"] = "value"
     assert AttrGetter("meta.attr").transform([txn]) == ["value"]
@@ -66,7 +67,7 @@ def test_get_metadata():
     ]
 
 
-def test_get_day_of_month():
+def test_get_day_of_month() -> None:
     get_day = txn_attr_getter("date.day")
     assert list(map(get_day, TEST_TRANSACTIONS)) == [6, 7, 7, 8]
 

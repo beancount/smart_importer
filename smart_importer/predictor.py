@@ -8,7 +8,6 @@ import logging
 import threading
 from typing import TYPE_CHECKING, Any, Callable
 
-from beancount.core import data
 from beancount.core.data import (
     Close,
     Open,
@@ -16,7 +15,6 @@ from beancount.core.data import (
     filter_txns,
 )
 from beancount.core.data import sorted as beancount_sorted
-from beangulp.importer import Importer
 from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.svm import SVC
 
@@ -25,54 +23,14 @@ from smart_importer.entries import (
     set_entry_attribute,
 )
 from smart_importer.pipelines import get_pipeline
+from smart_importer.wrapper import ImporterWrapper
 
 if TYPE_CHECKING:
+    from beancount.core import data
+    from beangulp.importer import Importer
     from sklearn import Pipeline
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
-
-
-class ImporterWrapper(Importer):
-    """Wrapper around an importer for enriching it with smart importer logic.
-
-    Args:
-        importer: The importer to wrap
-        predictor: The entry predictor
-    """
-
-    def __init__(self, importer: Importer, predictor: EntryPredictor):
-        self.importer = importer
-        self.predictor = predictor
-
-    @property
-    def name(self) -> str:
-        return self.importer.name
-
-    def identify(self, filepath: str) -> bool:
-        return self.importer.identify(filepath)
-
-    def account(self, filepath):
-        return self.importer.account(filepath)
-
-    def date(self, filepath):
-        return self.importer.date(filepath)
-
-    def filename(self, filepath):
-        return self.importer.filename(filepath)
-
-    def deduplicate(self, entries, existing):
-        return self.importer.deduplicate(entries, existing)
-
-    def sort(self, entries, reverse=False):
-        return self.importer.sort(entries, reverse)
-
-    def extract(self, filepath, existing):
-        entries = self.importer.extract(filepath, existing)
-        account = self.importer.account(filepath)
-        modified_entries = self.predictor.hook(
-            [(filepath, entries, account, self.importer)], existing
-        )
-        return modified_entries[0][1]
 
 
 class EntryPredictor:
@@ -98,12 +56,12 @@ class EntryPredictor:
         self,
         predict: bool = True,
         overwrite: bool = False,
-        string_tokenizer: Callable[[str], list] | None = None,
+        string_tokenizer: Callable[[str], list[str]] | None = None,
         denylist_accounts: list[str] | None = None,
     ) -> None:
         super().__init__()
-        self.training_data = None
-        self.open_accounts: dict[str, str] = {}
+        self.training_data: list[Transaction] | None = None
+        self.open_accounts: dict[str, Open] = {}
         self.denylist_accounts = set(denylist_accounts or [])
         self.pipeline: Pipeline | None = None
         self.is_fitted = False
@@ -112,7 +70,7 @@ class EntryPredictor:
         self.overwrite = overwrite
         self.string_tokenizer = string_tokenizer
 
-    def wrap(self, importer: Importer):
+    def wrap(self, importer: Importer) -> ImporterWrapper:
         """Wrap an existing importer with smart importer logic.
 
         Args:
@@ -123,10 +81,10 @@ class EntryPredictor:
     def hook(
         self,
         imported_entries: list[
-            tuple[str, data.Entries, data.Account, Importer]
+            tuple[str, data.Directives, data.Account, Importer]
         ],
         existing_entries: data.Directives,
-    ) -> list[tuple[str, data.Entries, data.Account, Importer]]:
+    ) -> list[tuple[str, data.Directives, data.Account, Importer]]:
         """Predict attributes for imported transactions.
 
         Args:
@@ -157,7 +115,7 @@ class EntryPredictor:
                 )
             return result
 
-    def load_open_accounts(self, existing_entries):
+    def load_open_accounts(self, existing_entries: data.Directives) -> None:
         """Return map of accounts which have been opened but not closed."""
         account_map = {}
 
@@ -170,7 +128,9 @@ class EntryPredictor:
 
         self.open_accounts = account_map
 
-    def load_training_data(self, all_transactions, account):
+    def load_training_data(
+        self, all_transactions: list[Transaction], account: str
+    ) -> None:
         """Load training data, i.e., a list of Beancount entries."""
         self.training_data = [
             txn
@@ -196,7 +156,7 @@ class EntryPredictor:
                 len(all_transactions),
             )
 
-    def training_data_filter(self, txn, account):
+    def training_data_filter(self, txn: Transaction, account: str) -> bool:
         """Filter function for the training data."""
         found_import_account = False
         for pos in txn.postings:
@@ -210,7 +170,7 @@ class EntryPredictor:
         return found_import_account
 
     @property
-    def targets(self):
+    def targets(self) -> list[str]:
         """The training targets for the given training data.
 
         Returns:
@@ -218,6 +178,7 @@ class EntryPredictor:
         """
         if not self.attribute:
             raise NotImplementedError
+        assert self.training_data is not None
         return [
             getattr(entry, self.attribute) or ""
             for entry in self.training_data
@@ -276,8 +237,8 @@ class EntryPredictor:
         )
 
     def apply_prediction(
-        self, entry: data.Transaction, prediction: Any
-    ) -> data.Transaction:
+        self, entry: Transaction, prediction: Any
+    ) -> Transaction:
         """Apply a single prediction to an entry.
 
         Args:
