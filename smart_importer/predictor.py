@@ -158,6 +158,9 @@ class EntryPredictor:
 
     def training_data_filter(self, txn: Transaction, account: str) -> bool:
         """Filter function for the training data."""
+        if len(txn.postings) < 2:
+            return False
+
         found_import_account = False
         for pos in txn.postings:
             if pos.account not in self.open_accounts:
