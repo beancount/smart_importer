@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v1.1 (2025-10-17)
+-----------------
+
+* Ignore single posting transactions for training to address #149
+
+
 v1.0 (2025-05-23)
 -----------------
 
