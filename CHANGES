@@ -1,10 +1,17 @@
 Changelog
 =========
 
-v1.1 (2025-10-17)
+v1.2 (2025-10-17)
 -----------------
 
 * Ignore single posting transactions for training to address #149
+
+
+v1.1 (2025-05-25)
+-----------------
+
+* Forward name of the actual importer when wrapping, fixes #143 by @tarioch in #145
+* Training pipeline specifically for each importer result and filter ba… by @tarioch in #146
 
 
 v1.0 (2025-05-23)
