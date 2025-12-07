@@ -234,3 +234,39 @@ In your importer code, you can then pass `jieba` to be used as tokenizer:
     tokenizer = lambda s: list(jieba.cut(s))
 
     predictor = PredictPostings(string_tokenizer=tokenizer)
+
+
+Privacy
+-------
+
+smart_importer uses machine learning (artificial intelligence, AI) algorithms in an ethical, privacy-conscious way:
+All data processing happens on the local machine; no data is sent to or retrieved from external servers or the cloud. 
+All the code, including the machine learning implementation, is open-source.
+
+Model: 
+The machine learning model used in smart_importer is a classification model.
+The goal of the classification model is to predict transaction attributes, 
+such as postings/accounts and payee names, 
+in order to reduce the manual effort when importing transactions.
+The model is implemented using the open-source `scikit-learn <https://scikit-learn.org/>`__ library,
+specifically using scikit-learn's `SVC (support vector machine) <https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html>`__ implementation.
+
+Training data: 
+The model is trained on historical transactions from your Beancount ledger.
+This training happens on-the-fly when the import process is started, by reading ``existing_entries`` from the importer.
+The trained model is used locally on your machine during the import process, as follows.
+
+Input:
+The input data are the transactions to be imported.
+Typically, these are transactions with a single posting, where one posting (e.g., the bank account) is known and the other one is missing.
+
+Output: 
+The output data are transactions with predicted second postings and/or other predicted transaction attributes.
+
+Accuracy and Feedback Loops:
+The effectiveness of the model depends on the volume and diversity of your historical data — small or homogeneous datasets may result in poor predictions. 
+Predictions are made automatically when importing new transactions, but users should always review them for accuracy before committing them to the ledger.
+Users can manually adjust predictions (e.g., change the payee or account) and save the corrected transactions to their ledger. 
+These corrections are then used as training data for future predictions, allowing the accuracy to improve over time.
+
+The smart_importer project is fully open source, meaning you can inspect and modify the code as needed.
