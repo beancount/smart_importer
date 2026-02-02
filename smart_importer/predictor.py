@@ -132,6 +132,7 @@ class EntryPredictor:
         self, all_transactions: list[Transaction], account: str
     ) -> None:
         """Load training data, i.e., a list of Beancount entries."""
+        self.account = account
         self.training_data = [
             txn
             for txn in all_transactions

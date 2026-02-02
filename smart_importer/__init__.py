@@ -27,11 +27,20 @@ class PredictPostings(EntryPredictor):
     def targets(self) -> list[str]:
         assert self.training_data is not None
         return [
-            " ".join(sorted(posting.account for posting in txn.postings))
+            " ".join(
+                sorted(
+                    posting.account
+                    for posting in txn.postings
+                    if posting.account != self.account
+                )
+            )
             for txn in self.training_data
         ]
 
     def apply_prediction(
         self, entry: Transaction, prediction: str
     ) -> Transaction:
-        return update_postings(entry, prediction.split(" "))
+        accounts = prediction.split(" ")
+        if self.account:
+            accounts.insert(0, self.account)
+        return update_postings(entry, accounts)

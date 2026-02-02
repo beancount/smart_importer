@@ -305,3 +305,32 @@ def test_account_predictions_multiple() -> None:
     ]
     assert predicted_accounts1 == ACCOUNT_PREDICTIONS
     assert predicted_accounts2 == ACCOUNT_PREDICTIONS
+
+
+def test_predict_postings_duplicate_accounts() -> None:
+    """Verifies that when providing the account, we only predict the unknown leg."""
+    training_data, _, _ = parser.parse_string(
+        """
+2016-01-01 open Assets:Bank:A USD
+2016-01-01 open Assets:Bank:B USD
+2016-01-01 open Expenses:Food USD
+
+2016-01-02 * "Starbucks"
+  Assets:Bank:A  -7.00 USD
+  Expenses:Food
+
+2016-01-02 * "Starbucks"
+  Assets:Bank:B  -7.00 USD
+  Expenses:Food
+"""
+    )
+    predictor = PredictPostings()
+
+    # 1. Failing case: account unknown (matches everything)
+    predictor.hook([("file", [], None, None)], training_data)
+    assert "Assets:Bank:A" in predictor.targets[0]
+    assert "Assets:Bank:B" in predictor.targets[1]
+
+    # 2. Passing case: account known (strips self.account)
+    predictor.hook([("file", [], "Assets:Bank:B", None)], training_data)
+    assert "Assets:Bank:B" not in predictor.targets[0]
