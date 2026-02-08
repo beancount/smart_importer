@@ -68,9 +68,15 @@ class StringVectorizer(CountVectorizer):  # type: ignore[misc]
     """Subclass of CountVectorizer that handles empty data."""
 
     def __init__(
-        self, tokenizer: Callable[[str], list[str]] | None = None
+        self,
+        tokenizer: Callable[[str], list[str]] | None = None,
+        token_pattern: None | str = r"(?u)\b\w\w+\b",
     ) -> None:
-        super().__init__(ngram_range=(1, 3), tokenizer=tokenizer)
+        super().__init__(
+            ngram_range=(1, 3),
+            tokenizer=tokenizer,
+            token_pattern=token_pattern,
+        )
 
     def fit_transform(self, raw_documents: list[str], y: None = None) -> Any:
         try:
@@ -86,7 +92,9 @@ class StringVectorizer(CountVectorizer):  # type: ignore[misc]
 
 
 def get_pipeline(
-    attribute: str, tokenizer: Callable[[str], list[str]] | None
+    attribute: str,
+    tokenizer: Callable[[str], list[str]] | None,
+    token_pattern: None | str = r"(?u)\b\w\w+\b",
 ) -> Any:
     """Make a pipeline for a given entry attribute."""
 
@@ -95,5 +103,6 @@ def get_pipeline(
 
     # Treat all other attributes as strings.
     return make_pipeline(
-        AttrGetter(attribute, default=""), StringVectorizer(tokenizer)
+        AttrGetter(attribute, default=""),
+        StringVectorizer(tokenizer, token_pattern=token_pattern),
     )
