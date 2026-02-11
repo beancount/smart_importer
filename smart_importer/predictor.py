@@ -54,7 +54,7 @@ class EntryPredictor:
     weights: dict[str, float] = {}
     attribute: str | None = None
 
-    def __init__(
+    def __init__(#pylint: disable=too-many-arguments
         self,
         predict: bool = True,
         overwrite: bool = False,
