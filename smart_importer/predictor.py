@@ -43,6 +43,8 @@ class EntryPredictor:
         string_tokenizer: Tokenizer can let smart_importer support more
             languages. This parameter should be an callable function with
             string parameter and the returning should be a list.
+        string_token_pattern: Regex for tokenizing text when no custom
+            tokenizer is provided. Set to None to disable.
         denylist_accounts: Transations with any of these accounts will be
             removed from the training data.
     """
@@ -52,11 +54,12 @@ class EntryPredictor:
     weights: dict[str, float] = {}
     attribute: str | None = None
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-positional-arguments,too-many-arguments
         self,
         predict: bool = True,
         overwrite: bool = False,
         string_tokenizer: Callable[[str], list[str]] | None = None,
+        string_token_pattern: str | None = r"(?u)\b\w\w+\b",
         denylist_accounts: list[str] | None = None,
     ) -> None:
         super().__init__()
@@ -69,6 +72,7 @@ class EntryPredictor:
         self.predict = predict
         self.overwrite = overwrite
         self.string_tokenizer = string_tokenizer
+        self.string_token_pattern = string_token_pattern
 
     def wrap(self, importer: Importer) -> ImporterWrapper:
         """Wrap an existing importer with smart importer logic.
@@ -191,7 +195,14 @@ class EntryPredictor:
         """Defines the machine learning pipeline based on given weights."""
 
         transformers = [
-            (attribute, get_pipeline(attribute, self.string_tokenizer))
+            (
+                attribute,
+                get_pipeline(
+                    attribute,
+                    tokenizer=self.string_tokenizer,
+                    token_pattern=self.string_token_pattern,
+                ),
+            )
             for attribute in self.weights
         ]
 
