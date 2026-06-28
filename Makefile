@@ -11,11 +11,11 @@ lint:
 
 .PHONY: install
 install:
-	pip3 install --editable .
+	pip install --editable .
 
-dist: smart_importer setup.cfg setup.py
+dist: smart_importer pyproject.toml
 	rm -rf dist
-	python setup.py sdist bdist_wheel
+	python -m build
 
 # Before making a release, CHANGES needs to be updated and
 # a tag and GitHub release should be created too.

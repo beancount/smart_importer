@@ -1,5 +1,47 @@
+[project]
+name = "smart_importer"
+description = "Augment Beancount importers with machine learning functionality."
+readme = "README.rst"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Johannes Harms" }]
+keywords = ["fava", "beancount", "accounting", "machinelearning"]
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Environment :: Web Environment",
+  "Environment :: Console",
+  "Intended Audience :: Education",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Intended Audience :: Information Technology",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Office/Business :: Financial :: Accounting",
+  "Topic :: Office/Business :: Financial :: Investment",
+]
+dependencies = [
+  "beancount>=3",
+  "beangulp",
+  "scikit-learn>=1.0",
+  "numpy>=1.18.0",
+  "typing-extensions>=4.9",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/beancount/smart_importer"
+Issues = "https://github.com/beancount/smart_importer/issues"
+
+[tool.setuptools.packages.find]
+exclude = ["tests"]
+
 [build-system]
-requires = ["setuptools>=30.3.0", "wheel", "setuptools_scm"]
+requires = ["setuptools>=80", "setuptools_scm[simple]>=8"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]

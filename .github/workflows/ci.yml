@@ -43,7 +43,7 @@ jobs:
         python-version: "3.14"
     - name: Install Dependencies
       run: |
-        pip install wheel setuptools
+        pip install wheel setuptools build
     - name: Build distribution
       run: >-
         make dist
