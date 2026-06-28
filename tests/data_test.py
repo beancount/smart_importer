@@ -7,7 +7,7 @@ from __future__ import annotations
 import os
 import pprint
 import re
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import pytest
 from beancount.core.compare import stable_hash_namedtuple
@@ -18,6 +18,8 @@ from smart_importer import PredictPostings
 from .predictors_test import DummyImporter
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from beancount.core import data
 
 

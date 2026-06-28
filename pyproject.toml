@@ -21,7 +21,6 @@ module = ["beangulp.*"]
 follow_untyped_imports = true
 
 [tool.ruff]
-target-version = "py38"
 line-length = 79
 
 [tool.ruff.lint]
@@ -29,4 +28,10 @@ extend-select = [
     "I",   # isort
     "UP",  # pyupgrade
     "TC",  # type-checking
+]
+
+[tool.pylint.'messages control']
+disable = [
+  "too-few-public-methods",
+  "cyclic-import",
 ]

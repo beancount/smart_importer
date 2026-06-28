@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from beancount.core.data import (
     Close,
@@ -26,6 +26,8 @@ from smart_importer.pipelines import get_pipeline
 from smart_importer.wrapper import ImporterWrapper
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from beancount.core import data
     from beangulp.importer import Importer
     from sklearn import Pipeline
